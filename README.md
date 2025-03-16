@@ -2,6 +2,8 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-AstralET-blue)](https://github.com/ldoubil/astral)
 
+
+
 ## 预览
 ![manage-step1](/assets/AstralET1.png)
 ![manage-step1](/assets/AstralET2.png)
@@ -10,6 +12,7 @@
 ![manage-step1](/assets/AstralET5.png)
 
 ## 使用教程
+
 
 1. ​**下载并安装**  
    前往 [GitHub 项目页面](https://github.com/ldoubil/astral) 下载最新版本的 AstralET。
