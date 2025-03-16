@@ -116,7 +116,7 @@ class _InfoPageState extends State<InfoPage>
                   );
                 },
                 child: Text(
-                  AppInfoUtil.getFullVersion(),
+                  AppInfoUtil.getVersion(),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),

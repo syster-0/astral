@@ -18,6 +18,7 @@ class PlayerInfo {
   final int receivedPackets; // 接收包数量
   final double packetLossRate; // 丢包率(%)
   final String etVersion; // ET版本
+  final String natType; // 添加NAT类型
 
   PlayerInfo({
     required this.name,
@@ -30,6 +31,7 @@ class PlayerInfo {
     required this.receivedPackets,
     required this.packetLossRate,
     required this.etVersion,
+    required this.natType, // 添加NAT类型参数
   });
 }
 
@@ -44,13 +46,43 @@ class RoomPage extends StatefulWidget {
 
 class _RoomPageState extends State<RoomPage> {
   List<PlayerInfo> players = [];
+  List<PlayerInfo> filteredPlayers = []; // 添加过滤后的玩家列表
   bool isLoading = true;
-  // 移除布局类型状态变量
+  String searchQuery = ''; // 添加搜索查询字符串
+  TextEditingController searchController = TextEditingController(); // 添加搜索控制器
 
   @override
   void initState() {
     super.initState();
     isLoading = true;
+    searchController.addListener(_onSearchChanged); // 添加搜索监听器
+  }
+
+  @override
+  void dispose() {
+    searchController.removeListener(_onSearchChanged); // 移除搜索监听器
+    searchController.dispose(); // 释放控制器资源
+    super.dispose();
+  }
+
+  // 搜索变化处理函数
+  void _onSearchChanged() {
+    setState(() {
+      searchQuery = searchController.text;
+      _filterPlayers(); // 过滤玩家列表
+    });
+  }
+
+  // 过滤玩家列表
+  void _filterPlayers() {
+    if (searchQuery.isEmpty) {
+      filteredPlayers = List.from(players); // 如果搜索为空，显示所有玩家
+    } else {
+      filteredPlayers = players
+          .where((player) =>
+              player.name.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList(); // 根据名称过滤玩家
+    }
   }
 
   @override
@@ -60,7 +92,22 @@ class _RoomPageState extends State<RoomPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('房间成员'),
-        // 移除布局切换按钮
+        actions: [
+          // 添加搜索按钮
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: _PlayerSearchDelegate(
+                  players: players,
+                  colorScheme: colorScheme,
+                  buildPlayerListItem: _buildPlayerListItem,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<KM>(
         builder: (context, km, child) {
@@ -190,6 +237,9 @@ class _RoomPageState extends State<RoomPage> {
           packetLossRate = double.parse(packetLossRate.toStringAsFixed(1));
         }
 
+        // 获取NAT类型
+        String natType = _mapNatType(node.nat);
+
         // 创建PlayerInfo对象
         nodePlayerInfos.add(
           PlayerInfo(
@@ -203,6 +253,7 @@ class _RoomPageState extends State<RoomPage> {
             receivedPackets: receivedPackets,
             packetLossRate: packetLossRate,
             etVersion: node.version, // 获取版本信息
+            natType: natType, // 添加NAT类型
           ),
         );
       }
@@ -211,6 +262,7 @@ class _RoomPageState extends State<RoomPage> {
 
       setState(() {
         players = nodePlayerInfos;
+        _filterPlayers(); // 更新过滤后的玩家列表
         isLoading = false;
       });
     } catch (e) {
@@ -221,176 +273,6 @@ class _RoomPageState extends State<RoomPage> {
         });
       }
     }
-  }
-
-  // 构建玩家信息卡片
-  Widget _buildPlayerCard(PlayerInfo player, ColorScheme colorScheme) {
-    // 根据延迟值确定颜色
-    Color latencyColor = _getLatencyColor(player.latency);
-
-    // 根据连接类型选择图标
-    IconData connectionIcon = _getConnectionIcon(player.connectionType);
-
-    return FloatingCard(
-      colorScheme: colorScheme,
-      maxWidth: 600,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 玩家名称和连接类型
-          Row(
-            children: [
-              Icon(Icons.person, color: colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  player.name,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getConnectionTypeColor(
-                      player.connectionType, colorScheme),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      connectionIcon,
-                      size: 14,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      player.connectionType,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // IP地址
-          _buildInfoRow(
-            Icons.lan,
-            'IP地址',
-            player.ip,
-            colorScheme,
-            showCopyButton: true,
-          ),
-          const SizedBox(height: 12),
-
-          // 延迟信息
-          _buildInfoRow(
-            Icons.speed,
-            '延迟',
-            '${player.latency} ms',
-            colorScheme,
-            valueColor: latencyColor,
-          ),
-          const SizedBox(height: 12),
-
-          // ET版本
-          _buildInfoRow(
-            Icons.memory,
-            'ET版本',
-            player.etVersion,
-            colorScheme,
-          ),
-
-          const Divider(height: 24),
-
-          // 网络数据部分标题
-          Row(
-            children: [
-              Icon(Icons.data_usage, color: colorScheme.primary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                '网络数据',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 网络数据信息 - 优化对齐方式
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildNetworkDataItemAligned(
-                        '上传',
-                        '${player.uploadSpeed} KB/s',
-                        Icons.upload,
-                        colorScheme.primary,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildNetworkDataItemAligned(
-                        '下载',
-                        '${player.downloadSpeed} KB/s',
-                        Icons.download,
-                        colorScheme.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildNetworkDataItemAligned(
-                        '发送包',
-                        '${player.sentPackets}',
-                        Icons.send,
-                        colorScheme.primary,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildNetworkDataItemAligned(
-                        '接收包',
-                        '${player.receivedPackets}',
-                        Icons.call_received,
-                        colorScheme.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 24),
-
-          // 丢包率信息
-          _buildInfoRow(
-            Icons.error_outline,
-            '丢包率',
-            '${player.packetLossRate}%',
-            colorScheme,
-            valueColor: _getPacketLossColor(player.packetLossRate),
-          ),
-        ],
-      ),
-    );
   }
 
   // 构建列表项视图
@@ -490,6 +372,15 @@ class _RoomPageState extends State<RoomPage> {
           'ET版本',
           player.etVersion,
           colorScheme,
+        ),
+        const SizedBox(height: 8),
+        // NAT类型
+        _buildInfoRow(
+          _getNatTypeIcon(player.natType),
+          'NAT类型',
+          player.natType,
+          colorScheme,
+          valueColor: _getNatTypeColor(player.natType),
         ),
         const SizedBox(height: 8),
 
@@ -631,6 +522,16 @@ class _RoomPageState extends State<RoomPage> {
                 'ET版本',
                 player.etVersion,
                 colorScheme,
+              ),
+              const SizedBox(height: 8),
+
+              // NAT类型
+              _buildInfoRow(
+                _getNatTypeIcon(player.natType),
+                'NAT类型',
+                player.natType,
+                colorScheme,
+                valueColor: _getNatTypeColor(player.natType),
               ),
             ],
           ),
@@ -799,38 +700,6 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  // 构建对齐的网络数据项
-  Widget _buildNetworkDataItemAligned(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(icon, size: 22, color: color),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
-            fontSize: 14,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
   // 根据延迟值获取颜色
   Color _getLatencyColor(int latency) {
     if (latency < 50) {
@@ -906,5 +775,181 @@ class _RoomPageState extends State<RoomPage> {
     } else {
       return Colors.grey;
     }
+  }
+
+  // 将NAT类型转换为中文
+  String _mapNatType(String natType) {
+    switch (natType) {
+      case 'Unknown':
+        return '未知';
+      case 'OpenInternet':
+        return '开放网络';
+      case 'NoPat':
+        return '无PAT';
+      case 'FullCone':
+        return '全锥形';
+      case 'Restricted':
+        return '受限锥形';
+      case 'PortRestricted':
+        return '端口受限锥形';
+      case 'Symmetric':
+        return '对称型';
+      case 'SymUdpFirewall':
+        return '对称UDP防火墙';
+      case 'SymmetricEasyInc':
+        return '对称递增型';
+      case 'SymmetricEasyDec':
+        return '对称递减型';
+      default:
+        return '未知';
+    }
+  }
+
+  // 根据NAT类型获取图标
+  IconData _getNatTypeIcon(String natType) {
+    if (natType.contains('开放') || natType.contains('全锥形')) {
+      return Icons.public;
+    } else if (natType.contains('受限')) {
+      return Icons.shield;
+    } else if (natType.contains('端口受限')) {
+      return Icons.security;
+    } else if (natType.contains('对称')) {
+      return Icons.sync_alt;
+    } else if (natType.contains('防火墙')) {
+      return Icons.fireplace;
+    } else if (natType.contains('递增')) {
+      return Icons.trending_up;
+    } else if (natType.contains('递减')) {
+      return Icons.trending_down;
+    } else if (natType.contains('无PAT')) {
+      return Icons.router;
+    } else {
+      return Icons.help_outline;
+    }
+  }
+
+  // 根据NAT类型获取颜色
+  Color _getNatTypeColor(String natType) {
+    if (natType.contains('开放') ||
+        natType.contains('全锥形') ||
+        natType.contains('无PAT')) {
+      return Colors.green;
+    } else if (natType.contains('受限') || natType.contains('端口受限')) {
+      return Colors.orange;
+    } else if (natType.contains('对称') || natType.contains('防火墙')) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
+    }
+  }
+}
+
+// 玩家搜索委托类
+class _PlayerSearchDelegate extends SearchDelegate<String> {
+  final List<PlayerInfo> players;
+  final ColorScheme colorScheme;
+  final Function(PlayerInfo, ColorScheme) buildPlayerListItem;
+
+  _PlayerSearchDelegate({
+    required this.players,
+    required this.colorScheme,
+    required this.buildPlayerListItem,
+  });
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          // 如果搜索框为空，直接返回
+          if (query.isEmpty) {
+            close(context, '');
+          } else {
+            // 否则清空搜索内容
+            query = '';
+            showSuggestions(context);
+          }
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildSearchResults(context);
+  }
+
+  // 修改方法签名，添加 BuildContext 参数
+  Widget _buildSearchResults(BuildContext context) {
+    final filteredPlayers = query.isEmpty
+        ? players
+        : players
+            .where((player) =>
+                player.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+
+    if (filteredPlayers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: colorScheme.primary.withOpacity(0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '未找到匹配的玩家',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '尝试使用其他搜索关键词',
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 添加对屏幕宽度的检测
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 使用约束条件获取当前宽度
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: filteredPlayers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: buildPlayerListItem(filteredPlayers[index], colorScheme),
+            );
+          },
+        );
+      },
+    );
   }
 }

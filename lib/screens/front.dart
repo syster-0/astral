@@ -120,62 +120,89 @@ class _HomePageState extends State<HomePage> {
             roomName: roomName,
             roomPassword: roomPassword,
             severurl: Serverip);
-        // 模拟连接过程，2秒后连接成功
-        Future.delayed(const Duration(seconds: 2), () {
+
+        // 添加连接超时计数器
+        int connectionTimeoutCounter = 0;
+
+        // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
+        timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
           // 检查组件是否仍然挂载
-          if (!mounted) return;
-          
-          if (isRunning) {
-            // 确保用户没有在连接过程中取消
-            setState(() {
-              _connectionState = ConnectionState.connected;
-              // 连接成功后开始计时
-
-              timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-                // 检查组件是否仍然挂载
-                if (!mounted) {
-                  timer.cancel();
-                  return;
-                }
-                
-                final info = await getRunningInfo();
-                // 打印运行信息的详细内容
-                // print("运行信息详情:${info}");
-                Runin runin = parseRunin(info);
-                // 获取网络状态
-                // 获取网络状态
-                final networkStatus = await getNetworkStatus();
-                km.nodes = networkStatus.nodes;
-
-                // 更新网络流量数据
-                _updateNetworkStats(networkStatus.nodes);
-
-                // print('设备名称: ${runin.devName}');
-                // print(
-                //     '设备ID: ${_intToIpv4String(runin.myNodeInfo?.virtualIpv4?.address?.addr ?? 0)}');
-                final int? version =
-                    runin.myNodeInfo?.virtualIpv4?.address?.addr;
-                if (version != null) {
-                  String ipStr = _intToIpv4String(version);
-                  // 检查IP不为0.0.0.0且与当前IP不同时才更新
-                  if (ipStr != "0.0.0.0" && publicIP != ipStr) {
-                    km.virtualIP = ipStr;
-                  }
-                }
-                
-                // 再次检查组件是否仍然挂载
-                if (!mounted) {
-                  timer.cancel();
-                  return;
-                }
-                
-                setState(() {
-                  runningTime += const Duration(seconds: 1);
-                });
-              });
-            });
+          if (!mounted) {
+            timer.cancel();
+            return;
           }
+
+          final info = await getRunningInfo();
+          Runin runin = parseRunin(info);
+
+          // 获取网络状态
+          final networkStatus = await getNetworkStatus();
+          final km = Provider.of<KM>(context, listen: false);
+          km.nodes = networkStatus.nodes;
+
+          // 更新网络流量数据
+          _updateNetworkStats(networkStatus.nodes);
+
+          final int? version = runin.myNodeInfo?.virtualIpv4?.address?.addr;
+          if (version != null) {
+            String ipStr = _intToIpv4String(version);
+            // 检查IP不为0.0.0.0时认为连接成功
+            if (ipStr != "0.0.0.0") {
+              if (publicIP != ipStr) {
+                km.virtualIP = ipStr;
+              }
+
+              // 如果当前状态还是连接中，则更新为已连接
+              if (_connectionState == ConnectionState.connecting) {
+                setState(() {
+                  _connectionState = ConnectionState.connected;
+                });
+              }
+
+              // 重置超时计数器
+              connectionTimeoutCounter = 0;
+            } else if (_connectionState == ConnectionState.connecting) {
+              // 只在连接状态下增加超时计数
+              connectionTimeoutCounter++;
+
+              // 如果连续10秒都是0.0.0.0，判断为连接失败
+              if (connectionTimeoutCounter >= 10) {
+                // 停止连接并显示失败消息
+                timer.cancel();
+                setState(() {
+                  isRunning = false;
+                  _connectionState = ConnectionState.notStarted;
+                  runningTime = Duration.zero;
+                });
+
+                // 关闭服务器连接
+                closeAllServer();
+
+                // 显示连接失败提示
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('连接失败，请检查网络或房间信息后重试'),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+                return;
+              }
+            }
+          }
+
+          // 再次检查组件是否仍然挂载
+          if (!mounted) {
+            timer.cancel();
+            return;
+          }
+
+          setState(() {
+            runningTime += const Duration(seconds: 1);
+          });
         });
+        // 移除原来的Future.delayed模拟连接成功的代码
       } else {
         // 停止时重置状态
         _connectionState = ConnectionState.notStarted;
@@ -217,7 +244,7 @@ class _HomePageState extends State<HomePage> {
 
     // 再次检查挂载状态，确保在setState前组件仍然挂载
     if (!mounted) return;
-    
+
     // 计算速度 (字节/秒 转换为 MB/秒)
     setState(() {
       _uploadBytes = totalUploadBytes;
@@ -881,7 +908,7 @@ class _HomePageState extends State<HomePage> {
 // 添加版本信息卡片
 Widget _buildVersionInfoCard(ColorScheme colorScheme) {
   // 这里可以从配置或API获取实际版本号
-  final String appVersion = AppInfoUtil.getFullVersion();
+  final String appVersion = AppInfoUtil.getVersion();
 
   return FloatingCard(
     colorScheme: colorScheme,
@@ -940,5 +967,3 @@ Widget _buildVersionItem(
     ],
   );
 }
-
-

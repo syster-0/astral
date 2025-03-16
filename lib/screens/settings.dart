@@ -1,3 +1,5 @@
+import 'package:astral/utils/app_info.dart';
+import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../utils/ping_util.dart';
@@ -10,6 +12,11 @@ class SettingsPage extends StatefulWidget {
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
+
+final updateChecker = UpdateChecker(
+  owner: 'ldoubil',
+  repo: 'astral',
+);
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
@@ -221,6 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // updateChecker.checkForUpdates(context);
     serverIP = Provider.of<KM>(context).virtualIP;
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -347,18 +355,16 @@ class _SettingsPageState extends State<SettingsPage> {
         Card(
           child: Column(
             children: [
-              const ListTile(
+              ListTile(
                 leading: Icon(Icons.info),
                 title: Text('应用版本'),
-                subtitle: Text('灰度版本'),
+                subtitle: Text(AppInfoUtil.getVersion()),
               ),
               ListTile(
                 leading: const Icon(Icons.update),
                 title: const Text('检查更新'),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('灰度版本不支持更新')),
-                  );
+                  updateChecker.checkForUpdates(context);
                 },
               ),
             ],

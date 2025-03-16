@@ -6,6 +6,7 @@ import 'dart:io';
 import 'screens/Home.dart';
 import 'config/themeconfiguration.dart';
 import 'config/app_config.dart';
+import 'package:astral/utils/up.dart'; // 添加这行导入
 
 // 定义应用程序的主要StatefulWidget
 class MyApp extends StatefulWidget {
@@ -38,6 +39,17 @@ class _MyAppState extends State<MyApp> {
 
     // 初始化系统托盘
     initSystemTray();
+
+    // 添加版本检查（在下一帧执行确保context可用）
+    Future.microtask(() {
+      final updateChecker = UpdateChecker(
+        owner: 'ldoubil',
+        repo: 'astral',
+      );
+      if (mounted) {
+        updateChecker.scheckForUpdates(context);
+      }
+    });
   }
 
   // 初始化系统托盘
@@ -88,10 +100,10 @@ class _MyAppState extends State<MyApp> {
   // 更改主题色的方法
   void changeSeedColor(Color color) {
     // 使用 Future.microtask 延迟状态更新，避免在当前帧中触发重建
-      setState(() {
-        _seedColor = color;
-        AppConfig().setSeedColor(color);
-      });
+    setState(() {
+      _seedColor = color;
+      AppConfig().setSeedColor(color);
+    });
   }
 
   // 更改底部导航栏选中索引的方法
