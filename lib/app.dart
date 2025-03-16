@@ -39,17 +39,6 @@ class _MyAppState extends State<MyApp> {
 
     // 初始化系统托盘
     initSystemTray();
-
-    // 添加版本检查（在下一帧执行确保context可用）
-    Future.microtask(() {
-      final updateChecker = UpdateChecker(
-        owner: 'ldoubil',
-        repo: 'astral',
-      );
-      if (mounted) {
-        updateChecker.scheckForUpdates(context);
-      }
-    });
   }
 
   // 初始化系统托盘

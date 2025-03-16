@@ -292,6 +292,7 @@ pub struct KVNodeInfo {
     pub ipv4: String,
     pub latency_ms: f64,
     pub nat: String, // NAT类型
+    pub loss_rate: f32,
     pub connections: Vec<KVNodeConnectionStats>,
     pub version: String,
     pub cost: i32,
@@ -330,7 +331,6 @@ pub fn get_network_status() -> KVNetworkStatus {
                 hostname: route.hostname.clone(),
                 ipv4,
                 latency_ms: if let Some(peer) = &pair.peer {
-                    // 类似cli.rs中的get_latency_ms方法
                     let mut min_latency = u64::MAX;
                     for conn in &peer.conns {
                         if let Some(stats) = &conn.stats {
@@ -347,6 +347,15 @@ pub fn get_network_status() -> KVNetworkStatus {
                 } else {
                     // 如果没有peer信息，则使用路由路径延迟
                     f64::from(route.path_latency.max(0)) / 1000.0
+                },
+                loss_rate: if let Some(peer) = &pair.peer {
+                    let mut total_loss_rate = 0.0;
+                    for conn in &peer.conns {
+                        total_loss_rate += conn.loss_rate;
+                    }
+                    total_loss_rate
+                } else {
+                    0.0 // 如果没有连接信息，默认为0
                 },
                 nat: route.stun_info.as_ref().map_or_else(
                     || "Unknown".to_string(),
@@ -571,6 +580,9 @@ pub fn create_server(
         let cfg = create_config();
         cfg.set_hostname(Option::from(username));
         cfg.set_dhcp(enable_dhcp);
+        let mut flags = cfg.get_flags();
+        flags.dev_name = "Astral".to_string();
+        cfg.set_flags(flags);
         let peer_config = PeerConfig {
             uri: ("tcp://".to_string() + &severurl).parse().unwrap(),
         };

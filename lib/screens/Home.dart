@@ -1,3 +1,4 @@
+import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import '../widgets/window_control_buttons.dart';
@@ -46,6 +47,17 @@ class _MainScreenState extends State<MainScreen>
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
+
+    // 添加异步更新检查（推荐方式）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final updateChecker = UpdateChecker(
+        owner: 'ldoubil',
+        repo: 'astral',
+      );
+      if (mounted) {
+        updateChecker.scheckForUpdates(context);
+      }
+    });
   }
 
   @override
@@ -229,7 +241,8 @@ class PageKeepAlive extends StatefulWidget {
   State<PageKeepAlive> createState() => _PageKeepAliveState();
 }
 
-class _PageKeepAliveState extends State<PageKeepAlive> with AutomaticKeepAliveClientMixin {
+class _PageKeepAliveState extends State<PageKeepAlive>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 

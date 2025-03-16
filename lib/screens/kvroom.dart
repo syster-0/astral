@@ -230,13 +230,7 @@ class _RoomPageState extends State<RoomPage> {
         }
 
         // 计算丢包率 (简单估算)
-        double packetLossRate = 0.0;
-        if (sentPackets > 0 && receivedPackets > 0) {
-          packetLossRate = (1.0 - (receivedPackets / sentPackets)).abs() * 100;
-          if (packetLossRate > 100) packetLossRate = 100.0;
-          packetLossRate = double.parse(packetLossRate.toStringAsFixed(1));
-        }
-
+        double packetLossRate = node.lossRate;
         // 获取NAT类型
         String natType = _mapNatType(node.nat);
 

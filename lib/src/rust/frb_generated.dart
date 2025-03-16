@@ -516,6 +516,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -558,16 +564,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   KVNodeInfo dco_decode_kv_node_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return KVNodeInfo(
       hostname: dco_decode_String(arr[0]),
       ipv4: dco_decode_String(arr[1]),
       latencyMs: dco_decode_f_64(arr[2]),
       nat: dco_decode_String(arr[3]),
-      connections: dco_decode_list_kv_node_connection_stats(arr[4]),
-      version: dco_decode_String(arr[5]),
-      cost: dco_decode_i_32(arr[6]),
+      lossRate: dco_decode_f_32(arr[4]),
+      connections: dco_decode_list_kv_node_connection_stats(arr[5]),
+      version: dco_decode_String(arr[6]),
+      cost: dco_decode_i_32(arr[7]),
     );
   }
 
@@ -754,6 +761,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double sse_decode_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat32();
+  }
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
@@ -797,6 +810,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_ipv4 = sse_decode_String(deserializer);
     var var_latencyMs = sse_decode_f_64(deserializer);
     var var_nat = sse_decode_String(deserializer);
+    var var_lossRate = sse_decode_f_32(deserializer);
     var var_connections =
         sse_decode_list_kv_node_connection_stats(deserializer);
     var var_version = sse_decode_String(deserializer);
@@ -806,6 +820,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         ipv4: var_ipv4,
         latencyMs: var_latencyMs,
         nat: var_nat,
+        lossRate: var_lossRate,
         connections: var_connections,
         version: var_version,
         cost: var_cost);
@@ -1017,6 +1032,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_f_32(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat32(self);
+  }
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
@@ -1054,6 +1075,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.ipv4, serializer);
     sse_encode_f_64(self.latencyMs, serializer);
     sse_encode_String(self.nat, serializer);
+    sse_encode_f_32(self.lossRate, serializer);
     sse_encode_list_kv_node_connection_stats(self.connections, serializer);
     sse_encode_String(self.version, serializer);
     sse_encode_i_32(self.cost, serializer);

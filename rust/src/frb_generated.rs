@@ -496,6 +496,13 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_f32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -547,6 +554,7 @@ impl SseDecode for crate::api::simple::KVNodeInfo {
         let mut var_ipv4 = <String>::sse_decode(deserializer);
         let mut var_latencyMs = <f64>::sse_decode(deserializer);
         let mut var_nat = <String>::sse_decode(deserializer);
+        let mut var_lossRate = <f32>::sse_decode(deserializer);
         let mut var_connections =
             <Vec<crate::api::simple::KVNodeConnectionStats>>::sse_decode(deserializer);
         let mut var_version = <String>::sse_decode(deserializer);
@@ -556,6 +564,7 @@ impl SseDecode for crate::api::simple::KVNodeInfo {
             ipv4: var_ipv4,
             latency_ms: var_latencyMs,
             nat: var_nat,
+            loss_rate: var_lossRate,
             connections: var_connections,
             version: var_version,
             cost: var_cost,
@@ -822,6 +831,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::simple::KVNodeInfo {
             self.ipv4.into_into_dart().into_dart(),
             self.latency_ms.into_into_dart().into_dart(),
             self.nat.into_into_dart().into_dart(),
+            self.loss_rate.into_into_dart().into_dart(),
             self.connections.into_into_dart().into_dart(),
             self.version.into_into_dart().into_dart(),
             self.cost.into_into_dart().into_dart(),
@@ -928,6 +938,13 @@ impl SseEncode for bool {
     }
 }
 
+impl SseEncode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_f32::<NativeEndian>(self).unwrap();
+    }
+}
+
 impl SseEncode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -968,6 +985,7 @@ impl SseEncode for crate::api::simple::KVNodeInfo {
         <String>::sse_encode(self.ipv4, serializer);
         <f64>::sse_encode(self.latency_ms, serializer);
         <String>::sse_encode(self.nat, serializer);
+        <f32>::sse_encode(self.loss_rate, serializer);
         <Vec<crate::api::simple::KVNodeConnectionStats>>::sse_encode(self.connections, serializer);
         <String>::sse_encode(self.version, serializer);
         <i32>::sse_encode(self.cost, serializer);

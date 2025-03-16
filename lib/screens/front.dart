@@ -91,18 +91,18 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // 初始化 TextEditingController
+    // 初始化所有TextEditingController
     _roomNameController = TextEditingController(text: roomName);
     _roomPasswordController = TextEditingController(text: roomPassword);
     _usernameController = TextEditingController(text: username);
-    _virtualIPController = TextEditingController(text: publicIP);
+    _virtualIPController = TextEditingController(text: publicIP); // 添加缺失的初始化
 
     // 修改卡片构建器列表，添加版本信息卡片
     _cardBuilders = [
-      _buildNetworkStatusCard, // 网络状态卡片
-      _buildUserInfoCard, // 用户信息卡片
-      _buildRoomInfoCard, // 房间信息卡片
-      _buildVersionInfoCard, // 新增版本信息卡片
+      _buildNetworkStatusCard,
+      _buildUserInfoCard,
+      _buildRoomInfoCard,
+      _buildVersionInfoCard,
     ];
   }
 
@@ -120,7 +120,6 @@ class _HomePageState extends State<HomePage> {
             roomName: roomName,
             roomPassword: roomPassword,
             severurl: Serverip);
-
         // 添加连接超时计数器
         int connectionTimeoutCounter = 0;
 
@@ -286,6 +285,7 @@ class _HomePageState extends State<HomePage> {
       text: km.username,
       selection: _usernameController.selection,
     );
+    // 添加虚拟IP控制器的值同步
     _virtualIPController.value = TextEditingValue(
       text: km.virtualIP,
       selection: _virtualIPController.selection,
@@ -744,8 +744,10 @@ class _HomePageState extends State<HomePage> {
           TextField(
             controller: _usernameController,
             enabled: _connectionState != ConnectionState.connected,
-            onChanged: (value) {
-              km.username = value;
+            onEditingComplete: () {
+              // 改为完成编辑时更新
+              Provider.of<KM>(context, listen: false).username =
+                  _usernameController.text;
             },
             decoration: InputDecoration(
               labelText: '用户名',
@@ -765,9 +767,13 @@ class _HomePageState extends State<HomePage> {
                   enabled: !_isAutoIP &&
                       _connectionState != ConnectionState.connected,
                   onChanged: (value) {
+                    // 保留空回调以避免实时更新
+                  },
+                  onEditingComplete: () {
+                    // 添加完成编辑回调
                     if (!_isAutoIP) {
-                      setState(() {});
-                      km.virtualIP = value;
+                      Provider.of<KM>(context, listen: false).virtualIP =
+                          _virtualIPController.text;
                     }
                   },
                   decoration: InputDecoration(
@@ -790,6 +796,10 @@ class _HomePageState extends State<HomePage> {
                               _isAutoIP = value;
                             });
                             km.dynamicIP = value;
+                            // 切换模式时同步最新值
+                            if (!value) {
+                              km.virtualIP = _virtualIPController.text;
+                            }
                           }
                         : null,
                   ),
@@ -860,8 +870,10 @@ class _HomePageState extends State<HomePage> {
           TextField(
             controller: _roomNameController,
             enabled: _connectionState != ConnectionState.connected,
-            onChanged: (value) {
-              km.roomName = value;
+            onEditingComplete: () {
+              // 改为完成编辑时更新
+              Provider.of<KM>(context, listen: false).roomName =
+                  _roomNameController.text;
             },
             decoration: InputDecoration(
               labelText: '房间名称',
@@ -876,8 +888,10 @@ class _HomePageState extends State<HomePage> {
           TextField(
             controller: _roomPasswordController,
             enabled: _connectionState != ConnectionState.connected,
-            onChanged: (value) {
-              km.roomPassword = value;
+            onEditingComplete: () {
+              // 改为完成编辑时更新
+              Provider.of<KM>(context, listen: false).roomPassword =
+                  _roomPasswordController.text;
             },
             obscureText: true,
             decoration: InputDecoration(
