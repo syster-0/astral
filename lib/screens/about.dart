@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
-import 'package:ASTRAL/utils/app_info.dart';
+import 'package:astral/utils/app_info.dart';
 
 class InfoPage extends StatefulWidget {
   const InfoPage({super.key});

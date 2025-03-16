@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io'; // 添加 dart:io 导入以使用 Platform 类
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'cof.dart';
 
 class AppConfig {
   static final AppConfig _instance = AppConfig._internal();
-  static late SharedPreferences _prefs;
+  static late ConfigManager _configManager;
+  static late String _configDirectory;
 
   factory AppConfig() {
     return _instance;
@@ -14,112 +16,146 @@ class AppConfig {
 
   // 初始化配置
   static Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    // 获取可执行文件所在目录而不是当前工作目录
+    _configDirectory = File(Platform.resolvedExecutable).parent.path;
+    final configPath = path.join(_configDirectory, 'config.yaml');
+
+    _configManager = ConfigManager(
+      filePath: configPath,
+      defaultConfig: {
+        'theme': {
+          'mode': 'system',
+          'seedColor': Colors.blue.value,
+        },
+        'server': {
+          'list': ['public.easytier.cn:11010'],
+          'current': 'public.easytier.cn:11010',
+        },
+        'room': {
+          'name': 'kevin',
+          'password': 'kevin',
+        },
+        'user': {
+          'name': Platform.localHostname,
+        },
+        'network': {
+          'virtualIP': '',
+          'dynamicIP': true,
+        },
+        'system': {
+          'closeToTray': true,
+        },
+      },
+    );
+
+    await _configManager.load();
   }
 
   // 主题设置
-  static const String _keyThemeMode = 'themeMode';
   ThemeMode get themeMode {
-    final String? value = _prefs.getString(_keyThemeMode);
+    final String? value = _configManager.get<String>('theme.mode');
     return ThemeMode.values.firstWhere(
-      (mode) => mode.toString() == value,
+      (mode) => mode.toString() == 'ThemeMode.$value',
       orElse: () => ThemeMode.system,
     );
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    await _prefs.setString(_keyThemeMode, mode.toString());
+    final modeString = mode.toString().split('.').last.toLowerCase();
+    _configManager.set('theme.mode', modeString);
+    await _configManager.save();
   }
 
   // 主题色设置
-  static const String _keySeedColor = 'seedColor';
   Color get seedColor {
-    final int? value = _prefs.getInt(_keySeedColor);
+    final int? value = _configManager.get<int>('theme.seedColor');
     return value != null ? Color(value) : Colors.blue;
   }
 
   Future<void> setSeedColor(Color color) async {
-    await _prefs.setInt(_keySeedColor, color.value);
+    _configManager.set('theme.seedColor', color.value);
+    await _configManager.save();
   }
 
   // 服务器列表设置
-  static const String _keyServerList = 'serverList';
   List<String> get serverList {
-    final List<String>? value = _prefs.getStringList(_keyServerList);
-    return value?.isNotEmpty == true ? value! : ['public.easytier.net:11010'];
+    final List? value = _configManager.get<List>('server.list');
+    return value?.cast<String>() ?? ['public.easytier.cn:11010'];
   }
 
   Future<void> setServerList(List<String> servers) async {
-    await _prefs.setStringList(_keyServerList, servers);
+    _configManager.set('server.list', servers);
+    await _configManager.save();
   }
 
   // 当前选中的服务器设置
-  static const String _keyCurrentServer = 'currentServer';
   String get currentServer {
-    return _prefs.getString(_keyCurrentServer) ?? 'public.easytier.net:11010';
+    return _configManager.get<String>('server.current') ??
+        'public.easytier.cn:11010';
   }
 
   Future<void> setCurrentServer(String server) async {
-    await _prefs.setString(_keyCurrentServer, server);
+    _configManager.set('server.current', server);
+    await _configManager.save();
   }
 
   // 房间名设置
-  static const String _keyRoomName = 'roomName';
   String get roomName {
-    return _prefs.getString(_keyRoomName) ?? 'kevin';
+    return _configManager.get<String>('room.name') ?? 'kevin';
   }
 
   Future<void> setRoomName(String name) async {
-    await _prefs.setString(_keyRoomName, name);
+    _configManager.set('room.name', name);
+    await _configManager.save();
   }
 
   // 房间密码设置
-  static const String _keyRoomPassword = 'roomPassword';
   String get roomPassword {
-    return _prefs.getString(_keyRoomPassword) ?? 'kevin';
+    return _configManager.get<String>('room.password') ?? 'kevin';
   }
 
   Future<void> setRoomPassword(String password) async {
-    await _prefs.setString(_keyRoomPassword, password);
+    _configManager.set('room.password', password);
+    await _configManager.save();
   }
 
   // 用户名设置
-  static const String _keyUsername = 'username';
   String get username {
-    return _prefs.getString(_keyUsername) ?? Platform.localHostname;
+    return _configManager.get<String>('user.name') ?? Platform.localHostname;
   }
 
   Future<void> setUsername(String name) async {
-    await _prefs.setString(_keyUsername, name);
+    _configManager.set('user.name', name);
+    await _configManager.save();
   }
 
   // 虚拟IP设置
-  static const String _keyVirtualIP = 'virtualIP';
   String get virtualIP {
-    return _prefs.getString(_keyVirtualIP) ?? '';
-  }
-
-  // 关闭按钮进入托盘
-  static const String _keyCloseToTray = 'closeToTray';
-  bool get closeToTray {
-    return _prefs.getBool(_keyCloseToTray) ?? true;
-  }
-
-  Future<void> setCloseToTray(bool enabled) async {
-    await _prefs.setBool(_keyCloseToTray, enabled);
+    return _configManager.get<String>('network.virtualIP') ?? '';
   }
 
   Future<void> setVirtualIP(String ip) async {
-    await _prefs.setString(_keyVirtualIP, ip);
+    _configManager.set('network.virtualIP', ip);
+    await _configManager.save();
+  }
+
+  // 关闭按钮进入托盘
+  bool get closeToTray {
+    return _configManager.get<bool>('system.closeToTray') ?? true;
+  }
+
+  Future<void> setCloseToTray(bool enabled) async {
+    _configManager.set('system.closeToTray', enabled);
+    await _configManager.save();
   }
 
   // 动态获取IP设置
-  static const String _keyDynamicIP = 'dynamicIP';
   bool get dynamicIP {
-    return _prefs.getBool(_keyDynamicIP) ?? true;
+    return _configManager.get<bool>('network.dynamicIP') ?? true;
   }
 
   Future<void> setDynamicIP(bool enabled) async {
-    await _prefs.setBool(_keyDynamicIP, enabled);
+    _configManager.set('network.dynamicIP', enabled);
+    await _configManager.save();
   }
 }

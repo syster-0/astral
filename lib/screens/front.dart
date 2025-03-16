@@ -1,9 +1,9 @@
 // 导入必要的包
 import 'dart:convert';
 
-import 'package:ASTRAL/src/rust/api/simple.dart';
-import 'package:ASTRAL/utils/kv_state.dart';
-import 'package:ASTRAL/utils/app_info.dart';
+import 'package:astral/src/rust/api/simple.dart';
+import 'package:astral/utils/kv_state.dart';
+import 'package:astral/utils/app_info.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
@@ -122,6 +122,9 @@ class _HomePageState extends State<HomePage> {
             severurl: Serverip);
         // 模拟连接过程，2秒后连接成功
         Future.delayed(const Duration(seconds: 2), () {
+          // 检查组件是否仍然挂载
+          if (!mounted) return;
+          
           if (isRunning) {
             // 确保用户没有在连接过程中取消
             setState(() {
@@ -129,6 +132,12 @@ class _HomePageState extends State<HomePage> {
               // 连接成功后开始计时
 
               timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+                // 检查组件是否仍然挂载
+                if (!mounted) {
+                  timer.cancel();
+                  return;
+                }
+                
                 final info = await getRunningInfo();
                 // 打印运行信息的详细内容
                 // print("运行信息详情:${info}");
@@ -153,10 +162,13 @@ class _HomePageState extends State<HomePage> {
                     km.virtualIP = ipStr;
                   }
                 }
-                // print("- 用户名: ${info?.myNodeInfo?.hostname}");
-                // print("- 虚拟IPv4: ${info?.myNodeInfo?.virtualIpv4?.address}");
-                // print("- version: ${info?.myNodeInfo?.version}");
-                // print("- 本地IP: ${info.myNodeInfo.}");
+                
+                // 再次检查组件是否仍然挂载
+                if (!mounted) {
+                  timer.cancel();
+                  return;
+                }
+                
                 setState(() {
                   runningTime += const Duration(seconds: 1);
                 });
@@ -203,6 +215,9 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
+    // 再次检查挂载状态，确保在setState前组件仍然挂载
+    if (!mounted) return;
+    
     // 计算速度 (字节/秒 转换为 MB/秒)
     setState(() {
       _uploadBytes = totalUploadBytes;
@@ -226,26 +241,6 @@ class _HomePageState extends State<HomePage> {
       _lastUploadBytes = _uploadBytes;
       _lastDownloadBytes = _downloadBytes;
     });
-  }
-
-  // 根据屏幕宽度计算列数
-  int _getColumnCount(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width < 600) {
-      return 1; // 手机屏幕显示1列
-    } else if (width < 900) {
-      return 2; // 平板或小屏幕显示2列
-    } else {
-      return 3; // 大屏幕显示3列
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$hours:$minutes:$seconds';
   }
 
   @override
@@ -282,31 +277,37 @@ class _HomePageState extends State<HomePage> {
     //我的用户名
     username = Provider.of<KM>(context).username;
     Serverip = Provider.of<KM>(context).serverIP;
-    // 使用 SliverPadding 包裹 SliverList
+
+    // 使用 LayoutBuilder 来处理布局变化，同时保留状态
     return Scaffold(
-      body: CustomScrollView(
-        // 添加这个属性来控制滚动行为
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // 替换原有的 SliverList 为 SliverPadding + SliverGrid
-          SliverPadding(
-            padding: const EdgeInsets.all(16.0),
-            sliver: SliverMasonryGrid.count(
-              crossAxisCount: _getColumnCount(context), // 根据屏幕宽度动态设置列数
-              mainAxisSpacing: 16, // 主轴间距
-              crossAxisSpacing: 16, // 交叉轴间距
-              childCount: _cardBuilders.length,
-              itemBuilder: (context, index) {
-                // 直接从列表中获取构建函数并调用
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 100),
-                  child: _cardBuilders[index](colorScheme),
-                );
-              },
+      body: LayoutBuilder(builder: (context, constraints) {
+        // 根据约束计算列数
+        final columnCount = _getColumnCount(constraints.maxWidth);
+
+        return CustomScrollView(
+          // 添加这个属性来控制滚动行为
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // 替换原有的 SliverList 为 SliverPadding + SliverGrid
+            SliverPadding(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverMasonryGrid.count(
+                crossAxisCount: columnCount, // 使用计算出的列数
+                mainAxisSpacing: 16, // 主轴间距
+                crossAxisSpacing: 16, // 交叉轴间距
+                childCount: _cardBuilders.length,
+                itemBuilder: (context, index) {
+                  // 直接从列表中获取构建函数并调用
+                  return ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 100),
+                    child: _cardBuilders[index](colorScheme),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
       floatingActionButton: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
@@ -349,6 +350,25 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  // 修改为接受宽度参数，而不是使用 MediaQuery
+  int _getColumnCount(double width) {
+    if (width < 600) {
+      return 1; // 手机屏幕显示1列
+    } else if (width < 900) {
+      return 2; // 平板或小屏幕显示2列
+    } else {
+      return 3; // 大屏幕显示3列
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$hours:$minutes:$seconds';
   }
 
 // 根据连接状态获取按钮图标
@@ -920,3 +940,5 @@ Widget _buildVersionItem(
     ],
   );
 }
+
+

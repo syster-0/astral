@@ -280,7 +280,7 @@ pub fn is_easytier_running() -> bool {
 
 // 定义节点连接统计信息结构体
 pub struct KVNodeConnectionStats {
-    pub conn_type: String,
+    pub conn_type: String, // 连接类型
     pub rx_bytes: u64,
     pub tx_bytes: u64,
     pub rx_packets: u64,
@@ -291,6 +291,7 @@ pub struct KVNodeInfo {
     pub hostname: String,
     pub ipv4: String,
     pub latency_ms: f64,
+    pub nat: String, // NAT类型
     pub connections: Vec<KVNodeConnectionStats>,
     pub version: String,
     pub cost: i32,
@@ -328,7 +329,33 @@ pub fn get_network_status() -> KVNetworkStatus {
             let mut node_info = KVNodeInfo {
                 hostname: route.hostname.clone(),
                 ipv4,
-                latency_ms: f64::from(route.path_latency.max(0)) / 1000.0,
+                latency_ms: if let Some(peer) = &pair.peer {
+                    // 类似cli.rs中的get_latency_ms方法
+                    let mut min_latency = u64::MAX;
+                    for conn in &peer.conns {
+                        if let Some(stats) = &conn.stats {
+                            min_latency = min_latency.min(stats.latency_us);
+                        }
+                    }
+                    if min_latency == u64::MAX {
+                        // 如果没有找到有效的连接延迟，则使用路由路径延迟
+                        f64::from(route.path_latency.max(0)) / 1000.0
+                    } else {
+                        // 将微秒转换为毫秒
+                        f64::from(min_latency as u32) / 1000.0
+                    }
+                } else {
+                    // 如果没有peer信息，则使用路由路径延迟
+                    f64::from(route.path_latency.max(0)) / 1000.0
+                },
+                nat: route.stun_info.as_ref().map_or_else(
+                    || "Unknown".to_string(),
+                    |stun| {
+                        // 使用NatType枚举替代直接匹配数字
+                        let nat_type = NatType::try_from(stun.udp_nat_type).unwrap_or(NatType::Unknown);
+                        format!("{:?}", nat_type)
+                    }
+                ),
                 connections: Vec::new(),
                 version: route.version.clone(),
                 cost,

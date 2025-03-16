@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../utils/ping_util.dart';
-import 'package:ASTRAL/utils/kv_state.dart';
+import 'package:astral/utils/kv_state.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -35,37 +35,34 @@ class _SettingsPageState extends State<SettingsPage> {
     // 初始化 ping 状态
     for (var server in _serverList) {
       pingResults[server] = null;
-      isPinging[server] = false;
+      isPinging[server] = true; // 默认所有服务器都开启ping
     }
 
-    // 开始 ping 当前服务器，并设置为持续 ping
-    _startPingServer(_currentServer, forceContinuous: true);
+    // 开始 ping 所有服务器
+    for (var server in _serverList) {
+      _pingServer(server);
+    }
   }
 
   @override
   void dispose() {
     // 停止所有 ping
     for (var server in _serverList) {
-      _stopPingServer(server);
+      isPinging[server] = false;
     }
     super.dispose();
   }
 
-  // 修改开始 ping 方法，添加强制持续 ping 参数
-  void _startPingServer(String server, {bool forceContinuous = false}) {
+  // 简化 ping 方法，移除强制持续 ping 参数
+  void _startPingServer(String server) {
     if (isPinging[server] == true) return;
 
     isPinging[server] = true;
-    if (forceContinuous) {
-      isPinging[server] = true; // 设置为持续 ping 状态
-    }
     _pingServer(server);
   }
 
-  // 修改停止 ping 方法
+  // 修改停止 ping 方法 - 实际上不再需要，但保留以防将来需要
   void _stopPingServer(String server) {
-    // 如果是当前服务器，不允许停止
-    if (server == _currentServer) return;
     isPinging[server] = false;
   }
 
@@ -119,9 +116,10 @@ class _SettingsPageState extends State<SettingsPage> {
         _serverList.add(result);
         _appConfig.setServerList(_serverList);
 
-        // 初始化新服务器的 ping 状态
+        // 初始化新服务器的 ping 状态并立即开始 ping
         pingResults[result] = null;
-        isPinging[result] = false;
+        isPinging[result] = true;
+        _pingServer(result);
       });
     }
   }
@@ -207,21 +205,18 @@ class _SettingsPageState extends State<SettingsPage> {
   // 添加构建 ping 显示组件的方法
   Widget _buildPingWidget(String server) {
     final pingResult = pingResults[server];
-    if (server == _currentServer || isPinging[server] == true) {
-      if (pingResult == null) {
-        return const Text('测试中...', style: TextStyle(color: Colors.grey));
-      } else {
-        return Text(
-          '${pingResult}ms',
-          style: TextStyle(
-            color: pingResult < 100
-                ? Colors.green
-                : (pingResult < 300 ? Colors.orange : Colors.red),
-          ),
-        );
-      }
+    if (pingResult == null) {
+      return const Text('测试中...', style: TextStyle(color: Colors.grey));
+    } else {
+      return Text(
+        '${pingResult}ms',
+        style: TextStyle(
+          color: pingResult < 100
+              ? Colors.green
+              : (pingResult < 300 ? Colors.orange : Colors.red),
+        ),
+      );
     }
-    return const Text('点击测试', style: TextStyle(color: Colors.grey));
   }
 
   @override
@@ -248,22 +243,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 leading: const Icon(Icons.list),
                 title: const Text('服务器列表'),
                 onExpansionChanged: (expanded) {
-                  // 展开/折叠时处理其他服务器的 ping 状态
-                  setState(() {
-                    for (var server in _serverList) {
-                      if (server != _currentServer) {
-                        if (expanded) {
-                          // 如果之前是手动开启的，则恢复 ping
-                          if (isPinging[server] == true) {
-                            _startPingServer(server);
-                          }
-                        } else {
-                          // 折叠时暂停所有非当前服务器的 ping
-                          _stopPingServer(server);
-                        }
-                      }
-                    }
-                  });
+                  // 不再需要处理展开折叠时的 ping 状态，所有服务器都持续 ping
                 },
                 children: [
                   // 在服务器列表前添加当前服务器的 ping 状态显示
@@ -277,22 +257,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
                       // 构建延迟显示组件
                       Widget pingWidget;
-                      if (isPinging[server] == true) {
-                        if (pingResult == null) {
-                          pingWidget = const Text('测试中...',
-                              style: TextStyle(color: Colors.grey));
-                        } else {
-                          pingWidget = Text('${pingResult}ms',
-                              style: TextStyle(
-                                  color: pingResult < 100
-                                      ? Colors.green
-                                      : (pingResult < 300
-                                          ? Colors.orange
-                                          : Colors.red)));
-                        }
-                      } else {
-                        pingWidget = const Text('点击测试',
+                      if (pingResult == null) {
+                        pingWidget = const Text('测试中...',
                             style: TextStyle(color: Colors.grey));
+                      } else {
+                        pingWidget = Text('${pingResult}ms',
+                            style: TextStyle(
+                                color: pingResult < 100
+                                    ? Colors.green
+                                    : (pingResult < 300
+                                        ? Colors.orange
+                                        : Colors.red)));
                       }
 
                       return ListTile(
@@ -308,26 +283,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // 添加 ping 按钮
-                            IconButton(
-                              icon: Icon(
-                                isPinging[server] == true
-                                    ? Icons.pause
-                                    : Icons.play_arrow,
-                                color: isPinging[server] == true
-                                    ? Colors.blue
-                                    : null,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  if (isPinging[server] == true) {
-                                    _stopPingServer(server);
-                                  } else {
-                                    _startPingServer(server);
-                                  }
-                                });
-                              },
-                            ),
+                            // 移除 ping 按钮，只保留编辑和删除按钮
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () => _showEditServerDialog(index),
@@ -343,8 +299,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             _currentServer = server;
                             Provider.of<KM>(context, listen: false).serverIP =
                                 server;
-                            // 开始 ping 新选择的服务器
-                            _startPingServer(server);
+                            // 不再需要特别开始 ping 新选择的服务器，因为所有服务器都在 ping
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('已切换到服务器: $server')),
@@ -364,7 +319,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // 添加应用设置卡片
         Card(
           child: Column(
@@ -387,7 +342,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
         Card(
           child: Column(

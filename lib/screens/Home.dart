@@ -33,6 +33,8 @@ class _MainScreenState extends State<MainScreen>
   late List<Widget> _pages;
   late List<NavItem> _navItems;
   late AnimationController _titleAnimationController;
+  // 添加一个key用于IndexedStack
+  final GlobalKey _indexedStackKey = GlobalKey();
 
   @override
   void initState() {
@@ -70,8 +72,16 @@ class _MainScreenState extends State<MainScreen>
       currentThemeMode: widget.currentThemeMode,
     );
 
-    // 预先创建所有页面
-    _pages = _navItems.map((item) => item.pageBuilder()).toList();
+    // 预先创建所有页面，并包装在AutomaticKeepAlive中
+    _pages = _navItems.map((item) {
+      final page = item.pageBuilder();
+      // 如果页面已经实现了AutomaticKeepAliveClientMixin，则不需要包装
+      if (page is AutomaticKeepAliveClientMixin) {
+        return page;
+      }
+      // 否则包装在PageKeepAlive中
+      return PageKeepAlive(child: page);
+    }).toList();
   }
 
   // 将侧边栏构建方法整合到MainScreen类中
@@ -100,8 +110,9 @@ class _MainScreenState extends State<MainScreen>
     // 设置一个阈值，当宽度大于此值时使用侧边栏
     final bool useSidebar = screenWidth > 600;
 
-    // 创建一个共享的 IndexedStack 实例
+    // 创建一个共享的 IndexedStack 实例，使用相同的key
     final indexedStack = IndexedStack(
+      key: _indexedStackKey,
       index: widget.currentIndex,
       children: _pages,
     );
@@ -205,5 +216,26 @@ class _MainScreenState extends State<MainScreen>
               ),
             ),
     );
+  }
+}
+
+// 添加一个包装类来保持页面状态
+class PageKeepAlive extends StatefulWidget {
+  final Widget child;
+
+  const PageKeepAlive({Key? key, required this.child}) : super(key: key);
+
+  @override
+  State<PageKeepAlive> createState() => _PageKeepAliveState();
+}
+
+class _PageKeepAliveState extends State<PageKeepAlive> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

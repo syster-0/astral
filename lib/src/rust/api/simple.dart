@@ -123,6 +123,7 @@ class KVNodeInfo {
   final String hostname;
   final String ipv4;
   final double latencyMs;
+  final String nat;
   final List<KVNodeConnectionStats> connections;
   final String version;
   final int cost;
@@ -131,6 +132,7 @@ class KVNodeInfo {
     required this.hostname,
     required this.ipv4,
     required this.latencyMs,
+    required this.nat,
     required this.connections,
     required this.version,
     required this.cost,
@@ -141,6 +143,7 @@ class KVNodeInfo {
       hostname.hashCode ^
       ipv4.hashCode ^
       latencyMs.hashCode ^
+      nat.hashCode ^
       connections.hashCode ^
       version.hashCode ^
       cost.hashCode;
@@ -153,6 +156,7 @@ class KVNodeInfo {
           hostname == other.hostname &&
           ipv4 == other.ipv4 &&
           latencyMs == other.latencyMs &&
+          nat == other.nat &&
           connections == other.connections &&
           version == other.version &&
           cost == other.cost;

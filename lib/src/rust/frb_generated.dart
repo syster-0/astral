@@ -558,15 +558,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   KVNodeInfo dco_decode_kv_node_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return KVNodeInfo(
       hostname: dco_decode_String(arr[0]),
       ipv4: dco_decode_String(arr[1]),
       latencyMs: dco_decode_f_64(arr[2]),
-      connections: dco_decode_list_kv_node_connection_stats(arr[3]),
-      version: dco_decode_String(arr[4]),
-      cost: dco_decode_i_32(arr[5]),
+      nat: dco_decode_String(arr[3]),
+      connections: dco_decode_list_kv_node_connection_stats(arr[4]),
+      version: dco_decode_String(arr[5]),
+      cost: dco_decode_i_32(arr[6]),
     );
   }
 
@@ -795,6 +796,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_hostname = sse_decode_String(deserializer);
     var var_ipv4 = sse_decode_String(deserializer);
     var var_latencyMs = sse_decode_f_64(deserializer);
+    var var_nat = sse_decode_String(deserializer);
     var var_connections =
         sse_decode_list_kv_node_connection_stats(deserializer);
     var var_version = sse_decode_String(deserializer);
@@ -803,6 +805,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         hostname: var_hostname,
         ipv4: var_ipv4,
         latencyMs: var_latencyMs,
+        nat: var_nat,
         connections: var_connections,
         version: var_version,
         cost: var_cost);
@@ -1050,6 +1053,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.hostname, serializer);
     sse_encode_String(self.ipv4, serializer);
     sse_encode_f_64(self.latencyMs, serializer);
+    sse_encode_String(self.nat, serializer);
     sse_encode_list_kv_node_connection_stats(self.connections, serializer);
     sse_encode_String(self.version, serializer);
     sse_encode_i_32(self.cost, serializer);

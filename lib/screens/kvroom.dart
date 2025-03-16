@@ -1,13 +1,10 @@
 // 导入必要的包
-import 'dart:convert';
 import 'package:flutter/services.dart'; // 添加这一行导入剪贴板服务
 
-import 'package:ASTRAL/src/rust/api/simple.dart';
-import 'package:ASTRAL/utils/kv_state.dart';
+import 'package:astral/utils/kv_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/card.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 /// 玩家信息模型类
 class PlayerInfo {
@@ -48,8 +45,7 @@ class RoomPage extends StatefulWidget {
 class _RoomPageState extends State<RoomPage> {
   List<PlayerInfo> players = [];
   bool isLoading = true;
-  // 添加布局类型状态变量
-  bool isGridLayout = true; // 默认使用网格布局
+  // 移除布局类型状态变量
 
   @override
   void initState() {
@@ -64,18 +60,7 @@ class _RoomPageState extends State<RoomPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('房间成员'),
-        // 添加布局切换按钮
-        actions: [
-          IconButton(
-            icon: Icon(isGridLayout ? Icons.view_list : Icons.grid_view),
-            tooltip: isGridLayout ? '切换到列表视图' : '切换到网格视图',
-            onPressed: () {
-              setState(() {
-                isGridLayout = !isGridLayout;
-              });
-            },
-          ),
-        ],
+        // 移除布局切换按钮
       ),
       body: Consumer<KM>(
         builder: (context, km, child) {
@@ -138,29 +123,18 @@ class _RoomPageState extends State<RoomPage> {
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.all(16.0),
-                  sliver: isGridLayout
-                      ? SliverMasonryGrid.count(
-                          crossAxisCount: _getColumnCount(context),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childCount: players.length,
-                          itemBuilder: (context, index) {
-                            return _buildPlayerCard(
-                                players[index], colorScheme);
-                          },
-                        )
-                      : SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: _buildPlayerListItem(
-                                    players[index], colorScheme),
-                              );
-                            },
-                            childCount: players.length,
-                          ),
-                        ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child:
+                              _buildPlayerListItem(players[index], colorScheme),
+                        );
+                      },
+                      childCount: players.length,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -201,8 +175,8 @@ class _RoomPageState extends State<RoomPage> {
         // 如果有连接信息，计算网络统计数据
         if (node.connections.isNotEmpty) {
           for (var conn in node.connections) {
-            uploadSpeed += (conn.txBytes as BigInt).toInt() ~/ 1024; // 转换为KB
-            downloadSpeed += (conn.rxBytes as BigInt).toInt() ~/ 1024; // 转换为KB
+            uploadSpeed += conn.txBytes.toInt() ~/ 1024; // 转换为KB
+            downloadSpeed += conn.rxBytes.toInt() ~/ 1024; // 转换为KB
             sentPackets += conn.txPackets.toInt();
             receivedPackets += conn.rxPackets.toInt();
           }
@@ -221,7 +195,7 @@ class _RoomPageState extends State<RoomPage> {
           PlayerInfo(
             name: node.hostname,
             ip: node.ipv4, // 临时IP，实际应从节点信息中获取
-            latency: (node.latencyMs * 1000).toInt(), // 转换为毫秒
+            latency: (node.latencyMs).toInt(), // 转换为毫秒
             connectionType: connectionType,
             uploadSpeed: uploadSpeed,
             downloadSpeed: downloadSpeed,
@@ -419,127 +393,359 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-// 构建列表项视图
+  // 构建列表项视图
   Widget _buildPlayerListItem(PlayerInfo player, ColorScheme colorScheme) {
     // 根据延迟值确定颜色
     Color latencyColor = _getLatencyColor(player.latency);
     // 根据连接类型选择图标
     IconData connectionIcon = _getConnectionIcon(player.connectionType);
 
+    // 检测是否为小屏幕设备
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
     return FloatingCard(
       colorScheme: colorScheme,
       maxWidth: double.infinity,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // 左侧玩家信息
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 玩家名称和连接类型
-                Row(
-                  children: [
-                    Icon(Icons.person, color: colorScheme.primary, size: 22),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        player.name,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // IP地址
-                _buildInfoRow(
-                  Icons.lan,
-                  'IP地址',
-                  player.ip,
-                  colorScheme,
-                  showCopyButton: true,
-                ),
-                const SizedBox(height: 8),
-
-                // ET版本
-                _buildInfoRow(
-                  Icons.memory,
-                  'ET版本',
-                  player.etVersion,
-                  colorScheme,
-                ),
-              ],
-            ),
-          ),
-
-          // 右侧网络状态信息
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 连接类型标签
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getConnectionTypeColor(
-                        player.connectionType, colorScheme),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        connectionIcon,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        player.connectionType,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // 延迟信息
-                _buildInfoRow(
-                  Icons.speed,
-                  '延迟',
-                  '${player.latency} ms',
-                  colorScheme,
-                  valueColor: latencyColor,
-                ),
-                const SizedBox(height: 8),
-
-                // 丢包率信息
-                _buildInfoRow(
-                  Icons.error_outline,
-                  '丢包率',
-                  '${player.packetLossRate}%',
-                  colorScheme,
-                  valueColor: _getPacketLossColor(player.packetLossRate),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      child: isSmallScreen
+          ? _buildMobilePlayerListItem(
+              player, colorScheme, latencyColor, connectionIcon)
+          : _buildDesktopPlayerListItem(
+              player, colorScheme, latencyColor, connectionIcon),
     );
   }
 
-  // 构建信息行
+  // 为移动设备优化的列表项布局
+  Widget _buildMobilePlayerListItem(PlayerInfo player, ColorScheme colorScheme,
+      Color latencyColor, IconData connectionIcon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 玩家名称和连接类型
+        Row(
+          children: [
+            Icon(Icons.person, color: colorScheme.primary, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                player.name,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    _getConnectionTypeColor(player.connectionType, colorScheme),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    connectionIcon,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    player.connectionType,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // IP地址
+        _buildInfoRow(
+          Icons.lan,
+          'IP地址',
+          player.ip,
+          colorScheme,
+          showCopyButton: true,
+        ),
+        const SizedBox(height: 8),
+
+        // 延迟信息
+        _buildInfoRow(
+          Icons.speed,
+          '延迟',
+          '${player.latency} ms',
+          colorScheme,
+          valueColor: latencyColor,
+        ),
+        const SizedBox(height: 8),
+
+        // ET版本
+        _buildInfoRow(
+          Icons.memory,
+          'ET版本',
+          player.etVersion,
+          colorScheme,
+        ),
+        const SizedBox(height: 8),
+
+        // 丢包率信息
+        _buildInfoRow(
+          Icons.error_outline,
+          '丢包率',
+          '${player.packetLossRate}%',
+          colorScheme,
+          valueColor: _getPacketLossColor(player.packetLossRate),
+        ),
+
+        // 网络数据部分
+        const Divider(height: 16),
+
+        // 网络数据信息 - 移动设备上使用紧凑布局
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '上传',
+                      '${player.uploadSpeed} KB/s',
+                      Icons.upload,
+                      colorScheme.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '下载',
+                      '${player.downloadSpeed} KB/s',
+                      Icons.download,
+                      colorScheme.secondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '发送包',
+                      '${player.sentPackets}',
+                      Icons.send,
+                      colorScheme.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '接收包',
+                      '${player.receivedPackets}',
+                      Icons.call_received,
+                      colorScheme.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 为桌面设备优化的列表项布局
+  Widget _buildDesktopPlayerListItem(PlayerInfo player, ColorScheme colorScheme,
+      Color latencyColor, IconData connectionIcon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 左侧玩家基本信息
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 玩家名称和连接类型
+              Row(
+                children: [
+                  Icon(Icons.person, color: colorScheme.primary, size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      player.name,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getConnectionTypeColor(
+                          player.connectionType, colorScheme),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          connectionIcon,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          player.connectionType,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // IP地址
+              _buildInfoRow(
+                Icons.lan,
+                'IP地址',
+                player.ip,
+                colorScheme,
+                showCopyButton: true,
+              ),
+              const SizedBox(height: 8),
+
+              // ET版本
+              _buildInfoRow(
+                Icons.memory,
+                'ET版本',
+                player.etVersion,
+                colorScheme,
+              ),
+            ],
+          ),
+        ),
+
+        // 中间网络状态信息
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 延迟信息
+              _buildInfoRow(
+                Icons.speed,
+                '延迟',
+                '${player.latency} ms',
+                colorScheme,
+                valueColor: latencyColor,
+              ),
+              const SizedBox(height: 8),
+
+              // 丢包率信息
+              _buildInfoRow(
+                Icons.error_outline,
+                '丢包率',
+                '${player.packetLossRate}%',
+                colorScheme,
+                valueColor: _getPacketLossColor(player.packetLossRate),
+              ),
+              const SizedBox(height: 8),
+
+              // 上传下载速度
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '上传',
+                      '${player.uploadSpeed} KB/s',
+                      Icons.upload,
+                      colorScheme.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNetworkDataItem(
+                      '下载',
+                      '${player.downloadSpeed} KB/s',
+                      Icons.download,
+                      colorScheme.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // 右侧包数据信息
+        Expanded(
+          flex: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildNetworkDataItem(
+                '发送包',
+                '${player.sentPackets}',
+                Icons.send,
+                colorScheme.primary,
+              ),
+              const SizedBox(height: 8),
+              _buildNetworkDataItem(
+                '接收包',
+                '${player.receivedPackets}',
+                Icons.call_received,
+                colorScheme.secondary,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 更紧凑的网络数据项
+  Widget _buildNetworkDataItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 4),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   // 构建信息行
   Widget _buildInfoRow(
     IconData icon,

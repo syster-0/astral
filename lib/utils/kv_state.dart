@@ -1,4 +1,4 @@
-import 'package:ASTRAL/src/rust/api/simple.dart';
+import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 
