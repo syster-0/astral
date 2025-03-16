@@ -27,10 +27,10 @@ class FloatingCard extends StatefulWidget {
     this.hoverElevation = 8,
     this.maxWidth,
     this.height,
-    this.enable3DEffect = false, // 默认启用3D效果
+    this.enable3DEffect = true, // 默认启用3D效果
     this.maxRotationDegree = 10, // 默认最大旋转角度为10度
-    this.enableTranslateEffect = false, // 默认启用偏移效果
-    this.maxTranslateDistance = 0.1, // 默认最大偏移距离为5
+    this.enableTranslateEffect = true, // 默认启用偏移效果
+    this.maxTranslateDistance = 5, // 默认最大偏移距离为5
     this.zTranslation = 10, // 默认Z轴偏移距离为20
     this.riseOnHover = true, // 默认悬浮时升起
   });

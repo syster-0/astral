@@ -87,6 +87,11 @@ class _HomePageState extends State<HomePage> {
   late final TextEditingController _roomPasswordController;
   late final TextEditingController _usernameController;
   late final TextEditingController _virtualIPController;
+  // 添加FocusNode来监听焦点变化
+  late final FocusNode _virtualIPFocusNode;
+  late final FocusNode _usernameControllerFocusNode;
+  late final FocusNode _roomNameControllerFocusNode;
+  late final FocusNode _roomPasswordControllerFocusNode;
 
   @override
   void initState() {
@@ -97,6 +102,20 @@ class _HomePageState extends State<HomePage> {
     _usernameController = TextEditingController(text: username);
     _virtualIPController = TextEditingController(text: publicIP); // 添加缺失的初始化
 
+    // 初始化FocusNode并添加监听器
+    _virtualIPFocusNode = FocusNode();
+    _virtualIPFocusNode.addListener(_onVirtualIPFocusChange);
+
+    // 初始化用户名、房间名和密码的FocusNode
+    _usernameControllerFocusNode = FocusNode();
+    _usernameControllerFocusNode.addListener(_onUsernameFocusChange);
+
+    _roomNameControllerFocusNode = FocusNode();
+    _roomNameControllerFocusNode.addListener(_onRoomNameFocusChange);
+
+    _roomPasswordControllerFocusNode = FocusNode();
+    _roomPasswordControllerFocusNode.addListener(_onRoomPasswordFocusChange);
+
     // 修改卡片构建器列表，添加版本信息卡片
     _cardBuilders = [
       _buildNetworkStatusCard,
@@ -104,6 +123,58 @@ class _HomePageState extends State<HomePage> {
       _buildRoomInfoCard,
       _buildVersionInfoCard,
     ];
+  }
+
+  // 添加焦点变化监听方法
+  void _onVirtualIPFocusChange() {
+    if (!_virtualIPFocusNode.hasFocus && !_isAutoIP) {
+      // 当失去焦点且不是自动IP模式时更新值
+      Provider.of<KM>(context, listen: false).virtualIP =
+          _virtualIPController.text;
+    }
+  }
+
+  // 添加用户名焦点变化监听方法
+  void _onUsernameFocusChange() {
+    if (!_usernameControllerFocusNode.hasFocus) {
+      Provider.of<KM>(context, listen: false).username =
+          _usernameController.text;
+    }
+  }
+
+  // 添加房间名焦点变化监听方法
+  void _onRoomNameFocusChange() {
+    if (!_roomNameControllerFocusNode.hasFocus) {
+      Provider.of<KM>(context, listen: false).roomName =
+          _roomNameController.text;
+    }
+  }
+
+  // 添加房间密码焦点变化监听方法
+  void _onRoomPasswordFocusChange() {
+    if (!_roomPasswordControllerFocusNode.hasFocus) {
+      Provider.of<KM>(context, listen: false).roomPassword =
+          _roomPasswordController.text;
+    }
+  }
+
+  @override
+  void dispose() {
+    // 释放资源
+    _virtualIPFocusNode.removeListener(_onVirtualIPFocusChange);
+    _virtualIPFocusNode.dispose();
+
+    // 释放新增的FocusNode资源
+    _usernameControllerFocusNode.removeListener(_onUsernameFocusChange);
+    _usernameControllerFocusNode.dispose();
+
+    _roomNameControllerFocusNode.removeListener(_onRoomNameFocusChange);
+    _roomNameControllerFocusNode.dispose();
+
+    _roomPasswordControllerFocusNode.removeListener(_onRoomPasswordFocusChange);
+    _roomPasswordControllerFocusNode.dispose();
+
+    super.dispose();
   }
 
   void toggleRunning() {
@@ -743,6 +814,7 @@ class _HomePageState extends State<HomePage> {
           // 用户名输入框
           TextField(
             controller: _usernameController,
+            focusNode: _usernameControllerFocusNode, // 添加焦点节点
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
               // 改为完成编辑时更新
@@ -764,6 +836,7 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: TextField(
                   controller: _virtualIPController,
+                  focusNode: _virtualIPFocusNode, // 添加焦点节点
                   enabled: !_isAutoIP &&
                       _connectionState != ConnectionState.connected,
                   onChanged: (value) {
@@ -869,6 +942,7 @@ class _HomePageState extends State<HomePage> {
           // 房间名称输入框
           TextField(
             controller: _roomNameController,
+            focusNode: _roomNameControllerFocusNode, // 添加焦点节点
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
               // 改为完成编辑时更新
@@ -887,6 +961,7 @@ class _HomePageState extends State<HomePage> {
           // 房间密码输入框
           TextField(
             controller: _roomPasswordController,
+            focusNode: _roomPasswordControllerFocusNode, // 添加焦点节点
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
               // 改为完成编辑时更新
