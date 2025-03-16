@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:system_tray/system_tray.dart';
 import 'dart:io';
-import 'screens/主屏幕.dart';
-import 'config/主题配置.dart';
+import 'screens/Home.dart';
+import 'config/themeconfiguration.dart';
 import 'config/app_config.dart';
 
 // 定义应用程序的主要StatefulWidget

@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/services.dart'; // 添加这一行导入剪贴板服务
 
 import 'package:ASTRAL/src/rust/api/simple.dart';
-import 'package:ASTRAL/utils/%E7%8A%B6%E6%80%81.dart';
+import 'package:ASTRAL/utils/kv_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/卡片.dart';
+import '../widgets/card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 /// 玩家信息模型类

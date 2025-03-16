@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/首页.dart';
-import '../screens/设置.dart';
-import '../screens/关于.dart';
-import '../screens/房间.dart';
+import '../screens/front.dart';
+import '../screens/settings.dart';
+import '../screens/about.dart';
+import '../screens/kvroom.dart';
 
 class NavItem {
   final String label;

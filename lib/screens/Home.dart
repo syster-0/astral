@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import '../widgets/窗口控制按钮.dart';
-import '../widgets/主题选择器.dart';
-import '../utils/主题工具.dart';
-import '../config/导航配置.dart';
+import '../widgets/window_control_buttons.dart';
+import '../widgets/theme_selector.dart';
+import '../utils/theme_tools.dart';
+import '../config/navigationconfiguration.dart';
 
 class MainScreen extends StatefulWidget {
   final Function toggleThemeMode;

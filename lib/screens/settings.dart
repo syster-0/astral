@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../utils/ping_util.dart';
-import 'package:ASTRAL/utils/状态.dart';
+import 'package:ASTRAL/utils/kv_state.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {

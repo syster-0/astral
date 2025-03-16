@@ -2,13 +2,13 @@
 import 'dart:convert';
 
 import 'package:ASTRAL/src/rust/api/simple.dart';
-import 'package:ASTRAL/utils/%E7%8A%B6%E6%80%81.dart';
+import 'package:ASTRAL/utils/kv_state.dart';
 import 'package:ASTRAL/utils/app_info.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
-import '../widgets/卡片.dart';
+import '../widgets/card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../utils/runin.dart';
 
