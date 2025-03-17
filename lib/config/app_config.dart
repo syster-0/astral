@@ -28,8 +28,13 @@ class AppConfig {
           'seedColor': Colors.blue.value,
         },
         'server': {
-          'list': ['public.easytier.cn:11010'],
-          'current': 'public.easytier.cn:11010',
+          'list': [
+            {
+              'url': 'public.easytier.cn:11010',
+              'name': '公共服务器',
+              'selected': true,
+            }
+          ],
         },
         'room': {
           'name': 'kevin',
@@ -79,24 +84,24 @@ class AppConfig {
   }
 
   // 服务器列表设置
-  List<String> get serverList {
-    final List? value = _configManager.get<List>('server.list');
-    return value?.cast<String>() ?? ['public.easytier.cn:11010'];
+  List<Map<String, dynamic>> get serverList {
+    final dynamic value = _configManager.get('server.list');
+    if (value is List) {
+      return List<Map<String, dynamic>>.from(
+        value.map((item) => Map<String, dynamic>.from(item as Map)),
+      );
+    }
+    return [
+      {
+        'url': 'public.easytier.cn:11010',
+        'name': '公共服务器',
+        'selected': true,
+      }
+    ];
   }
 
-  Future<void> setServerList(List<String> servers) async {
+  Future<void> setServerList(List<Map<String, dynamic>> servers) async {
     _configManager.set('server.list', servers);
-    await _configManager.save();
-  }
-
-  // 当前选中的服务器设置
-  String get currentServer {
-    return _configManager.get<String>('server.current') ??
-        'public.easytier.cn:11010';
-  }
-
-  Future<void> setCurrentServer(String server) async {
-    _configManager.set('server.current', server);
     await _configManager.save();
   }
 
@@ -159,7 +164,7 @@ class AppConfig {
     _configManager.set('network.dynamicIP', enabled);
     await _configManager.save();
   }
-  
+
   // 全局ping开关设置
   bool get enablePing {
     return _configManager.get<bool>('system.enablePing') ?? true;

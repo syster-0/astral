@@ -20,8 +20,7 @@ final updateChecker = UpdateChecker(
 );
 
 class _SettingsPageState extends State<SettingsPage> {
-  late List<String> _serverList;
-  late String _currentServer;
+  late List<Map<String, dynamic>> _serverList;
   final _appConfig = AppConfig();
   bool _closeToTray = false; // 添加关闭进入托盘变量
   bool _pingEnabled = true; // 添加全局ping开关
@@ -34,19 +33,28 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _serverList = _appConfig.serverList;
-    _currentServer = _appConfig.currentServer;
-    serverIP = _appConfig.currentServer;
+    serverIP = _getSelectedServersString();
     _closeToTray = _appConfig.closeToTray; // 初始化托盘设置
     // 初始化全局ping开关
     _pingEnabled = _appConfig.enablePing;
 
     // 初始化 ping 状态
     for (var server in _serverList) {
-      pingResults[server] = null;
+      pingResults[server['url']] = null;
     }
 
     // 开始 ping 所有服务器
     _startPingAllServers();
+  }
+
+  // 获取选中的服务器字符串
+  String _getSelectedServersString() {
+    final selected =
+        _serverList.where((server) => server['selected'] == true).toList();
+    if (selected.isEmpty && _serverList.isNotEmpty) {
+      return _serverList.first['url'];
+    }
+    return selected.map((server) => server['url']).join(', ');
   }
 
   // 添加一个计时器变量来控制 ping 操作
@@ -66,7 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
       if (_pingEnabled) {
         for (var server in _serverList) {
-          _pingServerOnce(server);
+          _pingServerOnce(server['url']);
         }
       }
     });
@@ -99,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (!_pingEnabled) {
         // 如果关闭ping，清空所有结果
         for (var server in _serverList) {
-          pingResults[server] = null;
+          pingResults[server['url']] = null;
         }
       }
     });
@@ -107,17 +115,32 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // 添加服务器对话框
   Future<void> _showAddServerDialog() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+    final urlController = TextEditingController();
+    final nameController = TextEditingController();
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('添加服务器'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: '服务器地址',
-            hintText: 'example.com:port',
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '服务器名称',
+                hintText: '自定义名称',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: '服务器地址',
+                hintText: 'example.com:port',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -125,37 +148,67 @@ class _SettingsPageState extends State<SettingsPage> {
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () {
+              if (urlController.text.isNotEmpty) {
+                Navigator.pop(context, {
+                  'url': urlController.text,
+                  'name': nameController.text.isNotEmpty
+                      ? nameController.text
+                      : urlController.text,
+                });
+              }
+            },
             child: const Text('添加'),
           ),
         ],
       ),
     );
 
-    if (result != null && result.isNotEmpty) {
+    if (result != null) {
       setState(() {
-        _serverList.add(result);
+        // 添加新服务器，默认不选中
+        _serverList.add({
+          'url': result['url'],
+          'name': result['name'],
+          'selected': false,
+        });
         _appConfig.setServerList(_serverList);
 
         // 初始化新服务器的 ping 状态
-        pingResults[result] = null;
+        pingResults[result['url']] = null;
       });
     }
   }
 
   // 编辑服务器对话框
   Future<void> _showEditServerDialog(int index) async {
-    final controller = TextEditingController(text: _serverList[index]);
-    final result = await showDialog<String>(
+    final server = _serverList[index];
+    final urlController = TextEditingController(text: server['url']);
+    final nameController = TextEditingController(text: server['name']);
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('编辑服务器'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: '服务器地址',
-            hintText: 'example.com:port',
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '服务器名称',
+                hintText: '自定义名称',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: '服务器地址',
+                hintText: 'example.com:port',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -163,17 +216,42 @@ class _SettingsPageState extends State<SettingsPage> {
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () {
+              if (urlController.text.isNotEmpty) {
+                Navigator.pop(context, {
+                  'url': urlController.text,
+                  'name': nameController.text.isNotEmpty
+                      ? nameController.text
+                      : urlController.text,
+                });
+              }
+            },
             child: const Text('保存'),
           ),
         ],
       ),
     );
 
-    if (result != null && result.isNotEmpty) {
+    if (result != null) {
+      final oldUrl = server['url'];
       setState(() {
-        _serverList[index] = result;
+        _serverList[index] = {
+          'url': result['url'],
+          'name': result['name'],
+          'selected': server['selected'],
+        };
         _appConfig.setServerList(_serverList);
+
+        // 更新 ping 状态
+        if (oldUrl != result['url']) {
+          pingResults[result['url']] = pingResults[oldUrl];
+          pingResults.remove(oldUrl);
+        }
+
+        // 更新当前选中的服务器显示
+        serverIP = _getSelectedServersString();
+        // 使用新的 serverList 方法替代直接设置 serverIP
+        Provider.of<KM>(context, listen: false).serverList = _serverList;
       });
     }
   }
@@ -206,19 +284,46 @@ class _SettingsPageState extends State<SettingsPage> {
         _appConfig.setServerList(_serverList);
 
         // 移除 ping 状态
-        pingResults.remove(server);
+        pingResults.remove(server['url']);
 
-        if (_currentServer == server && _serverList.isNotEmpty) {
-          _currentServer = _serverList[0];
-          _appConfig.setCurrentServer(_currentServer);
+        // 确保至少有一个服务器被选中
+        if (_serverList.isNotEmpty &&
+            !_serverList.any((server) => server['selected'] == true)) {
+          _serverList.first['selected'] = true;
         }
+
+        // 更新当前选中的服务器显示
+        serverIP = _getSelectedServersString();
+        // 使用新的 serverList 方法替代直接设置 serverIP
+        Provider.of<KM>(context, listen: false).serverList = _serverList;
       });
     }
   }
 
+  // 切换服务器选中状态
+  void _toggleServerSelection(int index) {
+    setState(() {
+      _serverList[index]['selected'] =
+          !(_serverList[index]['selected'] ?? false);
+      _appConfig.setServerList(_serverList);
+
+      // 更新当前选中的服务器显示
+      serverIP = _getSelectedServersString();
+      // 使用新的 serverList 方法替代直接设置 serverIP
+      Provider.of<KM>(context, listen: false).serverList = _serverList;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(_serverList[index]['selected']
+                ? '已选中服务器: ${_serverList[index]['name']}'
+                : '已取消选中: ${_serverList[index]['name']}')),
+      );
+    });
+  }
+
   // 添加构建 ping 显示组件的方法
-  Widget _buildPingWidget(String server) {
-    final pingResult = pingResults[server];
+  Widget _buildPingWidget(String url) {
+    final pingResult = pingResults[url];
     if (!_pingEnabled) {
       return const Text('Ping已关闭', style: TextStyle(color: Colors.grey));
     } else if (pingResult == null) {
@@ -238,7 +343,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     // updateChecker.checkForUpdates(context);
-    serverIP = Provider.of<KM>(context).virtualIP;
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
@@ -247,37 +351,36 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.dns),
-                title: Row(
-                  children: [
-                    const Text('当前服务器'),
-                    const SizedBox(width: 8),
-                    _buildPingWidget(_currentServer),
-                  ],
-                ),
-                subtitle: Text(_currentServer),
+                title: const Text('已选中的服务器'),
+                subtitle: Text(serverIP),
               ),
               ExpansionTile(
                 leading: const Icon(Icons.list),
                 title: const Text('服务器列表'),
                 children: [
-                  // 在服务器列表前添加当前服务器的 ping 状态显示
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _serverList.length,
                     itemBuilder: (context, index) {
                       final server = _serverList[index];
+                      final isSelected = server['selected'] == true;
 
                       return ListTile(
-                        leading: const Icon(Icons.computer),
+                        leading: Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
+                          color: isSelected ? Colors.green : null,
+                        ),
                         title: Row(
                           children: [
-                            Text('服务器 ${index + 1}'),
+                            Text(server['name']),
                             const SizedBox(width: 8),
-                            _buildPingWidget(server),
+                            _buildPingWidget(server['url']),
                           ],
                         ),
-                        subtitle: Text(server),
+                        subtitle: Text(server['url']),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -291,17 +394,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ],
                         ),
-                        onTap: () {
-                          setState(() {
-                            _currentServer = server;
-                            Provider.of<KM>(context, listen: false).serverIP =
-                                server;
-                            _appConfig.setCurrentServer(_currentServer);
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('已切换到服务器: $server')),
-                          );
-                        },
+                        onTap: () => _toggleServerSelection(index),
                       );
                     },
                   ),

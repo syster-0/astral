@@ -47,11 +47,50 @@ class KM extends ChangeNotifier {
     notifyListeners();
   }
 
-  //当前服务器IP
-  String get serverIP => _config.currentServer;
-  set serverIP(String value) {
-    _config.setCurrentServer(value);
+//服务器列表
+  List<Map<String, dynamic>> get serverList => _config.serverList;
+  set serverList(List<Map<String, dynamic>> value) {
+    List<Map<String, dynamic>> convertedList = value.map((item) {
+      return Map<String, dynamic>.from(item);
+    }).toList();
+    _config.setServerList(convertedList);
     notifyListeners();
+  }
+
+  //获取选中的服务器
+  //获取选中的服务器
+  List<String> get serverIP {
+    try {
+      final selected =
+          serverList.where((server) => server['selected'] == true).toList();
+
+      if (selected.isEmpty && serverList.isNotEmpty) {
+        final firstServer = serverList.first;
+        if (firstServer['url'] is String) {
+          return [firstServer['url'] as String];
+        }
+        return [];
+      }
+
+      return selected
+          .where((server) => server['url'] is String)
+          .map((server) => server['url'] as String)
+          .toList();
+    } catch (e) {
+      debugPrint('获取服务器IP时出错: $e');
+      return [];
+    }
+  }
+
+  //设置服务器选中状态
+  void setServerSelected(String url, bool selected) {
+    final servers = serverList;
+    for (var i = 0; i < servers.length; i++) {
+      if (servers[i]['url'] == url) {
+        servers[i]['selected'] = selected;
+      }
+    }
+    serverList = servers;
   }
 
   // 节点列表

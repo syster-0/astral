@@ -573,7 +573,7 @@ pub fn create_server(
     specified_ip: String,
     room_name: String,
     room_password: String,
-    severurl: String,
+    severurl: Vec<String>,
 ) {
     RT.spawn(async move {
         // 创建一个示例配置
@@ -584,14 +584,16 @@ pub fn create_server(
         // flags.dev_name = "astral".to_string();
         cfg.set_flags(flags);
         // 创建TCP和UDP连接配置列表
-        let peer_configs = vec![
-            PeerConfig {
-                uri: format!("tcp://{}", severurl).parse().unwrap(),
-            },
-            PeerConfig {
-                uri: format!("udp://{}", severurl).parse().unwrap(),
-            }
-        ];
+        let mut peer_configs = Vec::new();
+        // 为每个服务器URL创建TCP和UDP配置
+        for url in severurl {
+            peer_configs.push(PeerConfig {
+                uri: format!("tcp://{}", url).parse().unwrap(),
+            });
+            peer_configs.push(PeerConfig {
+                uri: format!("udp://{}", url).parse().unwrap(),
+            });
+        }
         
         cfg.set_peers(peer_configs);
         if enable_dhcp == false {

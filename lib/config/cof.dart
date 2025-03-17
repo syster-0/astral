@@ -25,7 +25,10 @@ class ConfigManager {
       final yamlMap = loadYaml(content);
       _config = _mergeConfigs(_convertYaml(yamlMap));
     } catch (e) {
-      throw Exception('配置文件解析失败: $e');
+      // 提供更详细的错误信息并使用默认配置
+      print('配置文件解析失败: $e');
+      print('将使用默认配置继续运行。请检查配置文件格式是否正确。');
+      _config = Map.from(defaultConfig);
     }
   }
 
@@ -61,7 +64,15 @@ class ConfigManager {
       current = current.putIfAbsent(key, () => <String, dynamic>{});
     }
 
-    current[keys.last] = value;
+    // 类型转换确保值类型兼容性
+    if (value is Map<String, dynamic>) {
+      current[keys.last] = Map<String, Object>.from(value);
+    } else if (value is List<Map<String, dynamic>>) {
+      current[keys.last] =
+          value.map((e) => Map<String, Object>.from(e)).toList();
+    } else {
+      current[keys.last] = value;
+    }
   }
 
   /// 合并用户配置与默认配置

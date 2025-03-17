@@ -107,7 +107,7 @@ fn wire__crate__api__simple__create_server_impl(
             let api_specified_ip = <String>::sse_decode(&mut deserializer);
             let api_room_name = <String>::sse_decode(&mut deserializer);
             let api_room_password = <String>::sse_decode(&mut deserializer);
-            let api_severurl = <String>::sse_decode(&mut deserializer);
+            let api_severurl = <Vec<String>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -608,6 +608,18 @@ impl SseDecode for Vec<Route> {
     }
 }
 
+impl SseDecode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<String>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::simple::KVNodeConnectionStats> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1018,6 +1030,16 @@ impl SseEncode for Vec<Route> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <Route>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <String>::sse_encode(item, serializer);
         }
     }
 }

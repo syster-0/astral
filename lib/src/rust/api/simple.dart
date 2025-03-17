@@ -37,7 +37,7 @@ Future<void> createServer(
         required String specifiedIp,
         required String roomName,
         required String roomPassword,
-        required String severurl}) =>
+        required List<String> severurl}) =>
     RustLib.instance.api.crateApiSimpleCreateServer(
         username: username,
         enableDhcp: enableDhcp,

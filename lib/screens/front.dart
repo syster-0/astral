@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
 
   bool _isAutoIP = true; // 只用于控制IP自动/手动模式
 
-  String Serverip = "";
+  List<String> Serverip = [""];
   int _uploadBytes = 0;
   int _downloadBytes = 0;
   int _lastUploadBytes = 0;
@@ -115,11 +115,12 @@ class _HomePageState extends State<HomePage> {
     _roomPasswordControllerFocusNode = FocusNode();
     _roomPasswordControllerFocusNode.addListener(_onRoomPasswordFocusChange);
 
-    // 修改卡片构建器列表，添加版本信息卡片
+    // 修改卡片构建器列表，添加服务器列表卡片
     _cardBuilders = [
       _buildNetworkStatusCard,
       _buildUserInfoCard,
       _buildRoomInfoCard,
+      _buildServerListCard,
       _buildVersionInfoCard,
     ];
   }
@@ -573,7 +574,60 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+// 添加服务器列表卡片
+  Widget _buildServerListCard(ColorScheme colorScheme) {
+    final km = Provider.of<KM>(context);
+    // 直接使用 serverIP 列表，而不是尝试访问 serverList
+    final serverUrls = km.serverIP;
+
+    return FloatingCard(
+      colorScheme: colorScheme,
+      maxWidth: 600,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          Row(
+            children: [
+              Icon(Icons.dns, color: colorScheme.primary, size: 22),
+              const SizedBox(width: 8),
+              const Text('当前服务器',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // 当前选中的服务器
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: serverUrls.isEmpty ||
+                    (serverUrls.length == 1 && serverUrls[0].isEmpty)
+                ? [
+                    Chip(
+                      avatar: Icon(Icons.info_outline,
+                          size: 16, color: colorScheme.error),
+                      label: const Text('未选择服务器'),
+                      backgroundColor:
+                          colorScheme.errorContainer.withOpacity(0.3),
+                    )
+                  ]
+                : serverUrls
+                    .map((url) => Chip(
+                          avatar: Icon(Icons.dns,
+                              size: 16, color: colorScheme.primary),
+                          label: Text(url),
+                          backgroundColor: colorScheme.surfaceVariant,
+                        ))
+                    .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 新增合并后的网络状态卡片（合并了流量统计和IP信息）
+  // 修改网络状态卡片，去除流量统计部分
   Widget _buildNetworkStatusCard(ColorScheme colorScheme) {
     return FloatingCard(
       colorScheme: colorScheme,
@@ -611,33 +665,6 @@ class _HomePageState extends State<HomePage> {
 
           // IP信息部分
           _buildIPInfo('虚拟 IP', publicIP, Icons.public, colorScheme),
-          const SizedBox(height: 12),
-
-          // 流量统计部分
-          const Divider(),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.data_usage, color: colorScheme.primary, size: 18),
-              const SizedBox(width: 8),
-              Text('流量统计',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.primary,
-                  )),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTrafficInfo('上传速度', '$uploadSpeed MB/s', Icons.upload,
-                  colorScheme.primary),
-              _buildTrafficInfo('下载速度', '$downloadSpeed MB/s', Icons.download,
-                  colorScheme.secondary),
-            ],
-          ),
 
           // 添加运行时间显示
           if (_connectionState == ConnectionState.connected) ...[
