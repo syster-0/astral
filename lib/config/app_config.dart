@@ -44,6 +44,7 @@ class AppConfig {
         },
         'system': {
           'closeToTray': true,
+          'enablePing': true, // 添加全局ping开关默认配置
         },
       },
     );
@@ -156,6 +157,16 @@ class AppConfig {
 
   Future<void> setDynamicIP(bool enabled) async {
     _configManager.set('network.dynamicIP', enabled);
+    await _configManager.save();
+  }
+  
+  // 全局ping开关设置
+  bool get enablePing {
+    return _configManager.get<bool>('system.enablePing') ?? true;
+  }
+
+  Future<void> setEnablePing(bool enabled) async {
+    _configManager.set('system.enablePing', enabled);
     await _configManager.save();
   }
 }

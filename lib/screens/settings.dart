@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:astral/utils/app_info.dart';
 import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +20,6 @@ final updateChecker = UpdateChecker(
 );
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
-  double _fontSize = 16.0;
   late List<String> _serverList;
   late String _currentServer;
   final _appConfig = AppConfig();
@@ -40,6 +37,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _currentServer = _appConfig.currentServer;
     serverIP = _appConfig.currentServer;
     _closeToTray = _appConfig.closeToTray; // 初始化托盘设置
+    // 初始化全局ping开关
+    _pingEnabled = _appConfig.enablePing;
 
     // 初始化 ping 状态
     for (var server in _serverList) {
@@ -58,8 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
     // 取消之前的计时器（如果存在）
     _pingTimer?.cancel();
 
-    // 创建新的计时器，每秒执行一次 ping
-    _pingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    // 创建新的计时器，使用设置的间隔时间
+    _pingTimer = Timer.periodic(Duration(milliseconds: 1000), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -96,6 +95,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void _togglePingStatus(bool value) {
     setState(() {
       _pingEnabled = value;
+      _appConfig.setEnablePing(_pingEnabled);
       if (!_pingEnabled) {
         // 如果关闭ping，清空所有结果
         for (var server in _serverList) {
@@ -104,7 +104,7 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
   }
-  
+
   // 添加服务器对话框
   Future<void> _showAddServerDialog() async {
     final controller = TextEditingController();
@@ -142,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
   }
-  
+
   // 编辑服务器对话框
   Future<void> _showEditServerDialog(int index) async {
     final controller = TextEditingController(text: _serverList[index]);
@@ -294,7 +294,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onTap: () {
                           setState(() {
                             _currentServer = server;
-                            Provider.of<KM>(context, listen: false).serverIP = server;
+                            Provider.of<KM>(context, listen: false).serverIP =
+                                server;
                             _appConfig.setCurrentServer(_currentServer);
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
