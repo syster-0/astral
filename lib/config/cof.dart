@@ -146,13 +146,38 @@ class ConfigManager {
     for (final item in list) {
       buffer.write('$prefix- ');
       if (item is Map) {
-        _writeMap(item.cast<String, dynamic>(), buffer, indent + 1);
+        if (item.isEmpty) {
+          buffer.writeln('{}');
+        } else {
+          buffer.writeln();
+          // 注意这里使用了正确的缩进级别
+          _writeMapInList(item.cast<String, dynamic>(), buffer, indent + 1);
+        }
       } else if (item is List) {
         _writeList(item, buffer, indent + 1);
       } else {
         buffer.writeln(_formatValue(item));
       }
     }
+  }
+
+  /// 专门用于处理列表中的Map项，确保正确缩进
+  void _writeMapInList(
+      Map<String, dynamic> map, StringBuffer buffer, int indent) {
+    final prefix = '  ' * indent;
+
+    map.forEach((key, value) {
+      buffer.write('$prefix$key: ');
+
+      if (value is Map<String, dynamic>) {
+        buffer.writeln();
+        _writeMap(value, buffer, indent + 1);
+      } else if (value is List) {
+        _writeList(value, buffer, indent + 1);
+      } else {
+        buffer.writeln(_formatValue(value));
+      }
+    });
   }
 
   /// 格式值处理
