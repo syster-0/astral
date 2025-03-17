@@ -55,6 +55,126 @@ class AppConfig {
     );
 
     await _configManager.load();
+    
+    // 验证配置格式，如果不正确则使用默认值覆盖
+    validateAndFixConfig();
+  }
+  
+  // 验证配置格式并修复不正确的配置
+  static void validateAndFixConfig() {
+    // 验证主题设置
+    _validateThemeConfig();
+    
+    // 验证服务器列表
+    _validateServerListConfig();
+    
+    // 验证房间设置
+    _validateRoomConfig();
+    
+    // 验证用户设置
+    _validateUserConfig();
+    
+    // 验证网络设置
+    _validateNetworkConfig();
+    
+    // 验证系统设置
+    _validateSystemConfig();
+    
+    // 保存修复后的配置
+    _configManager.save();
+  }
+  
+  // 验证主题配置
+  static void _validateThemeConfig() {
+    // 验证主题模式
+    final String? themeMode = _configManager.get<String>('theme.mode');
+    if (themeMode == null || 
+        !['system', 'light', 'dark'].contains(themeMode.toLowerCase())) {
+      _configManager.set('theme.mode', 'system');
+    }
+    
+    // 验证主题色
+    final int? seedColor = _configManager.get<int>('theme.seedColor');
+    if (seedColor == null) {
+      _configManager.set('theme.seedColor', Colors.blue.value);
+    }
+  }
+  
+  // 验证服务器列表配置
+  static void _validateServerListConfig() {
+    final dynamic serverList = _configManager.get('server.list');
+    bool isValid = true;
+    
+    if (serverList is! List) {
+      isValid = false;
+    } else {
+      for (var server in serverList) {
+        if (server is! Map || 
+            !server.containsKey('url') || 
+            !server.containsKey('name') || 
+            !server.containsKey('selected')) {
+          isValid = false;
+          break;
+        }
+      }
+    }
+    
+    if (!isValid) {
+      _configManager.set('server.list', [
+        {
+          'url': 'public.easytier.cn:11010',
+          'name': '公共服务器',
+          'selected': true,
+        }
+      ]);
+    }
+  }
+  
+  // 验证房间配置
+  static void _validateRoomConfig() {
+    final String? roomName = _configManager.get<String>('room.name');
+    if (roomName == null || roomName.isEmpty) {
+      _configManager.set('room.name', 'kevin');
+    }
+    
+    final String? roomPassword = _configManager.get<String>('room.password');
+    if (roomPassword == null || roomPassword.isEmpty) {
+      _configManager.set('room.password', 'kevin');
+    }
+  }
+  
+  // 验证用户配置
+  static void _validateUserConfig() {
+    final String? username = _configManager.get<String>('user.name');
+    if (username == null || username.isEmpty) {
+      _configManager.set('user.name', Platform.localHostname);
+    }
+  }
+  
+  // 验证网络配置
+  static void _validateNetworkConfig() {
+    final String? virtualIP = _configManager.get<String>('network.virtualIP');
+    if (virtualIP == null) {
+      _configManager.set('network.virtualIP', '');
+    }
+    
+    final bool? dynamicIP = _configManager.get<bool>('network.dynamicIP');
+    if (dynamicIP == null) {
+      _configManager.set('network.dynamicIP', true);
+    }
+  }
+  
+  // 验证系统配置
+  static void _validateSystemConfig() {
+    final bool? closeToTray = _configManager.get<bool>('system.closeToTray');
+    if (closeToTray == null) {
+      _configManager.set('system.closeToTray', true);
+    }
+    
+    final bool? enablePing = _configManager.get<bool>('system.enablePing');
+    if (enablePing == null) {
+      _configManager.set('system.enablePing', true);
+    }
   }
 
   // 主题设置
