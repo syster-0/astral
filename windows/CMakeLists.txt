@@ -75,10 +75,6 @@ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
-# 添加管理员权限要求（修正路径格式）
-target_link_options(${BINARY_NAME} PRIVATE
-  "LINKER:/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
-  $<$<C_COMPILER_ID:MSVC>:"LINKER:/MANIFESTINPUT:${CMAKE_CURRENT_SOURCE_DIR}/runner/runner.exe.manifest">)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)

@@ -581,15 +581,19 @@ pub fn create_server(
         cfg.set_hostname(Option::from(username));
         cfg.set_dhcp(enable_dhcp);
         let mut flags = cfg.get_flags();
-        flags.dev_name = "Astral".to_string();
+        // flags.dev_name = "astral".to_string();
         cfg.set_flags(flags);
-        let peer_config = PeerConfig {
-            uri: ("tcp://".to_string() + &severurl).parse().unwrap(),
-        };
-        let peer_config2 = PeerConfig {
-            uri: ("udp://".to_string() + &severurl).parse().unwrap(),
-        };
-        cfg.set_peers(vec![peer_config, peer_config2]);
+        // 创建TCP和UDP连接配置列表
+        let peer_configs = vec![
+            PeerConfig {
+                uri: format!("tcp://{}", severurl).parse().unwrap(),
+            },
+            PeerConfig {
+                uri: format!("udp://{}", severurl).parse().unwrap(),
+            }
+        ];
+        
+        cfg.set_peers(peer_configs);
         if enable_dhcp == false {
             // 使用完整路径引用 cidr 模块的 Ipv4Inet
             // 解析IP地址和子网掩码

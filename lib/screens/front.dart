@@ -52,8 +52,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 定义状态枚举
-
+  int connectionTimeoutCounter = 0;
   // 当前连接状态
   ConnectionState _connectionState = ConnectionState.notStarted;
 
@@ -160,11 +159,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    // 释放资源
+    // 取消所有计时器
+    timer?.cancel();
+    timer = null;
+
+    // 释放所有控制器和焦点节点
+    _roomNameController.dispose();
+    _roomPasswordController.dispose();
+    _usernameController.dispose();
+    _virtualIPController.dispose();
+
     _virtualIPFocusNode.removeListener(_onVirtualIPFocusChange);
     _virtualIPFocusNode.dispose();
 
-    // 释放新增的FocusNode资源
     _usernameControllerFocusNode.removeListener(_onUsernameFocusChange);
     _usernameControllerFocusNode.dispose();
 
@@ -191,8 +198,6 @@ class _HomePageState extends State<HomePage> {
             roomName: roomName,
             roomPassword: roomPassword,
             severurl: Serverip);
-        // 添加连接超时计数器
-        int connectionTimeoutCounter = 0;
 
         // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
         timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
@@ -216,49 +221,40 @@ class _HomePageState extends State<HomePage> {
           final int? version = runin.myNodeInfo?.virtualIpv4?.address?.addr;
           if (version != null) {
             String ipStr = _intToIpv4String(version);
-            // 检查IP不为0.0.0.0时认为连接成功
-            if (ipStr != "0.0.0.0") {
-              if (publicIP != ipStr) {
-                km.virtualIP = ipStr;
-              }
+            if (publicIP != ipStr) {
+              km.virtualIP = ipStr;
+            }
 
-              // 如果当前状态还是连接中，则更新为已连接
-              if (_connectionState == ConnectionState.connecting) {
-                setState(() {
-                  _connectionState = ConnectionState.connected;
-                });
-              }
-
-              // 重置超时计数器
+            // 如果当前状态还是连接中，则更新为已连接
+            if (_connectionState == ConnectionState.connecting) {
+              setState(() {
+                _connectionState = ConnectionState.connected;
+              });
+            }
+            connectionTimeoutCounter = 0;
+          } else if (_connectionState == ConnectionState.connecting) {
+            connectionTimeoutCounter++;
+            if (connectionTimeoutCounter >= 10) {
               connectionTimeoutCounter = 0;
-            } else if (_connectionState == ConnectionState.connecting) {
-              // 只在连接状态下增加超时计数
-              connectionTimeoutCounter++;
+              timer.cancel();
+              setState(() {
+                isRunning = false;
+                _connectionState = ConnectionState.notStarted;
+                runningTime = Duration.zero;
+              });
 
-              // 如果连续10秒都是0.0.0.0，判断为连接失败
-              if (connectionTimeoutCounter >= 10) {
-                // 停止连接并显示失败消息
-                timer.cancel();
-                setState(() {
-                  isRunning = false;
-                  _connectionState = ConnectionState.notStarted;
-                  runningTime = Duration.zero;
-                });
-
-                // 关闭服务器连接
-                closeAllServer();
-
-                // 显示连接失败提示
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('连接失败，请检查网络或房间信息后重试'),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                }
-                return;
+              closeAllServer();
+// 清空玩家列表数据
+              Provider.of<KM>(context, listen: false).nodes = [];
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('连接失败，未能获取节点信息'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
               }
+              return;
             }
           }
 
@@ -277,6 +273,8 @@ class _HomePageState extends State<HomePage> {
         // 停止时重置状态
         _connectionState = ConnectionState.notStarted;
         closeAllServer();
+        // 清空玩家列表数据
+        Provider.of<KM>(context, listen: false).nodes = [];
         timer?.cancel();
         runningTime = Duration.zero;
         // 重置网络统计数据
@@ -286,6 +284,7 @@ class _HomePageState extends State<HomePage> {
         _lastDownloadBytes = 0;
         uploadSpeed = 0;
         downloadSpeed = 0;
+        //connectionTimeoutCounter
       }
     });
   }
@@ -547,88 +546,6 @@ class _HomePageState extends State<HomePage> {
       case ConnectionState.connected:
         return colorScheme.onTertiary;
     }
-  }
-
-  // 修改卡片构建方法，移除多余的内边距
-  Widget _buildDashboardCard(ColorScheme colorScheme) {
-    return FloatingCard(
-        colorScheme: colorScheme,
-        maxWidth: 600, // 设置最大宽度
-        height: 200,
-        child: SizedBox(
-          child: PieChart(
-            PieChartData(
-              sections: [
-                PieChartSectionData(
-                  value: uploadSpeed,
-                  title: '上传',
-                  color: colorScheme.primary,
-                ),
-                PieChartSectionData(
-                  value: downloadSpeed,
-                  title: '下载',
-                  color: colorScheme.secondary,
-                ),
-              ],
-            ),
-          ),
-        ));
-  }
-
-  // 修改流量统计卡片，移除多余的内边距
-  Widget _buildTrafficCard(ColorScheme colorScheme) {
-    return FloatingCard(
-        colorScheme: colorScheme,
-        maxWidth: 600,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 修改标题为图标+文字组合
-            Row(
-              children: [
-                Icon(Icons.data_usage, color: colorScheme.primary, size: 22),
-                const SizedBox(width: 8),
-                const Text('流量统计',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildTrafficInfo('上传速度', '$uploadSpeed MB/s', Icons.upload,
-                    colorScheme.primary),
-                _buildTrafficInfo('下载速度', '$downloadSpeed MB/s', Icons.download,
-                    colorScheme.secondary),
-              ],
-            ),
-          ],
-        ));
-  }
-
-  // 修改IP地址卡片，移除多余的内边距
-  Widget _buildIPCard(ColorScheme colorScheme) {
-    return FloatingCard(
-      colorScheme: colorScheme,
-      maxWidth: 600,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 修改标题为图标+文字组合
-          Row(
-            children: [
-              Icon(Icons.wifi, color: colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              const Text('网络信息',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildIPInfo('虚拟 IP', publicIP, Icons.public, colorScheme),
-        ],
-      ),
-    );
   }
 
   Widget _buildTrafficInfo(

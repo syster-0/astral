@@ -6,7 +6,6 @@ import 'dart:io';
 import 'screens/Home.dart';
 import 'config/themeconfiguration.dart';
 import 'config/app_config.dart';
-import 'package:astral/utils/up.dart'; // 添加这行导入
 
 // 定义应用程序的主要StatefulWidget
 class MyApp extends StatefulWidget {

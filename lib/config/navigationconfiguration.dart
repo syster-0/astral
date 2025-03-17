@@ -40,12 +40,12 @@ class NavigationConfig {
                   currentThemeMode: currentThemeMode,
                 )),
       ),
-      NavItem(
-        label: '房间',
-        icon: Icons.room_outlined,
-        selectedIcon: Icons.room,
-        pageBuilder: () => _getOrCreatePage(1, () => const RoomPage()),
-      ),
+      // NavItem(
+      //   label: '房间',
+      //   icon: Icons.room_outlined,
+      //   selectedIcon: Icons.room,
+      //   pageBuilder: () => _getOrCreatePage(1, () => const RoomPage()),
+      // ),
       NavItem(
         label: '设置',
         icon: Icons.settings_outlined,
