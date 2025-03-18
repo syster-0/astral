@@ -15,7 +15,6 @@ jobs:
     # 调整 GITHUB_TOKEN 的权限
     permissions:
       contents: write  # 允许写入仓库内容（上传文件）
-      releases: write  # 允许创建和管理 Release
 
     steps:
       - uses: actions/checkout@v4
