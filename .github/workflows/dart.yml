@@ -28,6 +28,10 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      # 生成 Rust 桥接代码
+      - name: Generate Rust bridge code
+        run: flutter_rust_bridge_codegen generate
+
       # 编译 Flutter Windows 应用
       - name: Build Flutter Windows Release
         run: flutter build windows --release
