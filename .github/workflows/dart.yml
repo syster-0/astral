@@ -33,7 +33,7 @@ jobs:
 
       # 上传压缩包作为 Artifact
       - name: Upload Release Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: release
           path: ${{ github.workspace }}/release.zip
