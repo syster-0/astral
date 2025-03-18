@@ -385,7 +385,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         _buildInfoRow(
           Icons.error_outline,
           '丢包率',
-          '${player.packetLossRate}%',
+          '${player.packetLossRate.toStringAsFixed(2)}%', // 修改这里，保留2位小数
           colorScheme,
           valueColor: _getPacketLossColor(player.packetLossRate),
         ),
@@ -554,7 +554,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
               _buildInfoRow(
                 Icons.error_outline,
                 '丢包率',
-                '${player.packetLossRate}%',
+                '${player.packetLossRate.toStringAsFixed(2)}%', // 修改这里，保留2位小数
                 colorScheme,
                 valueColor: _getPacketLossColor(player.packetLossRate),
               ),
