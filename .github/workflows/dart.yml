@@ -10,26 +10,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 安装 Dart
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
       # 安装 Flutter
       - name: Install Flutter
         run: |
           git clone https://github.com/flutter/flutter.git -b stable
           echo "$(pwd)/flutter/bin" >> $GITHUB_PATH
 
-      # 安装 Dart 依赖
-      - name: Install Dart dependencies
-        run: dart pub get
+      # 安装 Flutter 依赖
+      - name: Install Flutter dependencies
+        run: flutter pub get
 
       # 分析项目源代码
       - name: Analyze project source
-        run: dart analyze
+        run: flutter analyze
 
       # 运行测试
       - name: Run tests
-        run: dart test
+        run: flutter test
 
       # 编译 Flutter Windows 应用
       - name: Build Flutter Windows Release
