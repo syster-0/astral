@@ -3,7 +3,7 @@ import 'package:flutter/services.dart'; // 添加这一行导入剪贴板服务
 
 import 'package:astral/utils/kv_state.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 替换 provider 导入
 import '../widgets/card.dart';
 
 /// 玩家信息模型类
@@ -37,14 +37,17 @@ class PlayerInfo {
 
 /// 房间页面组件
 /// 用于显示所有玩家的信息
-class RoomPage extends StatefulWidget {
+class RoomPage extends ConsumerStatefulWidget {
+  // 修改为 ConsumerStatefulWidget
   const RoomPage({super.key});
 
   @override
-  State<RoomPage> createState() => _RoomPageState();
+  ConsumerState<RoomPage> createState() =>
+      _RoomPageState(); // 修改为 ConsumerState
 }
 
-class _RoomPageState extends State<RoomPage> {
+class _RoomPageState extends ConsumerState<RoomPage> {
+  // 修改为 ConsumerState
   List<PlayerInfo> players = [];
   List<PlayerInfo> filteredPlayers = []; // 添加过滤后的玩家列表
   bool isLoading = true;
@@ -88,6 +91,7 @@ class _RoomPageState extends State<RoomPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // 使用 Riverpod 监听节点数据
 
     return Scaffold(
       appBar: AppBar(
@@ -109,11 +113,10 @@ class _RoomPageState extends State<RoomPage> {
           ),
         ],
       ),
-      body: Consumer<KM>(
-        builder: (context, km, child) {
-          // 当 KM 更新时，这个 builder 会被重新调用
+      body: Builder(
+        builder: (context) {
           // 异步处理数据
-          _processNodeData(km);
+          _processNodeData();
 
           if (isLoading) {
             return Center(
@@ -203,9 +206,9 @@ class _RoomPageState extends State<RoomPage> {
   }
 
   // 处理节点数据 - 合并了原来的两个相似方法
-  Future<void> _processNodeData(KM km) async {
+  Future<void> _processNodeData() async {
     try {
-      final nodes = await km.nodes; // 获取最新的节点信息
+      final nodes = await ref.read(nodesProvider); // 获取最新的节点信息
 
       // 将节点数据转换为PlayerInfo对象
       List<PlayerInfo> nodePlayerInfos = [];
@@ -216,8 +219,8 @@ class _RoomPageState extends State<RoomPage> {
         int downloadSpeed = 0;
         int sentPackets = 0;
         int receivedPackets = 0;
-        String connectionType =
-            _mapConnectionType(node.cost, node.ipv4, km.virtualIP);
+        String connectionType = _mapConnectionType(
+            node.cost, node.ipv4, ref.read(virtualIPProvider));
 
         // 如果有连接信息，计算网络统计数据
         if (node.connections.isNotEmpty) {

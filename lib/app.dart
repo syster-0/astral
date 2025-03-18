@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:system_tray/system_tray.dart';
 import 'dart:io';
 import 'screens/Home.dart';
-import 'config/themeconfiguration.dart';
+import 'config/themeconfiguration.dart' as theme_config;
 import 'config/app_config.dart';
 
 // 定义应用程序的主要StatefulWidget
@@ -114,7 +114,7 @@ class _MyAppState extends State<MyApp> {
       ],
       // Insert this line
       supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
-      theme: ThemeConfig.getLightTheme(
+      theme: theme_config.ThemeConfig.getLightTheme(
         useMaterial3: useMaterial3,
         seedColor: _seedColor,
       ).copyWith(
@@ -124,7 +124,7 @@ class _MyAppState extends State<MyApp> {
           primaryTextTheme: Typography.material2021().black.apply(
                 fontFamily: 'MiSans',
               )),
-      darkTheme: ThemeConfig.getDarkTheme(
+      darkTheme: theme_config.ThemeConfig.getDarkTheme(
         useMaterial3: useMaterial3,
         seedColor: _seedColor,
       ).copyWith(

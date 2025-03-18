@@ -37,14 +37,16 @@ Future<void> createServer(
         required String specifiedIp,
         required String roomName,
         required String roomPassword,
-        required List<String> severurl}) =>
+        required List<String> severurl,
+        required FlagsC flag}) =>
     RustLib.instance.api.crateApiSimpleCreateServer(
         username: username,
         enableDhcp: enableDhcp,
         specifiedIp: specifiedIp,
         roomName: roomName,
         roomPassword: roomPassword,
-        severurl: severurl);
+        severurl: severurl,
+        flag: flag);
 
 Future<void> closeAllServer() =>
     RustLib.instance.api.crateApiSimpleCloseAllServer();
@@ -62,6 +64,103 @@ abstract class PeerRoutePair implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Route>>
 abstract class Route implements RustOpaqueInterface {}
+
+class FlagsC {
+  final String defaultProtocol;
+  final String devName;
+  final bool enableEncryption;
+  final bool enableIpv6;
+  final int mtu;
+  final bool latencyFirst;
+  final bool enableExitNode;
+  final bool noTun;
+  final bool useSmoltcp;
+  final String relayNetworkWhitelist;
+  final bool disableP2P;
+  final bool relayAllPeerRpc;
+  final bool disableUdpHolePunching;
+
+  /// string ipv6_listener = 14; \[deprecated = true\]; use -l udp://\[::\]:12345 instead
+  final bool multiThread;
+  final int dataCompressAlgo;
+  final bool bindDevice;
+  final bool enableKcpProxy;
+  final bool disableKcpInput;
+  final bool disableRelayKcp;
+  final bool proxyForwardBySystem;
+
+  const FlagsC({
+    required this.defaultProtocol,
+    required this.devName,
+    required this.enableEncryption,
+    required this.enableIpv6,
+    required this.mtu,
+    required this.latencyFirst,
+    required this.enableExitNode,
+    required this.noTun,
+    required this.useSmoltcp,
+    required this.relayNetworkWhitelist,
+    required this.disableP2P,
+    required this.relayAllPeerRpc,
+    required this.disableUdpHolePunching,
+    required this.multiThread,
+    required this.dataCompressAlgo,
+    required this.bindDevice,
+    required this.enableKcpProxy,
+    required this.disableKcpInput,
+    required this.disableRelayKcp,
+    required this.proxyForwardBySystem,
+  });
+
+  @override
+  int get hashCode =>
+      defaultProtocol.hashCode ^
+      devName.hashCode ^
+      enableEncryption.hashCode ^
+      enableIpv6.hashCode ^
+      mtu.hashCode ^
+      latencyFirst.hashCode ^
+      enableExitNode.hashCode ^
+      noTun.hashCode ^
+      useSmoltcp.hashCode ^
+      relayNetworkWhitelist.hashCode ^
+      disableP2P.hashCode ^
+      relayAllPeerRpc.hashCode ^
+      disableUdpHolePunching.hashCode ^
+      multiThread.hashCode ^
+      dataCompressAlgo.hashCode ^
+      bindDevice.hashCode ^
+      enableKcpProxy.hashCode ^
+      disableKcpInput.hashCode ^
+      disableRelayKcp.hashCode ^
+      proxyForwardBySystem.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FlagsC &&
+          runtimeType == other.runtimeType &&
+          defaultProtocol == other.defaultProtocol &&
+          devName == other.devName &&
+          enableEncryption == other.enableEncryption &&
+          enableIpv6 == other.enableIpv6 &&
+          mtu == other.mtu &&
+          latencyFirst == other.latencyFirst &&
+          enableExitNode == other.enableExitNode &&
+          noTun == other.noTun &&
+          useSmoltcp == other.useSmoltcp &&
+          relayNetworkWhitelist == other.relayNetworkWhitelist &&
+          disableP2P == other.disableP2P &&
+          relayAllPeerRpc == other.relayAllPeerRpc &&
+          disableUdpHolePunching == other.disableUdpHolePunching &&
+          multiThread == other.multiThread &&
+          dataCompressAlgo == other.dataCompressAlgo &&
+          bindDevice == other.bindDevice &&
+          enableKcpProxy == other.enableKcpProxy &&
+          disableKcpInput == other.disableKcpInput &&
+          disableRelayKcp == other.disableRelayKcp &&
+          proxyForwardBySystem == other.proxyForwardBySystem;
+}
 
 class KVNetworkStatus {
   final BigInt totalNodes;

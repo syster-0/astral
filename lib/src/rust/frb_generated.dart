@@ -85,7 +85,8 @@ abstract class RustLibApi extends BaseApi {
       required String specifiedIp,
       required String roomName,
       required String roomPassword,
-      required List<String> severurl});
+      required List<String> severurl,
+      required FlagsC flag});
 
   Future<String> crateApiSimpleEasytierVersion();
 
@@ -174,7 +175,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required String specifiedIp,
       required String roomName,
       required String roomPassword,
-      required List<String> severurl}) {
+      required List<String> severurl,
+      required FlagsC flag}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -184,6 +186,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(roomName, serializer);
         sse_encode_String(roomPassword, serializer);
         sse_encode_list_String(severurl, serializer);
+        sse_encode_box_autoadd_flags_c(flag, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 2, port: port_);
       },
@@ -198,7 +201,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         specifiedIp,
         roomName,
         roomPassword,
-        severurl
+        severurl,
+        flag
       ],
       apiImpl: this,
     ));
@@ -212,7 +216,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "specifiedIp",
           "roomName",
           "roomPassword",
-          "severurl"
+          "severurl",
+          "flag"
         ],
       );
 
@@ -516,6 +521,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FlagsC dco_decode_box_autoadd_flags_c(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_flags_c(raw);
+  }
+
+  @protected
   double dco_decode_f_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -525,6 +536,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
+  }
+
+  @protected
+  FlagsC dco_decode_flags_c(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 20)
+      throw Exception('unexpected arr length: expect 20 but see ${arr.length}');
+    return FlagsC(
+      defaultProtocol: dco_decode_String(arr[0]),
+      devName: dco_decode_String(arr[1]),
+      enableEncryption: dco_decode_bool(arr[2]),
+      enableIpv6: dco_decode_bool(arr[3]),
+      mtu: dco_decode_u_32(arr[4]),
+      latencyFirst: dco_decode_bool(arr[5]),
+      enableExitNode: dco_decode_bool(arr[6]),
+      noTun: dco_decode_bool(arr[7]),
+      useSmoltcp: dco_decode_bool(arr[8]),
+      relayNetworkWhitelist: dco_decode_String(arr[9]),
+      disableP2P: dco_decode_bool(arr[10]),
+      relayAllPeerRpc: dco_decode_bool(arr[11]),
+      disableUdpHolePunching: dco_decode_bool(arr[12]),
+      multiThread: dco_decode_bool(arr[13]),
+      dataCompressAlgo: dco_decode_i_32(arr[14]),
+      bindDevice: dco_decode_bool(arr[15]),
+      enableKcpProxy: dco_decode_bool(arr[16]),
+      disableKcpInput: dco_decode_bool(arr[17]),
+      disableRelayKcp: dco_decode_bool(arr[18]),
+      proxyForwardBySystem: dco_decode_bool(arr[19]),
+    );
   }
 
   @protected
@@ -658,6 +699,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   BigInt dco_decode_u_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeU64(raw);
@@ -767,6 +814,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FlagsC sse_decode_box_autoadd_flags_c(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_flags_c(deserializer));
+  }
+
+  @protected
   double sse_decode_f_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat32();
@@ -776,6 +829,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
+  }
+
+  @protected
+  FlagsC sse_decode_flags_c(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_defaultProtocol = sse_decode_String(deserializer);
+    var var_devName = sse_decode_String(deserializer);
+    var var_enableEncryption = sse_decode_bool(deserializer);
+    var var_enableIpv6 = sse_decode_bool(deserializer);
+    var var_mtu = sse_decode_u_32(deserializer);
+    var var_latencyFirst = sse_decode_bool(deserializer);
+    var var_enableExitNode = sse_decode_bool(deserializer);
+    var var_noTun = sse_decode_bool(deserializer);
+    var var_useSmoltcp = sse_decode_bool(deserializer);
+    var var_relayNetworkWhitelist = sse_decode_String(deserializer);
+    var var_disableP2P = sse_decode_bool(deserializer);
+    var var_relayAllPeerRpc = sse_decode_bool(deserializer);
+    var var_disableUdpHolePunching = sse_decode_bool(deserializer);
+    var var_multiThread = sse_decode_bool(deserializer);
+    var var_dataCompressAlgo = sse_decode_i_32(deserializer);
+    var var_bindDevice = sse_decode_bool(deserializer);
+    var var_enableKcpProxy = sse_decode_bool(deserializer);
+    var var_disableKcpInput = sse_decode_bool(deserializer);
+    var var_disableRelayKcp = sse_decode_bool(deserializer);
+    var var_proxyForwardBySystem = sse_decode_bool(deserializer);
+    return FlagsC(
+        defaultProtocol: var_defaultProtocol,
+        devName: var_devName,
+        enableEncryption: var_enableEncryption,
+        enableIpv6: var_enableIpv6,
+        mtu: var_mtu,
+        latencyFirst: var_latencyFirst,
+        enableExitNode: var_enableExitNode,
+        noTun: var_noTun,
+        useSmoltcp: var_useSmoltcp,
+        relayNetworkWhitelist: var_relayNetworkWhitelist,
+        disableP2P: var_disableP2P,
+        relayAllPeerRpc: var_relayAllPeerRpc,
+        disableUdpHolePunching: var_disableUdpHolePunching,
+        multiThread: var_multiThread,
+        dataCompressAlgo: var_dataCompressAlgo,
+        bindDevice: var_bindDevice,
+        enableKcpProxy: var_enableKcpProxy,
+        disableKcpInput: var_disableKcpInput,
+        disableRelayKcp: var_disableRelayKcp,
+        proxyForwardBySystem: var_proxyForwardBySystem);
   }
 
   @protected
@@ -941,6 +1040,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint32();
+  }
+
+  @protected
   BigInt sse_decode_u_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getBigUint64();
@@ -1050,6 +1155,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_flags_c(FlagsC self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_flags_c(self, serializer);
+  }
+
+  @protected
   void sse_encode_f_32(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat32(self);
@@ -1059,6 +1170,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
+  }
+
+  @protected
+  void sse_encode_flags_c(FlagsC self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.defaultProtocol, serializer);
+    sse_encode_String(self.devName, serializer);
+    sse_encode_bool(self.enableEncryption, serializer);
+    sse_encode_bool(self.enableIpv6, serializer);
+    sse_encode_u_32(self.mtu, serializer);
+    sse_encode_bool(self.latencyFirst, serializer);
+    sse_encode_bool(self.enableExitNode, serializer);
+    sse_encode_bool(self.noTun, serializer);
+    sse_encode_bool(self.useSmoltcp, serializer);
+    sse_encode_String(self.relayNetworkWhitelist, serializer);
+    sse_encode_bool(self.disableP2P, serializer);
+    sse_encode_bool(self.relayAllPeerRpc, serializer);
+    sse_encode_bool(self.disableUdpHolePunching, serializer);
+    sse_encode_bool(self.multiThread, serializer);
+    sse_encode_i_32(self.dataCompressAlgo, serializer);
+    sse_encode_bool(self.bindDevice, serializer);
+    sse_encode_bool(self.enableKcpProxy, serializer);
+    sse_encode_bool(self.disableKcpInput, serializer);
+    sse_encode_bool(self.disableRelayKcp, serializer);
+    sse_encode_bool(self.proxyForwardBySystem, serializer);
   }
 
   @protected
@@ -1181,6 +1317,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         self.$1, serializer);
     sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRoute(
         self.$2, serializer);
+  }
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint32(self);
   }
 
   @protected

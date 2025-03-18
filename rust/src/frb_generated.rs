@@ -108,6 +108,7 @@ fn wire__crate__api__simple__create_server_impl(
             let api_room_name = <String>::sse_decode(&mut deserializer);
             let api_room_password = <String>::sse_decode(&mut deserializer);
             let api_severurl = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_flag = <crate::api::simple::FlagsC>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -119,6 +120,7 @@ fn wire__crate__api__simple__create_server_impl(
                             api_room_name,
                             api_room_password,
                             api_severurl,
+                            api_flag,
                         );
                     })?;
                     Ok(output_ok)
@@ -510,6 +512,54 @@ impl SseDecode for f64 {
     }
 }
 
+impl SseDecode for crate::api::simple::FlagsC {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_defaultProtocol = <String>::sse_decode(deserializer);
+        let mut var_devName = <String>::sse_decode(deserializer);
+        let mut var_enableEncryption = <bool>::sse_decode(deserializer);
+        let mut var_enableIpv6 = <bool>::sse_decode(deserializer);
+        let mut var_mtu = <u32>::sse_decode(deserializer);
+        let mut var_latencyFirst = <bool>::sse_decode(deserializer);
+        let mut var_enableExitNode = <bool>::sse_decode(deserializer);
+        let mut var_noTun = <bool>::sse_decode(deserializer);
+        let mut var_useSmoltcp = <bool>::sse_decode(deserializer);
+        let mut var_relayNetworkWhitelist = <String>::sse_decode(deserializer);
+        let mut var_disableP2P = <bool>::sse_decode(deserializer);
+        let mut var_relayAllPeerRpc = <bool>::sse_decode(deserializer);
+        let mut var_disableUdpHolePunching = <bool>::sse_decode(deserializer);
+        let mut var_multiThread = <bool>::sse_decode(deserializer);
+        let mut var_dataCompressAlgo = <i32>::sse_decode(deserializer);
+        let mut var_bindDevice = <bool>::sse_decode(deserializer);
+        let mut var_enableKcpProxy = <bool>::sse_decode(deserializer);
+        let mut var_disableKcpInput = <bool>::sse_decode(deserializer);
+        let mut var_disableRelayKcp = <bool>::sse_decode(deserializer);
+        let mut var_proxyForwardBySystem = <bool>::sse_decode(deserializer);
+        return crate::api::simple::FlagsC {
+            default_protocol: var_defaultProtocol,
+            dev_name: var_devName,
+            enable_encryption: var_enableEncryption,
+            enable_ipv6: var_enableIpv6,
+            mtu: var_mtu,
+            latency_first: var_latencyFirst,
+            enable_exit_node: var_enableExitNode,
+            no_tun: var_noTun,
+            use_smoltcp: var_useSmoltcp,
+            relay_network_whitelist: var_relayNetworkWhitelist,
+            disable_p2p: var_disableP2P,
+            relay_all_peer_rpc: var_relayAllPeerRpc,
+            disable_udp_hole_punching: var_disableUdpHolePunching,
+            multi_thread: var_multiThread,
+            data_compress_algo: var_dataCompressAlgo,
+            bind_device: var_bindDevice,
+            enable_kcp_proxy: var_enableKcpProxy,
+            disable_kcp_input: var_disableKcpInput,
+            disable_relay_kcp: var_disableRelayKcp,
+            proxy_forward_by_system: var_proxyForwardBySystem,
+        };
+    }
+}
+
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -667,6 +717,13 @@ impl SseDecode for (Vec<PeerInfo>, Vec<Route>) {
     }
 }
 
+impl SseDecode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for u64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -790,6 +847,40 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<Route>> for Route {
     }
 }
 
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::FlagsC {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.default_protocol.into_into_dart().into_dart(),
+            self.dev_name.into_into_dart().into_dart(),
+            self.enable_encryption.into_into_dart().into_dart(),
+            self.enable_ipv6.into_into_dart().into_dart(),
+            self.mtu.into_into_dart().into_dart(),
+            self.latency_first.into_into_dart().into_dart(),
+            self.enable_exit_node.into_into_dart().into_dart(),
+            self.no_tun.into_into_dart().into_dart(),
+            self.use_smoltcp.into_into_dart().into_dart(),
+            self.relay_network_whitelist.into_into_dart().into_dart(),
+            self.disable_p2p.into_into_dart().into_dart(),
+            self.relay_all_peer_rpc.into_into_dart().into_dart(),
+            self.disable_udp_hole_punching.into_into_dart().into_dart(),
+            self.multi_thread.into_into_dart().into_dart(),
+            self.data_compress_algo.into_into_dart().into_dart(),
+            self.bind_device.into_into_dart().into_dart(),
+            self.enable_kcp_proxy.into_into_dart().into_dart(),
+            self.disable_kcp_input.into_into_dart().into_dart(),
+            self.disable_relay_kcp.into_into_dart().into_dart(),
+            self.proxy_forward_by_system.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::simple::FlagsC {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::FlagsC> for crate::api::simple::FlagsC {
+    fn into_into_dart(self) -> crate::api::simple::FlagsC {
+        self
+    }
+}
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::simple::KVNetworkStatus {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
@@ -964,6 +1055,32 @@ impl SseEncode for f64 {
     }
 }
 
+impl SseEncode for crate::api::simple::FlagsC {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.default_protocol, serializer);
+        <String>::sse_encode(self.dev_name, serializer);
+        <bool>::sse_encode(self.enable_encryption, serializer);
+        <bool>::sse_encode(self.enable_ipv6, serializer);
+        <u32>::sse_encode(self.mtu, serializer);
+        <bool>::sse_encode(self.latency_first, serializer);
+        <bool>::sse_encode(self.enable_exit_node, serializer);
+        <bool>::sse_encode(self.no_tun, serializer);
+        <bool>::sse_encode(self.use_smoltcp, serializer);
+        <String>::sse_encode(self.relay_network_whitelist, serializer);
+        <bool>::sse_encode(self.disable_p2p, serializer);
+        <bool>::sse_encode(self.relay_all_peer_rpc, serializer);
+        <bool>::sse_encode(self.disable_udp_hole_punching, serializer);
+        <bool>::sse_encode(self.multi_thread, serializer);
+        <i32>::sse_encode(self.data_compress_algo, serializer);
+        <bool>::sse_encode(self.bind_device, serializer);
+        <bool>::sse_encode(self.enable_kcp_proxy, serializer);
+        <bool>::sse_encode(self.disable_kcp_input, serializer);
+        <bool>::sse_encode(self.disable_relay_kcp, serializer);
+        <bool>::sse_encode(self.proxy_forward_by_system, serializer);
+    }
+}
+
 impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1079,6 +1196,13 @@ impl SseEncode for (Vec<PeerInfo>, Vec<Route>) {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<PeerInfo>>::sse_encode(self.0, serializer);
         <Vec<Route>>::sse_encode(self.1, serializer);
+    }
+}
+
+impl SseEncode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u32::<NativeEndian>(self).unwrap();
     }
 }
 

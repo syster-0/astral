@@ -1,13 +1,16 @@
 // 导入必要的包
 import 'dart:convert';
 
+import 'package:astral/config/app_config.dart';
 import 'package:astral/src/rust/api/simple.dart';
+import 'package:astral/src/rust/frb_generated.dart';
 import 'package:astral/utils/kv_state.dart';
 import 'package:astral/utils/app_info.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 替换 provider 导入
 import '../widgets/card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../utils/runin.dart';
@@ -31,7 +34,7 @@ String _intToIpv4String(int addr) {
 
 /// 首页组件
 /// 用于显示应用的主页面，包含主题切换和问候功能
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   // 主题模式切换回调函数
   final Function toggleThemeMode;
   // 主题色更改回调函数
@@ -48,10 +51,10 @@ class HomePage extends StatefulWidget {
   });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   int connectionTimeoutCounter = 0;
   // 当前连接状态
   ConnectionState _connectionState = ConnectionState.notStarted;
@@ -74,6 +77,7 @@ class _HomePageState extends State<HomePage> {
   bool _isAutoIP = true; // 只用于控制IP自动/手动模式
 
   List<String> Serverip = [""];
+  List<ServerConfig> Serveripz = [];
   int _uploadBytes = 0;
   int _downloadBytes = 0;
   int _lastUploadBytes = 0;
@@ -129,32 +133,32 @@ class _HomePageState extends State<HomePage> {
   void _onVirtualIPFocusChange() {
     if (!_virtualIPFocusNode.hasFocus && !_isAutoIP) {
       // 当失去焦点且不是自动IP模式时更新值
-      Provider.of<KM>(context, listen: false).virtualIP =
-          _virtualIPController.text;
+      ref
+          .read(virtualIPProvider.notifier)
+          .setVirtualIP(_virtualIPController.text);
     }
   }
 
   // 添加用户名焦点变化监听方法
   void _onUsernameFocusChange() {
     if (!_usernameControllerFocusNode.hasFocus) {
-      Provider.of<KM>(context, listen: false).username =
-          _usernameController.text;
+      ref.read(usernameProvider.notifier).setUsername(_usernameController.text);
     }
   }
 
   // 添加房间名焦点变化监听方法
   void _onRoomNameFocusChange() {
     if (!_roomNameControllerFocusNode.hasFocus) {
-      Provider.of<KM>(context, listen: false).roomName =
-          _roomNameController.text;
+      ref.read(roomNameProvider.notifier).setRoomName(_roomNameController.text);
     }
   }
 
   // 添加房间密码焦点变化监听方法
   void _onRoomPasswordFocusChange() {
     if (!_roomPasswordControllerFocusNode.hasFocus) {
-      Provider.of<KM>(context, listen: false).roomPassword =
-          _roomPasswordController.text;
+      ref
+          .read(roomPasswordProvider.notifier)
+          .setRoomPassword(_roomPasswordController.text);
     }
   }
 
@@ -186,19 +190,75 @@ class _HomePageState extends State<HomePage> {
   }
 
   void toggleRunning() {
-    final km = Provider.of<KM>(context, listen: false);
     setState(() {
       isRunning = !isRunning;
       if (isRunning) {
         // 切换到连接中状态
         _connectionState = ConnectionState.connecting;
+
+        //利用 Serveripz 重组
+        List<String> ssServerip = [];
+        print(ssServerip);
+        for (var item in Serveripz) {
+          if (item.tcp) {
+            ssServerip.add("tcp://" + item.url);
+          }
+          if (item.udp) {
+            ssServerip.add("udp://" + item.url);
+          }
+          if (item.ws) {
+            ssServerip.add("ws://" + item.url);
+          }
+          if (item.wss) {
+            ssServerip.add("wss://" + item.url);
+          }
+          if (item.quic) {
+            ssServerip.add("quic://" + item.url);
+          }
+        }
+        // 复制
         createServer(
             username: username,
             enableDhcp: _isAutoIP,
             specifiedIp: publicIP,
             roomName: roomName,
             roomPassword: roomPassword,
-            severurl: Serverip);
+            severurl: ssServerip,
+            flag: FlagsC(
+                defaultProtocol: ref.read(advancedConfigProvider)['defaultProtocol'] ??
+                    "tcp",
+                devName: ref.read(advancedConfigProvider)['devName'] ?? "",
+                enableEncryption:
+                    ref.read(advancedConfigProvider)['enableEncryption'] ??
+                        true,
+                enableIpv6:
+                    ref.read(advancedConfigProvider)['enableIpv6'] ?? true,
+                mtu: ref.read(advancedConfigProvider)['mtu'] ?? 1380,
+                multiThread:
+                    ref.read(advancedConfigProvider)['multiThread'] ?? true,
+                latencyFirst:
+                    ref.read(advancedConfigProvider)['latencyFirst'] ?? false,
+                enableExitNode:
+                    ref.read(advancedConfigProvider)['enableExitNode'] ?? false,
+                noTun: ref.read(advancedConfigProvider)['noTun'] ?? false,
+                useSmoltcp:
+                    ref.read(advancedConfigProvider)['useSmoltcp'] ?? false,
+                relayNetworkWhitelist:
+                    ref.read(advancedConfigProvider)['relayNetworkWhitelist'] ??
+                        "*",
+                disableP2P:
+                    ref.read(advancedConfigProvider)['disableP2p'] ?? false,
+                relayAllPeerRpc:
+                    ref.read(advancedConfigProvider)['relayAllPeerRpc'] ??
+                        false,
+                disableUdpHolePunching:
+                    ref.read(advancedConfigProvider)['disableUdpHolePunching'] ?? false,
+                dataCompressAlgo: ref.read(advancedConfigProvider)['dataCompressAlgo'] ?? "None",
+                bindDevice: ref.read(advancedConfigProvider)['bindDevice'] ?? true,
+                enableKcpProxy: ref.read(advancedConfigProvider)['enableKcpProxy'] ?? false,
+                disableKcpInput: ref.read(advancedConfigProvider)['disableKcpInput'] ?? false,
+                disableRelayKcp: ref.read(advancedConfigProvider)['disableRelayKcp'] ?? true,
+                proxyForwardBySystem: ref.read(advancedConfigProvider)['proxyForwardBySystem'] ?? false));
 
         // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
         timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
@@ -213,8 +273,7 @@ class _HomePageState extends State<HomePage> {
 
           // 获取网络状态
           final networkStatus = await getNetworkStatus();
-          final km = Provider.of<KM>(context, listen: false);
-          km.nodes = networkStatus.nodes;
+          ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
 
           // 更新网络流量数据
           _updateNetworkStats(networkStatus.nodes);
@@ -223,7 +282,7 @@ class _HomePageState extends State<HomePage> {
           if (version != null) {
             String ipStr = _intToIpv4String(version);
             if (publicIP != ipStr) {
-              km.virtualIP = ipStr;
+              ref.read(virtualIPProvider.notifier).setVirtualIP(ipStr);
             }
 
             // 如果当前状态还是连接中，则更新为已连接
@@ -245,8 +304,8 @@ class _HomePageState extends State<HomePage> {
               });
 
               closeAllServer();
-// 清空玩家列表数据
-              Provider.of<KM>(context, listen: false).nodes = [];
+              // 清空玩家列表数据
+              ref.read(nodesProvider.notifier).setNodes([]);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -269,13 +328,12 @@ class _HomePageState extends State<HomePage> {
             runningTime += const Duration(seconds: 1);
           });
         });
-        // 移除原来的Future.delayed模拟连接成功的代码
       } else {
         // 停止时重置状态
         _connectionState = ConnectionState.notStarted;
         closeAllServer();
         // 清空玩家列表数据
-        Provider.of<KM>(context, listen: false).nodes = [];
+        ref.read(nodesProvider.notifier).setNodes([]);
         timer?.cancel();
         runningTime = Duration.zero;
         // 重置网络统计数据
@@ -285,7 +343,6 @@ class _HomePageState extends State<HomePage> {
         _lastDownloadBytes = 0;
         uploadSpeed = 0;
         downloadSpeed = 0;
-        //connectionTimeoutCounter
       }
     });
   }
@@ -296,7 +353,7 @@ class _HomePageState extends State<HomePage> {
 
     int totalUploadBytes = 0;
     int totalDownloadBytes = 0;
-    String myIP = Provider.of<KM>(context, listen: false).virtualIP;
+    String myIP = ref.read(virtualIPProvider);
 
     // 查找本机节点
     for (var node in nodes) {
@@ -343,22 +400,22 @@ class _HomePageState extends State<HomePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final km = Provider.of<KM>(context);
+    // 使用 Riverpod 读取数据
     _roomNameController.value = TextEditingValue(
-      text: km.roomName,
+      text: ref.read(roomNameProvider),
       selection: _roomNameController.selection,
     );
     _roomPasswordController.value = TextEditingValue(
-      text: km.roomPassword,
+      text: ref.read(roomPasswordProvider),
       selection: _roomPasswordController.selection,
     );
     _usernameController.value = TextEditingValue(
-      text: km.username,
+      text: ref.read(usernameProvider),
       selection: _usernameController.selection,
     );
     // 添加虚拟IP控制器的值同步
     _virtualIPController.value = TextEditingValue(
-      text: km.virtualIP,
+      text: ref.read(virtualIPProvider),
       selection: _virtualIPController.selection,
     );
   }
@@ -366,15 +423,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    publicIP = Provider.of<KM>(context).virtualIP;
-    _isAutoIP = Provider.of<KM>(context).dynamicIP; // 更新自动IP状态
-    //我的房间
-    roomName = Provider.of<KM>(context).roomName;
-    //我的密码
-    roomPassword = Provider.of<KM>(context).roomPassword;
-    //我的用户名
-    username = Provider.of<KM>(context).username;
-    Serverip = Provider.of<KM>(context).serverIP;
+    // 使用 Riverpod 读取数据
+    publicIP = ref.watch(virtualIPProvider);
+    _isAutoIP = ref.watch(dynamicIPProvider);
+    roomName = ref.watch(roomNameProvider);
+    roomPassword = ref.watch(roomPasswordProvider);
+    username = ref.watch(usernameProvider);
+    Serverip = ref.watch(serverIPProvider);
+    // 从 selectedServerProvider 获取服务器配置列表
+    final serverConfigs =
+        ref.watch(selectedServerProvider) as List<ServerConfig>;
+    Serveripz = serverConfigs;
 
     // 使用 LayoutBuilder 来处理布局变化，同时保留状态
     return Scaffold(
@@ -576,53 +635,57 @@ class _HomePageState extends State<HomePage> {
 
 // 添加服务器列表卡片
   Widget _buildServerListCard(ColorScheme colorScheme) {
-    final km = Provider.of<KM>(context);
-    // 直接使用 serverIP 列表，而不是尝试访问 serverList
-    final serverUrls = km.serverIP;
+    return Consumer(
+      builder: (context, ref, child) {
+        // 直接使用 serverIP 列表
+        final serverUrls = ref.watch(serverIPProvider);
 
-    return FloatingCard(
-      colorScheme: colorScheme,
-      maxWidth: 600,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 标题栏
-          Row(
+        return FloatingCard(
+          colorScheme: colorScheme,
+          maxWidth: 600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.dns, color: colorScheme.primary, size: 22),
-              const SizedBox(width: 8),
-              const Text('当前服务器',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              // 标题栏
+              Row(
+                children: [
+                  Icon(Icons.dns, color: colorScheme.primary, size: 22),
+                  const SizedBox(width: 8),
+                  const Text('当前服务器',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 当前选中的服务器
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: serverUrls.isEmpty ||
+                        (serverUrls.length == 1 && serverUrls[0].isEmpty)
+                    ? [
+                        Chip(
+                          avatar: Icon(Icons.info_outline,
+                              size: 16, color: colorScheme.error),
+                          label: const Text('未选择服务器'),
+                          backgroundColor:
+                              colorScheme.errorContainer.withOpacity(0.3),
+                        )
+                      ]
+                    : serverUrls
+                        .map((url) => Chip(
+                              avatar: Icon(Icons.dns,
+                                  size: 16, color: colorScheme.primary),
+                              label: Text(url),
+                              backgroundColor: colorScheme.surfaceVariant,
+                            ))
+                        .toList(),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // 当前选中的服务器
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: serverUrls.isEmpty ||
-                    (serverUrls.length == 1 && serverUrls[0].isEmpty)
-                ? [
-                    Chip(
-                      avatar: Icon(Icons.info_outline,
-                          size: 16, color: colorScheme.error),
-                      label: const Text('未选择服务器'),
-                      backgroundColor:
-                          colorScheme.errorContainer.withOpacity(0.3),
-                    )
-                  ]
-                : serverUrls
-                    .map((url) => Chip(
-                          avatar: Icon(Icons.dns,
-                              size: 16, color: colorScheme.primary),
-                          label: Text(url),
-                          backgroundColor: colorScheme.surfaceVariant,
-                        ))
-                    .toList(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -716,8 +779,7 @@ class _HomePageState extends State<HomePage> {
 
   // 优化用户信息卡片
   Widget _buildUserInfoCard(ColorScheme colorScheme) {
-    final km = Provider.of<KM>(context, listen: false);
-    final isValidIP = _isAutoIP || _isValidIPv4(km.virtualIP);
+    final isValidIP = _isAutoIP || _isValidIPv4(ref.watch(virtualIPProvider));
 
     return FloatingCard(
       colorScheme: colorScheme,
@@ -762,8 +824,9 @@ class _HomePageState extends State<HomePage> {
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
               // 改为完成编辑时更新
-              Provider.of<KM>(context, listen: false).username =
-                  _usernameController.text;
+              ref
+                  .read(usernameProvider.notifier)
+                  .setUsername(_usernameController.text);
             },
             decoration: InputDecoration(
               labelText: '用户名',
@@ -789,8 +852,9 @@ class _HomePageState extends State<HomePage> {
                   onEditingComplete: () {
                     // 添加完成编辑回调
                     if (!_isAutoIP) {
-                      Provider.of<KM>(context, listen: false).virtualIP =
-                          _virtualIPController.text;
+                      ref
+                          .read(virtualIPProvider.notifier)
+                          .setVirtualIP(_virtualIPController.text);
                     }
                   },
                   decoration: InputDecoration(
@@ -812,10 +876,14 @@ class _HomePageState extends State<HomePage> {
                             setState(() {
                               _isAutoIP = value;
                             });
-                            km.dynamicIP = value;
+                            ref
+                                .read(dynamicIPProvider.notifier)
+                                .setDynamicIP(value);
                             // 切换模式时同步最新值
                             if (!value) {
-                              km.virtualIP = _virtualIPController.text;
+                              ref
+                                  .read(virtualIPProvider.notifier)
+                                  .setVirtualIP(_virtualIPController.text);
                             }
                           }
                         : null,
@@ -846,7 +914,6 @@ class _HomePageState extends State<HomePage> {
 
   // 优化房间信息卡片
   Widget _buildRoomInfoCard(ColorScheme colorScheme) {
-    final km = Provider.of<KM>(context, listen: false);
     return FloatingCard(
       colorScheme: colorScheme,
       maxWidth: 600,
@@ -890,8 +957,9 @@ class _HomePageState extends State<HomePage> {
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
               // 改为完成编辑时更新
-              Provider.of<KM>(context, listen: false).roomName =
-                  _roomNameController.text;
+              ref
+                  .read(roomNameProvider.notifier)
+                  .setRoomName(_roomNameController.text);
             },
             decoration: InputDecoration(
               labelText: '房间名称',
@@ -908,9 +976,9 @@ class _HomePageState extends State<HomePage> {
             focusNode: _roomPasswordControllerFocusNode, // 添加焦点节点
             enabled: _connectionState != ConnectionState.connected,
             onEditingComplete: () {
-              // 改为完成编辑时更新
-              Provider.of<KM>(context, listen: false).roomPassword =
-                  _roomPasswordController.text;
+              ref
+                  .read(roomPasswordProvider.notifier)
+                  .setRoomPassword(_roomPasswordController.text);
             },
             obscureText: true,
             decoration: InputDecoration(

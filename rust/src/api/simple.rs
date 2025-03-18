@@ -2,7 +2,7 @@ pub use std::collections::BTreeMap;
 //use BTreeMap
 use dashmap::DashMap;
 pub use easytier::common::global_ctx::{EventBusSubscriber, GlobalCtxEvent};
-use easytier::common::scoped_task::ScopedTask;
+use easytier::common::{config::Flags, scoped_task::ScopedTask};
 pub use easytier::{
     common::config::{ConfigLoader, TomlConfigLoader},
     launcher::NetworkInstance,
@@ -158,6 +158,7 @@ fn create_config() -> TomlConfigLoader {
     cfg.set_listeners(vec![
         "tcp://0.0.0.0:11010".to_string().parse().unwrap(),
         "udp://0.0.0.0:11010".to_string().parse().unwrap(),
+        "tcp://[::]:11010".to_string().parse().unwrap(),
     ]);
     // cfg.set_inst_name("default".to_string());
     // cfg.set_inst_name(name);
@@ -566,6 +567,30 @@ pub fn get_running_info() -> String {
         .unwrap_or_else(|| "{}".to_string())
 }
 
+pub struct FlagsC {
+    pub default_protocol: String,
+    pub dev_name: String,
+    pub enable_encryption: bool,
+    pub enable_ipv6: bool,
+    pub mtu: u32,
+    pub latency_first: bool,
+    pub enable_exit_node: bool,
+    pub no_tun: bool,
+    pub use_smoltcp: bool,
+    pub relay_network_whitelist: String,
+    pub disable_p2p: bool,
+    pub relay_all_peer_rpc: bool,
+    pub disable_udp_hole_punching: bool,
+    /// string ipv6_listener = 14; \[deprecated = true\]; use -l udp://\[::\]:12345 instead
+    pub multi_thread: bool,
+    pub data_compress_algo: i32,
+    pub bind_device: bool,
+    pub enable_kcp_proxy: bool,
+    pub disable_kcp_input: bool,
+    pub disable_relay_kcp: bool,
+    pub proxy_forward_by_system: bool,
+}
+
 // 创建服务器
 pub fn create_server(
     username: String,
@@ -574,6 +599,7 @@ pub fn create_server(
     room_name: String,
     room_password: String,
     severurl: Vec<String>,
+    flag:FlagsC,
 ) {
     RT.spawn(async move {
         // 创建一个示例配置
@@ -581,6 +607,26 @@ pub fn create_server(
         cfg.set_hostname(Option::from(username));
         cfg.set_dhcp(enable_dhcp);
         let mut flags = cfg.get_flags();
+        flags.default_protocol = flag.default_protocol;
+        flags.dev_name = flag.dev_name;
+        flags.enable_encryption = flag.enable_encryption;
+        flags.enable_ipv6 = flag.enable_ipv6;
+        flags.mtu = flag.mtu;
+        flags.latency_first = flag.latency_first;
+        flags.enable_exit_node = flag.enable_exit_node;
+        flags.no_tun = flag.no_tun;
+        flags.use_smoltcp = flag.use_smoltcp;
+        flags.relay_network_whitelist = flag.relay_network_whitelist;
+        flags.disable_p2p = flag.disable_p2p;
+        flags.relay_all_peer_rpc = flag.relay_all_peer_rpc;
+        flags.disable_udp_hole_punching = flag.disable_udp_hole_punching;
+        flags.multi_thread = flag.multi_thread;
+        flags.data_compress_algo = flag.data_compress_algo;
+        flags.bind_device = flag.bind_device;
+        flags.enable_kcp_proxy = flag.enable_kcp_proxy;
+        flags.disable_kcp_input = flag.disable_kcp_input;
+        flags.disable_relay_kcp = flag.disable_relay_kcp;
+        flags.proxy_forward_by_system = flag.proxy_forward_by_system;
         // flags.dev_name = "astral".to_string();
         cfg.set_flags(flags);
         // 创建TCP和UDP连接配置列表
@@ -588,10 +634,7 @@ pub fn create_server(
         // 为每个服务器URL创建TCP和UDP配置
         for url in severurl {
             peer_configs.push(PeerConfig {
-                uri: format!("tcp://{}", url).parse().unwrap(),
-            });
-            peer_configs.push(PeerConfig {
-                uri: format!("udp://{}", url).parse().unwrap(),
+                uri: format!("{}", url).parse().unwrap(),
             });
         }
         

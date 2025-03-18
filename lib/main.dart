@@ -3,9 +3,9 @@ import 'package:astral/src/rust/frb_generated.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'config/windowconfiguration.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/app_config.dart';
 import 'utils/kv_state.dart';
-import 'package:provider/provider.dart'; // 添加这一行
 import 'package:astral/utils/app_info.dart';
 
 Future<void> main() async {
@@ -19,8 +19,7 @@ Future<void> main() async {
   // 初始化应用信息
   await RustLib.init();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => KM(),
+    ProviderScope(
       child: const MyApp(),
     ),
   );
