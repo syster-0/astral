@@ -304,6 +304,47 @@ pub struct KVNetworkStatus {
     pub nodes: Vec<KVNodeInfo>,
 }
 
+// 获取网络中所有节点的IP地址列表
+pub fn get_all_ips() -> Vec<String> {
+    let mut result = Vec::new();
+    
+    if let Some(instance) = INSTANCE_MAP.iter().next() {
+        if let Some(info) = instance.get_running_info() {
+            
+            // 添加所有远程节点IP
+            for route in &info.routes {
+                if let Some(ipv4_addr) = &route.ipv4_addr {
+                    if let Some(addr) = &ipv4_addr.address {
+                        let ip = format!(
+                            "{}.{}.{}.{}/{}",
+                            (addr.addr >> 24) & 0xFF,
+                            (addr.addr >> 16) & 0xFF,
+                            (addr.addr >> 8) & 0xFF,
+                            addr.addr & 0xFF,
+                            ipv4_addr.network_length
+                        );
+                        // 避免重复添加
+                        if !result.contains(&ip) {
+                            result.push(ip);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    result
+}
+
+// 设置TUN设备的文件描述符
+pub fn set_tun_fd(fd: i32) -> Result<(), String> {
+    // 遍历所有实例并设置TUN文件描述符
+    for mut instance in INSTANCE_MAP.iter_mut() {
+        instance.set_tun_fd(fd);
+    }
+    Ok(())
+}
+
 // 获取网络状态信息
 pub fn get_network_status() -> KVNetworkStatus {
     let pairs = get_peer_route_pairs().unwrap_or_default();

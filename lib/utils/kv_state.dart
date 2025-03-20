@@ -6,6 +6,25 @@ import '../config/app_config.dart';
 // 全局配置实例
 final appConfigProvider = Provider<AppConfig>((ref) => AppConfig());
 
+enum VpnRunningState {
+  stopped,    // VPN已停止
+  starting,   // VPN正在启动
+  running,    // VPN正在运行
+}
+
+class VpnStatus {
+  final VpnRunningState state;
+  final String? ipv4Addr; // null 表示未定义
+  final int? ipv4Cidr; // null 表示未定义
+  final List<String> routes;
+
+  const VpnStatus({
+    this.state = VpnRunningState.stopped,
+    this.ipv4Addr,
+    this.ipv4Cidr,
+    this.routes = const [],
+  });
+}
 // 计数器相关
 class CountNotifier extends StateNotifier<int> {
   CountNotifier() : super(0);
@@ -433,4 +452,46 @@ final disableKcpInputProvider = Provider<bool>((ref) {
 
 final disableRelayKcpProvider = Provider<bool>((ref) {
   return ref.watch(advancedConfigProvider)['disableRelayKcp'];
+});
+
+class VpnStatusNotifier extends StateNotifier<VpnStatus> {
+  VpnStatusNotifier() : super(const VpnStatus());
+
+  @override
+  set state(VpnStatus value) {
+    VpnStatus previous = state;
+    super.state = value;
+    
+    // 状态发生变化时的处理
+    if (previous.state != value.state) {
+      debugPrint('VPN状态变化: ${previous.state} -> ${value.state}');
+    }
+    if (previous.ipv4Addr != value.ipv4Addr) {
+      debugPrint('IPv4地址变化: ${previous.ipv4Addr} -> ${value.ipv4Addr}');
+    }
+    if (previous.ipv4Cidr != value.ipv4Cidr) {
+      debugPrint('CIDR变化: ${previous.ipv4Cidr} -> ${value.ipv4Cidr}');
+    }
+    if (!listEquals(previous.routes, value.routes)) {
+      debugPrint('路由变化: ${previous.routes} -> ${value.routes}');
+    }
+  }
+
+  void updateStatus({
+    VpnRunningState? state,
+    String? ipv4Addr,
+    int? ipv4Cidr,
+    List<String>? routes,
+  }) {
+    this.state = VpnStatus(
+      state: state ?? this.state.state,
+      ipv4Addr: ipv4Addr ?? this.state.ipv4Addr,
+      ipv4Cidr: ipv4Cidr ?? this.state.ipv4Cidr,
+      routes: routes ?? this.state.routes,
+    );
+  }
+}
+
+final vpnStatusProvider = StateNotifierProvider<VpnStatusNotifier, VpnStatus>((ref) {
+  return VpnStatusNotifier();
 });

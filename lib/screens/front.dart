@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // 替换 provider 导�
 import '../widgets/card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../utils/runin.dart';
+import 'package:vpn_service_plugin/vpn_service_plugin.dart';
 
 enum ConnectionState { notStarted, connecting, connected }
 
@@ -56,9 +57,33 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  final vpnPlugin = VpnServicePlugin();
+
   int connectionTimeoutCounter = 0;
+
   // 当前连接状态
   ConnectionState _connectionState = ConnectionState.notStarted;
+
+  void _startVpn({
+    required String ipv4Addr,
+    int mtu = 1300,
+    List<String> disallowedApplications = const ['com.example.astral'],
+  }) {
+    if (ipv4Addr.isNotEmpty & (ipv4Addr != "")) {
+      // 确保IP地址格式为"IP/掩码"
+      if (!ipv4Addr.contains('/')) {
+        ipv4Addr = "$ipv4Addr/24";
+      }
+
+      vpnPlugin.startVpn(
+        ipv4Addr: ipv4Addr,
+        mtu: mtu,
+        disallowedApplications: disallowedApplications,
+      );
+    } else {
+      debugPrint("错误：无法启动VPN，IP地址为空");
+    }
+  }
 
   bool isRunning = false; // 只用于控制启动/暂停状态
   Duration runningTime = Duration.zero;
@@ -100,6 +125,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+
     // 初始化所有TextEditingController
     _roomNameController = TextEditingController(text: roomName);
     _roomPasswordController = TextEditingController(text: roomPassword);
@@ -128,7 +154,20 @@ class _HomePageState extends ConsumerState<HomePage> {
       _buildServerListCard,
       _buildVersionInfoCard,
     ];
-    // 启动内存监控
+    if (Platform.isAndroid) {
+      // 监听VPN服务启动事件
+      vpnPlugin.onVpnServiceStarted.listen((data) {
+        print('VPN服务已启动，文件描述符: ${data['fd']}');
+        setTunFd(fd: data['fd']);
+        // 在这里处理VPN启动后的逻辑
+      });
+
+      // 监听VPN服务停止事件
+      vpnPlugin.onVpnServiceStopped.listen((data) {
+        print('VPN服务已停止');
+        // 在这里处理VPN停止后的逻辑
+      });
+    }
   }
 
   // 添加焦点变化监听方法
@@ -139,6 +178,56 @@ class _HomePageState extends ConsumerState<HomePage> {
           .read(virtualIPProvider.notifier)
           .setVirtualIP(_virtualIPController.text);
     }
+  }
+
+  // 添加一个处理VPN路由的方法
+  List<String> _getValidRoutesForVpn(List<String> routes) {
+    if (routes.isEmpty) {
+      return [];
+    }
+
+    // 处理每个路由地址，确保格式正确
+    List<String> validRoutes = [];
+    for (String route in routes) {
+      if (route.isEmpty) continue;
+
+      String processedRoute = route;
+      // 如果不包含CIDR格式（没有"/"），则添加"/32"
+      if (!processedRoute.contains('/')) {
+        processedRoute += '/32';
+      }
+
+      try {
+        // 解析IP和CIDR部分
+        final parts = processedRoute.split('/');
+        final ipPart = parts[0];
+        final cidrPart = parts[1];
+
+        // 验证IP地址格式
+        if (_isValidIPv4(ipPart)) {
+          // 对于主机IP（如10.126.126.2），使用/32而不是/24
+          // 对于网络IP（如10.126.126.0），使用/24
+          final ipOctets = ipPart.split('.');
+          final lastOctet = int.parse(ipOctets[3]);
+
+          // 如果最后一个八位字节不是0，且CIDR是24，可能需要调整为/32
+          if (lastOctet != 0 && cidrPart == "24") {
+            // 这是一个主机IP，使用/32
+            validRoutes.add("$ipPart/32");
+          } else {
+            // 保持原样
+            validRoutes.add(processedRoute);
+          }
+        } else {
+          debugPrint('跳过无效路由IP: $ipPart');
+        }
+      } catch (e) {
+        debugPrint('处理路由时出错: $route, 错误: $e');
+      }
+    }
+
+    // 去重并排序
+    return validRoutes.toSet().toList()..sort();
   }
 
   // 添加用户名焦点变化监听方法
@@ -200,7 +289,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
         //利用 Serveripz 重组
         List<String> ssServerip = [];
-        print(ssServerip);
         for (var item in Serveripz) {
           if (item.tcp) {
             ssServerip.add("tcp://" + item.url);
@@ -218,7 +306,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             ssServerip.add("quic://" + item.url);
           }
         }
-        // 复制
+        // 复制 创建服务器
+        // 启动VPN服务
+        if (Platform.isAndroid) {
+          vpnPlugin.prepareVpn();
+        }
+
         createServer(
             username: username,
             enableDhcp: _isAutoIP,
@@ -286,6 +379,13 @@ class _HomePageState extends ConsumerState<HomePage> {
           final networkStatus = await getNetworkStatus();
           ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
 
+          // 获取所有IP列表
+          List<String> llk = await getAllIps();
+          // 更新VPN状态
+          ref.read(vpnStatusProvider.notifier).updateStatus(
+                routes: llk,
+                ipv4Addr: publicIP, // 添加IP地址参数
+              );
           // 更新网络流量数据
           _updateNetworkStats(networkStatus.nodes);
 
@@ -298,6 +398,20 @@ class _HomePageState extends ConsumerState<HomePage> {
 
             // 如果当前状态还是连接中，则更新为已连接
             if (_connectionState == ConnectionState.connecting) {
+              if (Platform.isAndroid) {
+                // 确保IP地址不为空且格式正确
+                if (ipStr.isNotEmpty) {
+                  // 使用公共方法启动VPN
+                  _startVpn(
+                    ipv4Addr: ipStr,
+                  );
+                } else {
+                  // 处理IP为空的情况
+                  print("错误：无法获取有效的IP地址");
+                  // 可能需要停止连接过程
+                }
+              }
+
               setState(() {
                 _connectionState = ConnectionState.connected;
               });
@@ -340,6 +454,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           });
         });
       } else {
+        vpnPlugin.stopVpn();
         // 停止时重置状态
         _connectionState = ConnectionState.notStarted;
         closeAllServer();
@@ -444,6 +559,37 @@ class _HomePageState extends ConsumerState<HomePage> {
     // 从 selectedServerProvider 获取服务器配置列表
     final serverConfigs =
         ref.watch(selectedServerProvider) as List<ServerConfig>;
+
+    if (Platform.isAndroid) {
+      // 监听 VPN 状态,当状态为运行中时返回 true
+      ref.listen<VpnStatus>(vpnStatusProvider, (previous, current) {
+        if (previous != null) {
+          // 状态发生变化时的处理
+          if (previous.state != current.state) {
+            debugPrint('VPN状态变化: ${previous.state} -> ${current.state}');
+          }
+
+          if (previous.ipv4Addr != current.ipv4Addr) {
+            debugPrint('IPv4地址变化: ${previous.ipv4Addr} -> ${current.ipv4Addr}');
+            //判断ip有没有变化
+            if (publicIP != current.ipv4Addr &&
+                current.ipv4Addr?.isNotEmpty == true) {
+              // 使用公共方法启动VPN
+              _startVpn(ipv4Addr: current.ipv4Addr!);
+            }
+          }
+
+          if (previous.ipv4Cidr != current.ipv4Cidr) {
+            debugPrint('CIDR变化: ${previous.ipv4Cidr} -> ${current.ipv4Cidr}');
+          }
+
+          if (!listEquals(previous.routes, current.routes)) {
+            debugPrint('路由变化: ${previous.routes} -> ${current.routes}');
+          }
+        }
+      });
+    }
+
     Serveripz = serverConfigs;
 
     // 使用 LayoutBuilder 来处理布局变化，同时保留状态
@@ -1002,15 +1148,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // 添加IPv4地址验证方法
+// 验证IP地址格式是否有效
   bool _isValidIPv4(String ip) {
-    if (ip.isEmpty) return false;
+    if (ip == null || ip.isEmpty) return false;
 
-    // 使用正则表达式验证IPv4地址格式
-    final ipv4Pattern = RegExp(
+    final RegExp ipRegex = RegExp(
         r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$');
 
-    return ipv4Pattern.hasMatch(ip);
+    return ipRegex.hasMatch(ip);
   }
 }
 

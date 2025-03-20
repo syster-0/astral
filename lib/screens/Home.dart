@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
@@ -192,7 +194,12 @@ class _MainScreenState extends State<MainScreen>
             tooltip: '选择主题颜色',
             padding: const EdgeInsets.all(8), // 减小按钮内边距
           ),
-          const WindowControls(),
+
+          // 判断是否为桌面平台
+          if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) ...[
+            // 添加窗口控制按钮
+            const WindowControls(),
+          ]
         ],
       ),
       // 根据屏幕宽度决定使用侧边栏还是底部导航栏
