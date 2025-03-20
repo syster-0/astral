@@ -25,6 +25,12 @@ Future<String> easytierVersion() =>
 Future<bool> isEasytierRunning() =>
     RustLib.instance.api.crateApiSimpleIsEasytierRunning();
 
+Future<List<String>> getAllIps() =>
+    RustLib.instance.api.crateApiSimpleGetAllIps();
+
+Future<void> setTunFd({required int fd}) =>
+    RustLib.instance.api.crateApiSimpleSetTunFd(fd: fd);
+
 Future<KVNetworkStatus> getNetworkStatus() =>
     RustLib.instance.api.crateApiSimpleGetNetworkStatus();
 

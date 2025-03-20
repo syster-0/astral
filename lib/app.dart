@@ -1,11 +1,13 @@
 // 导入必要的Flutter包和自定义模块
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:system_tray/system_tray.dart';
 import 'dart:io';
 import 'screens/Home.dart';
 import 'config/themeconfiguration.dart' as theme_config;
 import 'config/app_config.dart';
+
+// 仅在桌面平台导入系统托盘
+import 'package:system_tray/system_tray.dart' if (dart.library.html) '';
 
 // 定义应用程序的主要StatefulWidget
 class MyApp extends StatefulWidget {
@@ -24,8 +26,8 @@ class _MyAppState extends State<MyApp> {
   int _currentIndex = 0;
 
   // 系统托盘相关变量
-  final SystemTray _systemTray = SystemTray();
-  final AppWindow _appWindow = AppWindow();
+  SystemTray? _systemTray;
+  AppWindow? _appWindow;
 
   @override
   void initState() {
@@ -35,18 +37,23 @@ class _MyAppState extends State<MyApp> {
     _themeMode = config.themeMode;
     useMaterial3 = true;
     _seedColor = config.seedColor;
-
-    // 初始化系统托盘
-    initSystemTray();
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      // 桌面平台代码
+      _systemTray = SystemTray();
+      _appWindow = AppWindow();
+      initSystemTray();
+    }
   }
 
   // 初始化系统托盘
   Future<void> initSystemTray() async {
+    if (_systemTray == null || _appWindow == null) return;
+
     // 设置托盘图标
     String path = 'assets/icon.ico';
 
     // 初始化托盘
-    await _systemTray.initSystemTray(
+    await _systemTray!.initSystemTray(
       title: "ASTRAL",
       iconPath: path,
     );
@@ -54,19 +61,19 @@ class _MyAppState extends State<MyApp> {
     // 设置托盘菜单
     final Menu menu = Menu();
     await menu.buildFrom([
-      MenuItemLabel(label: '打开应用', onClicked: (menuItem) => _appWindow.show()),
+      MenuItemLabel(label: '打开应用', onClicked: (menuItem) => _appWindow!.show()),
       MenuItemLabel(label: '退出', onClicked: (menuItem) => exit(0)),
     ]);
 
     // 设置托盘菜单
-    await _systemTray.setContextMenu(menu);
+    await _systemTray!.setContextMenu(menu);
 
     // 设置托盘点击事件
-    _systemTray.registerSystemTrayEventHandler((eventName) {
+    _systemTray!.registerSystemTrayEventHandler((eventName) {
       if (eventName == kSystemTrayEventClick) {
-        _appWindow.show();
+        _appWindow!.show();
       } else if (eventName == kSystemTrayEventRightClick) {
-        _systemTray.popUpContextMenu();
+        _systemTray!.popUpContextMenu();
       }
     });
   }
