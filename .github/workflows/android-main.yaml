@@ -4,7 +4,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛠️ 初始化
+        run: echo "🚀 开始 Android 主工作流"
+
   setup:
+    needs: init
     uses: ./.github/workflows/android-setup.yaml
 
   build-all:
