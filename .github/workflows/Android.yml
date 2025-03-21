@@ -7,39 +7,44 @@ jobs:
   build:
     runs-on: windows-latest
 
-    # 调整 GITHUB_TOKEN 的权限
     permissions:
-      contents: write  # 允许写入仓库内容（上传文件）
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # 安装 Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
 
-      # 安装 Android SDK 和 NDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          ndk-version: '21.4.7075529'  # 指定 NDK 版本
-          cmake-version: '3.18.1'      # 可选：安装 CMake
+          ndk-version: '27.2.12479018'  # Updated NDK version
+          cmake-version: '3.18.1'
 
-      # 配置 NDK 路径
+      - name: List Installed NDK Versions
+        run: |
+          echo "Listing installed NDK versions..."
+          $ndkDir = "$env:ANDROID_HOME\ndk"
+          if (Test-Path $ndkDir) {
+            Get-ChildItem -Path $ndkDir
+          } else {
+            echo "NDK directory $ndkDir does not exist."
+          }
+
       - name: Configure NDK Path
         run: |
           echo "Configuring NDK path..."
-          $ndkPath = "$env:ANDROID_HOME\ndk\21.4.7075529"
+          $ndkPath = "$env:ANDROID_HOME\ndk\25.2.9519653"  # Updated NDK version
           if (-Not (Test-Path $ndkPath)) {
             throw "NDK path $ndkPath does not exist. Please verify the NDK installation."
           }
           echo "ndk.dir=$ndkPath" | Out-File -FilePath "$env:GITHUB_WORKSPACE\android\local.properties" -Encoding utf8 -Append
           echo "NDK path configured to $ndkPath."
 
-      # 安装 Flutter
       - name: Install Flutter
         run: |
           echo "Cloning Flutter stable branch..."
@@ -48,21 +53,18 @@ jobs:
           echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "Flutter installation completed."
 
-      # 安装 Flutter 依赖
       - name: Install Flutter dependencies
         run: |
           echo "Fetching Flutter dependencies..."
           flutter pub get
           echo "Flutter dependencies installed."
 
-      # 编译 Flutter Android 应用
       - name: Build Flutter Android Release
         run: |
           echo "Building Flutter Android Release..."
           flutter build apk --release
           echo "Flutter Android Release build completed."
 
-      # 压缩 build\app\outputs\apk\release 目录
       - name: Compress Release Directory
         run: |
           echo "Compressing Release directory..."
@@ -71,7 +73,6 @@ jobs:
           Compress-Archive -Path $releaseDir -DestinationPath $zipFile
           echo "Release directory compressed to $zipFile."
 
-      # 上传压缩包作为 Artifact
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
