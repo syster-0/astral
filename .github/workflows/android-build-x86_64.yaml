@@ -73,6 +73,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-x86_64
-          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
-          retention-days: 1
-          if-no-files-found: error
+          path: build/app/outputs/flutter-apk/app-release.apk
