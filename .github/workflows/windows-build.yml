@@ -13,7 +13,8 @@ jobs:
     # 调整 GITHUB_TOKEN 的权限
     permissions:
       contents: write  # 允许写入仓库内容（上传文件）
-
+      packages: write
+      
     steps:
       - name: 🛠️ 检出代码仓库
         uses: actions/checkout@v4
