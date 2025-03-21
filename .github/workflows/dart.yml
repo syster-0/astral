@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       base_branch:
-        description: '基础分支 (例如: main)'
+        description: '基础分支 (例如: v0.0.0)'
         required: true
-        default: 'main'
+        default: 'v'
         type: string
       head_branch:
-        description: '目标分支 (例如: develop)'
+        description: '目标分支 (例如: main)'
         required: true
-        default: 'develop'
+        default: 'main'
         type: string
 
 jobs:
@@ -70,35 +70,52 @@ jobs:
           pip install google-generativeai
           
           # 创建 Python 脚本生成更新日志
-          cat > generate_changelog.py << 'EOF'
+          cat > generate_changelog.py << EOF
           import google.generativeai as genai
           import os
+          import sys
           
-          # 配置 API 密钥
-          genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
-          
-          # 读取提交信息
-          with open('commits.txt', 'r') as f:
-              commits = f.read()
-          
-          # 设置模型和生成参数
-          model = genai.GenerativeModel('gemini-1.5-flash')  # 修改为 Gemini 2.0 Flash
-          prompt = f"""
-          请根据以下Git提交记录，生成一份用户友好的更新日志。
-          将内容分类为"新功能"、"改进"、"修复"等类别。
-          使用简洁明了的中文描述每项变更。
-          
-          提交记录:
-          {commits}
-          """
-          
-          # 生成更新日志
-          response = model.generate_content(prompt)
-          
-          # 保存结果
-          with open('CHANGELOG.md', 'w') as f:
-              f.write("# 更新日志\n\n")
-              f.write(response.text)
+          try:
+              api_key = os.environ.get('GOOGLE_API_KEY')
+              if not api_key:
+                  print("Error: GOOGLE_API_KEY environment variable not found")
+                  sys.exit(1)
+                  
+              # 配置 API 密钥
+              genai.configure(api_key=api_key)
+              
+              # 读取提交信息
+              with open('commits.txt', 'r') as f:
+                  commits = f.read()
+              
+              if not commits.strip():
+                  print("No commits found between specified branches")
+                  with open('CHANGELOG.md', 'w') as f:
+                      f.write("# 更新日志\n\n无更新内容")
+                  sys.exit(0)
+              
+              # 设置模型和生成参数
+              model = genai.GenerativeModel('gemini-1.5-flash')
+              prompt = f"""
+              请根据以下Git提交记录，生成一份用户友好的更新日志。
+              将内容分类为"新功能"、"改进"、"修复"等类别。
+              使用简洁明了的中文描述每项变更。
+              
+              提交记录:
+              {commits}
+              """
+              
+              # 生成更新日志
+              response = model.generate_content(prompt)
+              
+              # 保存结果
+              with open('CHANGELOG.md', 'w') as f:
+                  f.write("# 更新日志\n\n")
+                  f.write(response.text)
+                  
+          except Exception as e:
+              print(f"Error: {str(e)}")
+              sys.exit(1)
           EOF
           
           # 执行 Python 脚本
