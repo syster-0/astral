@@ -11,56 +11,75 @@ jobs:
       contents: write
 
     steps:
+      # ✅ 检出代码
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
 
+      # ✅ 设置 JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
 
+      # ✅ 设置 Android SDK 和 NDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           ndk-version: '27.2.12479018'
           cmake-version: '3.18.1'
 
+      # ✅ 检查当前目录
       - name: Verify current directory
         run: |
           echo "Current working directory: $(pwd)"
           ls -la
 
-      - name: Switch to Android directory
+      # ✅ 清理 Gradle 缓存
+      - name: Clean Gradle Cache
         run: |
-          cd android
+          echo "Cleaning Gradle cache..."
+          ./gradlew clean
+          rm -rf ~/.gradle/caches
+          echo "Gradle cache cleaned."
 
+      # ✅ 下载并安装 Flutter
       - name: Install Flutter
         run: |
           echo "Cloning Flutter stable branch..."
           git clone https://github.com/flutter/flutter.git -b stable
-          echo "Verifying Flutter directory..."
-          ls -la $GITHUB_WORKSPACE/flutter
-          echo "Adding Flutter to PATH..."
-          echo "$GITHUB_WORKSPACE/flutter/bin" >> $GITHUB_PATH
-          echo "PATH is: $PATH"
-          echo "Testing Flutter command..."
-          $GITHUB_WORKSPACE/flutter/bin/flutter --version
+          echo "Flutter installed."
 
+      # ✅ 将 Flutter 添加到 PATH
+      - name: Add Flutter to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/flutter/bin" >> $GITHUB_PATH
+
+      # ✅ 验证 Flutter 是否可用（确保 PATH 生效）
+      - name: Verify Flutter
+        run: |
+          export PATH="$GITHUB_WORKSPACE/flutter/bin:$PATH"  # 临时加入 PATH 确保生效
+          flutter --version
+
+      # ✅ 安装 Flutter 依赖
       - name: Install Flutter dependencies
         run: |
+          export PATH="$GITHUB_WORKSPACE/flutter/bin:$PATH"
           echo "Fetching Flutter dependencies..."
           flutter pub get
           echo "Flutter dependencies installed."
 
+      # ✅ 构建 Flutter APK
       - name: Build Flutter APK
         run: |
+          export PATH="$GITHUB_WORKSPACE/flutter/bin:$PATH"
           echo "Building Flutter release APK..."
           flutter build apk --release
 
+      # ✅ 上传构建产物
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
