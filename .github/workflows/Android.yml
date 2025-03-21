@@ -5,13 +5,13 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest  # ✅ 改为 Linux 环境
 
     permissions:
       contents: write
 
     steps:
-      # ✅ 检出代码，确保完整文件
+      # ✅ 检出代码
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -35,28 +35,19 @@ jobs:
       # ✅ 检查当前目录
       - name: Verify current directory
         run: |
-          echo "Current working directory: $PWD"
-          ls
+          echo "Current working directory: $(pwd)"
+          ls -la
 
       # ✅ 切换到 Android 目录
       - name: Switch to Android directory
         run: |
           cd android
 
-      # ✅ 检查 Gradle Wrapper 文件
-      - name: Check for Gradle Wrapper
-        run: |
-          if (-Not (Test-Path ".\gradlew.bat")) {
-            echo "Gradle wrapper not found, installing it..."
-            gradle wrapper
-          }
-          echo "Gradle wrapper is present."
-
       # ✅ 清理 Gradle 缓存
       - name: Clean Gradle Cache
         run: |
           echo "Cleaning Gradle cache..."
-          .\gradlew.bat clean
+          ./gradlew clean
           rm -rf ~/.gradle/caches
           echo "Gradle cache cleaned."
 
@@ -66,8 +57,8 @@ jobs:
           echo "Cloning Flutter stable branch..."
           git clone https://github.com/flutter/flutter.git -b stable
           echo "Adding Flutter to PATH..."
-          echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "Flutter installation completed."
+          echo "$GITHUB_WORKSPACE/flutter/bin" >> $GITHUB_PATH
+          flutter --version
 
       # ✅ 安装 Flutter 依赖
       - name: Install Flutter dependencies
@@ -76,4 +67,15 @@ jobs:
           flutter pub get
           echo "Flutter dependencies installed."
 
-      # ✅ 构建 Flutter
+      # ✅ 构建 Flutter APK
+      - name: Build Flutter APK
+        run: |
+          echo "Building Flutter release APK..."
+          flutter build apk --release
+
+      # ✅ 上传构建产物
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
