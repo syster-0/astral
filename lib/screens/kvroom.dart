@@ -1,4 +1,5 @@
 // 导入必要的包
+import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/services.dart'; // 添加这一行导入剪贴板服务
 
 import 'package:astral/utils/kv_state.dart';
@@ -19,6 +20,7 @@ class PlayerInfo {
   final double packetLossRate; // 丢包率(%)
   final String etVersion; // ET版本
   final String natType; // 添加NAT类型
+  final List<NodeHopStats> hops; // 添加跃点路径信息
 
   PlayerInfo({
     required this.name,
@@ -31,7 +33,8 @@ class PlayerInfo {
     required this.receivedPackets,
     required this.packetLossRate,
     required this.etVersion,
-    required this.natType, // 添加NAT类型参数
+    required this.natType,
+    this.hops = const [], // 默认为空列表
   });
 }
 
@@ -222,6 +225,12 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         String connectionType = _mapConnectionType(
             node.cost, node.ipv4, ref.read(virtualIPProvider));
 
+        // 获取跃点信息 (示例，实际需要从节点数据中获取)
+        List<NodeHopStats> hops = [];
+        if (node.hops.isNotEmpty) {
+          hops = node.hops;
+        }
+
         // 如果有连接信息，计算网络统计数据
         if (node.connections.isNotEmpty) {
           for (var conn in node.connections) {
@@ -251,6 +260,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
             packetLossRate: packetLossRate,
             etVersion: node.version, // 获取版本信息
             natType: natType, // 添加NAT类型
+            hops: hops, // 添加跃点信息
           ),
         );
       }
@@ -389,6 +399,12 @@ class _RoomPageState extends ConsumerState<RoomPage> {
           colorScheme,
           valueColor: _getPacketLossColor(player.packetLossRate),
         ),
+
+        // 添加跃点信息显示
+        if (player.hops.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildHopsInfo(player.hops, colorScheme),
+        ],
 
         // 网络数据部分
         const Divider(height: 16),
@@ -530,6 +546,12 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                 colorScheme,
                 valueColor: _getNatTypeColor(player.natType),
               ),
+
+              // 添加跃点信息显示
+              if (player.hops.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildHopsInfo(player.hops, colorScheme),
+              ],
             ],
           ),
         ),
@@ -949,4 +971,57 @@ class _PlayerSearchDelegate extends SearchDelegate<String> {
       },
     );
   }
+}
+
+// 构建跃点信息显示
+Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(Icons.route, size: 20, color: colorScheme.primary),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '跃点路径:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (int i = 0; i < hops.length; i++) ...[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      hops[i].nodeName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  if (i < hops.length - 1)
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 14,
+                      color: colorScheme.primary.withOpacity(0.7),
+                    ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
