@@ -22,7 +22,7 @@ jobs:
           - name: 📦 下载 x86_64 架构 APK
             uses: actions/download-artifact@v4
             with:
-              name: app-release-all.apk
+              name: app-release-arm64-v8a
               path: ./downloaded-apks
     
           - name: 🖨️ 打印下载的文件
