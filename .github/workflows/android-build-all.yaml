@@ -71,8 +71,6 @@ jobs:
 
       - name: 📤 上传全架构 APK (ALL)
         uses: actions/upload-artifact@v4
-        with:  
-          name: app-release-all.apk
+        with:
+          name: app-release-all
           path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 1
-          if-no-files-found: error
