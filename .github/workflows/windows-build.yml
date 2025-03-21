@@ -1,0 +1,55 @@
+name: 🛠️ 构建 Windows 应用
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    # 调整 GITHUB_TOKEN 的权限
+    permissions:
+      contents: write  # 允许写入仓库内容（上传文件）
+
+    steps:
+      - name: 🛠️ 检出代码仓库
+        uses: actions/checkout@v4
+
+      # 安装 Flutter
+      - name: 🐦 安装 Flutter
+        run: |
+          echo "正在克隆 Flutter 稳定分支..."
+          git clone https://github.com/flutter/flutter.git -b stable
+          echo "正在将 Flutter 添加到 PATH..."
+          echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "Flutter 安装完成！"
+
+      # 安装 Flutter 依赖
+      - name: 📦 安装 Flutter 依赖
+        run: |
+          echo "正在获取 Flutter 依赖..."
+          flutter pub get
+          echo "Flutter 依赖安装完成！"
+
+      # 编译 Flutter Windows 应用
+      - name: 🛠️ 编译 Flutter Windows 应用
+        run: |
+          echo "正在编译 Flutter Windows Release 版本..."
+          flutter build windows --release
+          echo "Flutter Windows Release 编译完成！"
+
+      # 复制 DLL 文件到输出目录
+      - name: 📂 复制 DLL 文件到 Release 目录
+        run: |
+          echo "正在复制 DLL 文件到 Release 目录..."
+          $dllSourceDir = "$env:GITHUB_WORKSPACE\astral\tree\main\assets\dlls"
+          $releaseDir = "$env:GITHUB_WORKSPACE\build\windows\x64\runner\Release"
+          Copy-Item -Path "$dllSourceDir\*" -Destination $releaseDir -Recurse -Force
+          echo "DLL 文件已复制到 $releaseDir！"
+
+      # 上传 Release 目录作为 Artifact
+      - name: 📤 上传 Release 目录
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: ${{ github.workspace }}/build/windows/x64/runner/Release
