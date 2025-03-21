@@ -21,6 +21,20 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      # 安装 C/C++ 编译器
+      - name: Install MSVC Build Tools
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # 安装 LLVM/Clang
+      - name: Install LLVM/Clang
+        run: |
+          choco install llvm -y
+
+      # 安装 Windows SDK
+      - name: Install Windows SDK
+        run: |
+          choco install windows-sdk-10.1 -y
+
       # 安装 Flutter
       - name: Install Flutter
         run: |
