@@ -21,19 +21,20 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      # 安装 C/C++ 编译器
-      - name: Install MSVC Build Tools
-        uses: ilammy/msvc-dev-cmd@v1
+      # 安装 Android SDK 和 NDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          ndk-version: '21.4.7075529'  # 指定 NDK 版本
+          cmake-version: '3.18.1'      # 可选：安装 CMake
 
-      # 安装 LLVM/Clang
-      - name: Install LLVM/Clang
+      # 配置 NDK 路径
+      - name: Configure NDK Path
         run: |
-          choco install llvm -y
-
-      # 安装 Windows SDK
-      - name: Install Windows SDK
-        run: |
-          choco install windows-sdk-10.1 -y
+          echo "Configuring NDK path..."
+          $ndkPath = "$env:ANDROID_HOME\ndk\21.4.7075529"
+          echo "ndk.dir=$ndkPath" | Out-File -FilePath "$env:GITHUB_WORKSPACE\android\local.properties" -Encoding utf8 -Append
+          echo "NDK path configured to $ndkPath."
 
       # 安装 Flutter
       - name: Install Flutter
