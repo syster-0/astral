@@ -50,6 +50,9 @@ jobs:
         run: |
           git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 📚 安装 Flutter 依赖
@@ -66,6 +69,9 @@ jobs:
       - name: 🐦 设置 Flutter
         run: |
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 🛠️ 构建全架构 APK (ALL)
@@ -88,6 +94,9 @@ jobs:
       - name: 🐦 设置 Flutter
         run: |
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 🛠️ 构建 x86 架构 APK
@@ -110,6 +119,9 @@ jobs:
       - name: 🐦 设置 Flutter
         run: |
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 🛠️ 构建 x86_64 架构 APK
@@ -132,6 +144,9 @@ jobs:
       - name: 🐦 设置 Flutter
         run: |
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 🛠️ 构建 arm64-v8a 架构 APK
@@ -154,6 +169,9 @@ jobs:
       - name: 🐦 设置 Flutter
         run: |
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
           flutter --version
 
       - name: 🛠️ 构建 armeabi-v7a 架构 APK
