@@ -11,9 +11,11 @@ jobs:
       contents: write
 
     steps:
-      # ✅ 检出代码
+      # ✅ 检出代码，确保包含所有文件
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # ✅ 设置 JDK 17
       - name: Set up JDK 17
@@ -26,14 +28,18 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          ndk-version: '27.2.12479018'  # 确保与 build.gradle 一致
+          ndk-version: '27.2.12479018'
           cmake-version: '3.18.1'
 
       # ✅ 清理 Gradle 缓存
       - name: Clean Gradle Cache
         run: |
           echo "Cleaning Gradle cache..."
-          ./gradlew clean
+          if ($env:RUNNER_OS -eq 'Windows') {
+            .\gradlew.bat clean
+          } else {
+            ./gradlew clean
+          }
           rm -rf ~/.gradle/caches
           echo "Gradle cache cleaned."
 
