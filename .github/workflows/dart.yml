@@ -22,8 +22,10 @@ jobs:
         with:
           name: app-release-armeabi-v7a
           path: ./downloaded-apks
-          workflow: "🛠️ Android 构建 armeabi-v7a 架构 APK"  # 替换为你要下载的工作流名称
-          run_id: latest  # 下载最新运行的构建
+          # 移除了不支持的 workflow 和 run_id 参数
+          # 使用 pattern 参数来匹配文件名
+          pattern: '*.apk'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: 📝 列出下载的文件
         run: |
           echo "已下载的文件列表:"
