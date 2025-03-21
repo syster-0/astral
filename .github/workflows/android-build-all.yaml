@@ -50,6 +50,8 @@ jobs:
         run: |
           git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
           echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          chmod +x $HOME/flutter/bin/flutter
           flutter --version
 
       - name: 📚 安装 Flutter 依赖
