@@ -11,20 +11,25 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      # ✅ 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # ✅ 设置 JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
 
+      # ✅ 安装 Android SDK 和 NDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          ndk-version: '27.2.12479018'  # Updated NDK version
+          ndk-version: '27.2.12479018'  # 使用 NDK 27
           cmake-version: '3.18.1'
 
+      # ✅ 列出安装的 NDK 版本（调试用）
       - name: List Installed NDK Versions
         run: |
           echo "Listing installed NDK versions..."
@@ -35,16 +40,27 @@ jobs:
             echo "NDK directory $ndkDir does not exist."
           }
 
+      # ✅ 自动检测 NDK 路径并配置
       - name: Configure NDK Path
         run: |
           echo "Configuring NDK path..."
-          $ndkPath = "$env:ANDROID_HOME\ndk\25.2.9519653"  # Updated NDK version
-          if (-Not (Test-Path $ndkPath)) {
-            throw "NDK path $ndkPath does not exist. Please verify the NDK installation."
+          $ndkRoot = Get-ChildItem "$env:ANDROID_HOME\ndk" | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
+          if (-Not (Test-Path $ndkRoot)) {
+            throw "NDK path $ndkRoot does not exist. Please verify the NDK installation."
           }
-          echo "ndk.dir=$ndkPath" | Out-File -FilePath "$env:GITHUB_WORKSPACE\android\local.properties" -Encoding utf8 -Append
-          echo "NDK path configured to $ndkPath."
+          echo "ndk.dir=$ndkRoot" | Out-File -FilePath "$env:GITHUB_WORKSPACE\android\local.properties" -Encoding utf8 -Append
+          echo "NDK path configured to $ndkRoot."
 
+      # ✅ 缓存 Flutter，优化构建速度
+      - name: Cache Flutter
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/flutter
+          key: flutter-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            flutter-${{ runner.os }}-
+
+      # ✅ 安装 Flutter
       - name: Install Flutter
         run: |
           echo "Cloning Flutter stable branch..."
@@ -53,26 +69,30 @@ jobs:
           echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "Flutter installation completed."
 
+      # ✅ 安装 Flutter 依赖
       - name: Install Flutter dependencies
         run: |
           echo "Fetching Flutter dependencies..."
           flutter pub get
           echo "Flutter dependencies installed."
 
+      # ✅ 构建 Flutter Android Release APK
       - name: Build Flutter Android Release
         run: |
           echo "Building Flutter Android Release..."
           flutter build apk --release
           echo "Flutter Android Release build completed."
 
-      - name: Compress Release Directory
+      # ✅ 压缩 APK（仅打包 APK 文件）
+      - name: Compress APK
         run: |
-          echo "Compressing Release directory..."
-          $releaseDir = "$env:GITHUB_WORKSPACE\build\app\outputs\apk\release"
+          echo "Compressing APK..."
+          $apkFile = "$env:GITHUB_WORKSPACE\build\app\outputs\apk\release\app-release.apk"
           $zipFile = "$env:GITHUB_WORKSPACE\release.zip"
-          Compress-Archive -Path $releaseDir -DestinationPath $zipFile
-          echo "Release directory compressed to $zipFile."
+          Compress-Archive -Path $apkFile -DestinationPath $zipFile
+          echo "APK compressed to $zipFile."
 
+      # ✅ 上传 APK 到 GitHub Artifact
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
