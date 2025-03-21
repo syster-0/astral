@@ -1,0 +1,29 @@
+name: 🛠️ Android 构建 arm64-v8a 架构 APK
+
+on:
+  workflow_call: {}  # 允许被其他工作流调用
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: 🛠️ 检出代码仓库
+        uses: actions/checkout@v4
+
+      - name: 🐦 设置 Flutter
+        run: |
+          export PATH="$HOME/flutter/bin:$PATH"
+          echo "PATH: $PATH"
+          which flutter
+          flutter --version
+
+      - name: 🛠️ 构建 arm64-v8a 架构 APK
+        run: |
+          flutter build apk --release --target-platform android-arm64
+
+      - name: 📤 上传 arm64-v8a 架构 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-arm64-v8a
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
