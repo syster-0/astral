@@ -2,6 +2,9 @@ name: 🛠️ 构建 Android-build-all
 
 on:
   workflow_dispatch:
+  push:  # 每次 push 到仓库时触发
+    branches:
+      - main  # 指定触发分支
 
 jobs:
   setup:
