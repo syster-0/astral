@@ -58,13 +58,6 @@ jobs:
         run: |
           flutter pub get
 
-      - name: Build Rust library
-        run: |
-          export CC=arm-linux-gnueabihf-gcc
-          export CXX=arm-linux-gnueabihf-g++
-          export AR=arm-linux-gnueabihf-ar
-          export RANLIB=arm-linux-gnueabihf-ranlib
-          cargo build --target armv7-linux-androideabi --release
 
       - name: Build Flutter APK
         run: |
