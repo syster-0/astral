@@ -37,8 +37,46 @@ jobs:
           path: ./downloaded/armeabi-v7a
           search_artifacts: true
           if_no_artifact_found: warn
-          
-      # ... 其他下载步骤保持不变 ...
+      - run: mv ./downloaded/armeabi-v7a/* ./downloaded/armeabi-v7a/app-release-armeabi-v7a.apk
+
+      - name: 📦 下载 arm64-v8a 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-arm64.yaml"
+          name: app-release-arm64-v8a
+          path: ./downloaded/arm64-v8a
+          search_artifacts: true
+          if_no_artifact_found: warn
+      - run: mv ./downloaded/arm64-v8a/* ./downloaded/arm64-v8a/app-release-arm64-v8a.apk
+
+      - name: 📦 下载全架构构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-all.yaml"
+          name: app-release-all
+          path: ./downloaded/all
+          search_artifacts: true
+          if_no_artifact_found: warn
+      - run: mv ./downloaded/all/* ./downloaded/all/app-release-all.apk
+
+      - name: 📦 下载 x86_64 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-x86_64.yaml"
+          name: app-release-x86_64
+          path: ./downloaded/x86_64
+          search_artifacts: true
+          if_no_artifact_found: warn
+      - run: mv ./downloaded/x86_64/* ./downloaded/x86_64/app-release-x86_64.apk
+
+      - name: 📦 下载 Windows 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "windows-build.yml"
+          name: release
+          path: ./downloaded/windows
+          search_artifacts: true
+          if_no_artifact_found: warn
           
       - name: 📝 列出下载的文件
         run: |
