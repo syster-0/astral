@@ -21,16 +21,62 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         
-      - name: 📦 下载其他工作流的构件
+      - name: 📦 下载 armeabi-v7a 构件
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: "android-build-armv7.yaml"
           name: app-release-armeabi-v7a
-          path: ./downloaded-apks
+          path: ./downloaded/armeabi-v7a
+          search_artifacts: true
+          if_no_artifact_found: warn
+          
+      - name: 📦 下载 arm64-v8a 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-arm64.yaml"
+          name: app-release-arm64-v8a
+          path: ./downloaded/arm64-v8a
+          search_artifacts: true
+          if_no_artifact_found: warn
+          
+      - name: 📦 下载所有架构构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-all.yaml"
+          name: app-release-all
+          path: ./downloaded/all
+          search_artifacts: true
+          if_no_artifact_found: warn
+          
+      - name: 📦 下载 x86_64 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "android-build-x86_64.yaml"
+          name: app-release-x86_64
+          path: ./downloaded/x86_64
+          search_artifacts: true
+          if_no_artifact_found: warn
+          
+      - name: 📦 下载 Windows 构件
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: "windows-build.yml"
+          name: release
+          path: ./downloaded/windows
           search_artifacts: true
           if_no_artifact_found: warn
           
       - name: 📝 列出下载的文件
         run: |
           echo "已下载的文件列表:"
-          ls -la ./downloaded-apks
+          ls -la ./downloaded
+          echo "armeabi-v7a 文件:"
+          ls -la ./downloaded/armeabi-v7a || echo "目录不存在"
+          echo "arm64-v8a 文件:"
+          ls -la ./downloaded/arm64-v8a || echo "目录不存在"
+          echo "所有架构文件:"
+          ls -la ./downloaded/all || echo "目录不存在"
+          echo "x86_64 文件:"
+          ls -la ./downloaded/x86_64 || echo "目录不存在"
+          echo "Windows 文件:"
+          ls -la ./downloaded/windows || echo "目录不存在"
