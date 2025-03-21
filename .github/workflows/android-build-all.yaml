@@ -75,17 +75,6 @@ jobs:
         run: |
           flutter build apk --release
 
-      - name: 🚀 创建或获取 Draft Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: autobuild  # 固定标签
-          release_name: Auto Build
-          draft: true  # 创建为草稿
-          prerelease: false
-
       - name: 📤 上传全架构 APK 到 Draft Release
         uses: actions/upload-release-asset@v1
         env:
