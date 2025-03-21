@@ -2,11 +2,11 @@ name: 🚀 发布
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g., v1.0.0)'
-        required: true
-        type: string
+    # inputs:
+    #   version:
+    #     description: 'Release version (e.g., v1.0.0)'
+    #     required: true
+    #     type: string
 
 jobs:
   build:
@@ -17,23 +17,10 @@ jobs:
       contents: write  # 允许写入仓库内容（上传文件）
 
     steps:
-          - uses: actions/checkout@v4
-    
-          - name: 📦 下载 x86_64 架构 APK
-            uses: actions/download-artifact@v4
-            with:
-              name: app-release-arm64-v8a
-              path: ./downloaded-apks
-    
-          - name: 🖨️ 打印下载的文件
-            run: ls -R ./downloaded-apks
-
-      # 创建 GitHub Release 并上传压缩包
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     name: Release ${{ inputs.version }}
-      #     draft: true
-      #     files: ${{ github.workspace }}/release.zip
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     tag_name: ${{ inputs.version }}
+      - name: 📦 下载最新构建的 APK
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-armeabi-v7a
+          path: ./downloaded-apks
+          workflow: "🛠️ Android 构建 armeabi-v7a 架构 APK"  # 替换为你要下载的工作流名称
+          run_id: latest  # 下载最新运行的构建
