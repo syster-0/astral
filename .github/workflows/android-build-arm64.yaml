@@ -74,3 +74,5 @@ jobs:
         with:
           name: app-release-arm64-v8a
           path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          retention-days: 1
+          if-no-files-found: error
