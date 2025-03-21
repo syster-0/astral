@@ -11,11 +11,12 @@ jobs:
       contents: write
 
     steps:
-      # ✅ 检出代码，确保包含所有文件
+      # ✅ 检出代码，确保完整文件
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          lfs: true
 
       # ✅ 设置 JDK 17
       - name: Set up JDK 17
@@ -24,35 +25,40 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      # ✅ 安装 Android SDK 和 NDK
+      # ✅ 设置 Android SDK 和 NDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           ndk-version: '27.2.12479018'
           cmake-version: '3.18.1'
 
+      # ✅ 检查当前目录
+      - name: Verify current directory
+        run: |
+          echo "Current working directory: $PWD"
+          ls
+
+      # ✅ 切换到 Android 目录
+      - name: Switch to Android directory
+        run: |
+          cd android
+
+      # ✅ 检查 Gradle Wrapper 文件
+      - name: Check for Gradle Wrapper
+        run: |
+          if (-Not (Test-Path ".\gradlew.bat")) {
+            echo "Gradle wrapper not found, installing it..."
+            gradle wrapper
+          }
+          echo "Gradle wrapper is present."
+
       # ✅ 清理 Gradle 缓存
       - name: Clean Gradle Cache
         run: |
           echo "Cleaning Gradle cache..."
-          if ($env:RUNNER_OS -eq 'Windows') {
-            .\gradlew.bat clean
-          } else {
-            ./gradlew clean
-          }
+          .\gradlew.bat clean
           rm -rf ~/.gradle/caches
           echo "Gradle cache cleaned."
-
-      # ✅ 自动检测 NDK 路径
-      - name: Configure NDK Path
-        run: |
-          echo "Configuring NDK path..."
-          $ndkRoot = Get-ChildItem "$env:ANDROID_HOME\ndk" | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
-          if (-Not (Test-Path $ndkRoot)) {
-            throw "NDK path $ndkRoot does not exist. Please verify the NDK installation."
-          }
-          echo "ndk.dir=$ndkRoot" | Out-File -FilePath "$env:GITHUB_WORKSPACE\android\local.properties" -Encoding utf8 -Append
-          echo "NDK path configured to $ndkRoot."
 
       # ✅ 安装 Flutter
       - name: Install Flutter
@@ -70,25 +76,4 @@ jobs:
           flutter pub get
           echo "Flutter dependencies installed."
 
-      # ✅ 构建 Flutter Android Release APK
-      - name: Build Flutter Android Release
-        run: |
-          echo "Building Flutter Android Release..."
-          flutter build apk --release
-          echo "Flutter Android Release build completed."
-
-      # ✅ 压缩 APK
-      - name: Compress APK
-        run: |
-          echo "Compressing APK..."
-          $apkFile = "$env:GITHUB_WORKSPACE\build\app\outputs\apk\release\app-release.apk"
-          $zipFile = "$env:GITHUB_WORKSPACE\release.zip"
-          Compress-Archive -Path $apkFile -DestinationPath $zipFile
-          echo "APK compressed to $zipFile."
-
-      # ✅ 上传 APK 到 GitHub Artifact
-      - name: Upload Release Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release
-          path: ${{ github.workspace }}/release.zip
+      # ✅ 构建 Flutter
