@@ -57,6 +57,8 @@ jobs:
           
       - name: 🤖 生成分支差异提交内容
         id: generate_changelog
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           # 获取两个分支之间的提交信息
           COMMITS=$(git log --pretty=format:"%h - %s (%an)" ${{ github.event.inputs.base_branch }}..${{ github.event.inputs.head_branch }})
@@ -73,7 +75,7 @@ jobs:
           import os
           
           # 配置 API 密钥
-          genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+          genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
           
           # 读取提交信息
           with open('commits.txt', 'r') as f:
@@ -100,7 +102,7 @@ jobs:
           EOF
           
           # 执行 Python 脚本
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} python generate_changelog.py
+          python generate_changelog.py
           
           # 将更新日志内容设置为输出变量
           CHANGELOG=$(cat CHANGELOG.md)
