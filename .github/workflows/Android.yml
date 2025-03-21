@@ -49,7 +49,7 @@ jobs:
           echo "Cloning Flutter stable branch..."
           git clone https://github.com/flutter/flutter.git -b stable
           echo "Adding Flutter to PATH..."
-          echo "$GITHUB_WORKSPACE/flutter/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/flutter/bin" >> $GITHUB_ENV
           flutter --version
 
       # ✅ 安装 Flutter 依赖
