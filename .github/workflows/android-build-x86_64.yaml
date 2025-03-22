@@ -1,4 +1,4 @@
-name: 🛠️ Android 构建 x86_64 架构 APK
+name: 📲 Android 构建 x86_64 架构 APK
 
 on:
   workflow_dispatch:

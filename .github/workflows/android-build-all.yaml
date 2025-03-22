@@ -1,4 +1,4 @@
-name: 🛠️ 构建 Android-build-all
+name: 📱 构建 Android-build-all
 
 on:
   workflow_dispatch:
