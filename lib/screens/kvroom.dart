@@ -1007,7 +1007,7 @@ Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('跃点路径:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('连接路径:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Wrap(
               spacing: 4,
