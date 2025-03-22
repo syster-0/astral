@@ -377,6 +377,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
           // 获取网络状态
           final networkStatus = await getNetworkStatus();
+          final networkStatus2 = await getRunningInfo();
+          print(networkStatus2);
           ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
 
           // 获取所有IP列表

@@ -229,6 +229,7 @@ class KVNodeInfo {
   final String ipv4;
   final double latencyMs;
   final String nat;
+  final List<NodeHopStats> hops;
   final double lossRate;
   final List<KVNodeConnectionStats> connections;
   final String version;
@@ -239,6 +240,7 @@ class KVNodeInfo {
     required this.ipv4,
     required this.latencyMs,
     required this.nat,
+    required this.hops,
     required this.lossRate,
     required this.connections,
     required this.version,
@@ -251,6 +253,7 @@ class KVNodeInfo {
       ipv4.hashCode ^
       latencyMs.hashCode ^
       nat.hashCode ^
+      hops.hashCode ^
       lossRate.hashCode ^
       connections.hashCode ^
       version.hashCode ^
@@ -265,8 +268,40 @@ class KVNodeInfo {
           ipv4 == other.ipv4 &&
           latencyMs == other.latencyMs &&
           nat == other.nat &&
+          hops == other.hops &&
           lossRate == other.lossRate &&
           connections == other.connections &&
           version == other.version &&
           cost == other.cost;
+}
+
+class NodeHopStats {
+  final String targetIp;
+  final double latencyMs;
+  final double packetLoss;
+  final String nodeName;
+
+  const NodeHopStats({
+    required this.targetIp,
+    required this.latencyMs,
+    required this.packetLoss,
+    required this.nodeName,
+  });
+
+  @override
+  int get hashCode =>
+      targetIp.hashCode ^
+      latencyMs.hashCode ^
+      packetLoss.hashCode ^
+      nodeName.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeHopStats &&
+          runtimeType == other.runtimeType &&
+          targetIp == other.targetIp &&
+          latencyMs == other.latencyMs &&
+          packetLoss == other.packetLoss &&
+          nodeName == other.nodeName;
 }

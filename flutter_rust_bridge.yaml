@@ -1,4 +1,5 @@
 rust_input: crate::api
-rust_root: rust/
-dart_output: lib/src/rust
+rust_root: ./rust/
+dart_output: ./lib/src/rust
 default_dart_async: true 
+dump_all: true 

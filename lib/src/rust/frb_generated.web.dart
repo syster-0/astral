@@ -129,7 +129,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<KVNodeInfo> dco_decode_list_kv_node_info(dynamic raw);
 
   @protected
+  List<NodeHopStats> dco_decode_list_node_hop_stats(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  NodeHopStats dco_decode_node_hop_stats(dynamic raw);
 
   @protected
   (
@@ -250,7 +256,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<KVNodeInfo> sse_decode_list_kv_node_info(SseDeserializer deserializer);
 
   @protected
+  List<NodeHopStats> sse_decode_list_node_hop_stats(
+      SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  NodeHopStats sse_decode_node_hop_stats(SseDeserializer deserializer);
 
   @protected
   (
@@ -373,8 +386,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<KVNodeInfo> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_node_hop_stats(
+      List<NodeHopStats> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_node_hop_stats(NodeHopStats self, SseSerializer serializer);
 
   @protected
   void
