@@ -46,6 +46,7 @@ jobs:
       - name: 🎯 启用 Linux 桌面支持
         run: |
           flutter config --enable-linux-desktop
+          flutter create --platforms=linux .
 
       - name: 📚 安装 Flutter 依赖
         run: |
