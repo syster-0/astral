@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:astral/utils/logger.dart';
 import 'package:yaml/yaml.dart';
 
 class ConfigManager {
@@ -26,8 +27,8 @@ class ConfigManager {
       _config = _mergeConfigs(_convertYaml(yamlMap));
     } catch (e) {
       // 提供更详细的错误信息并使用默认配置
-      print('配置文件解析失败: $e');
-      print('将使用默认配置继续运行。请检查配置文件格式是否正确。');
+      Logger.info('配置文件解析失败: $e');
+      Logger.info('将使用默认配置继续运行。请检查配置文件格式是否正确。');
       _config = Map.from(defaultConfig);
     }
   }

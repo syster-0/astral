@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:astral/utils/app_info.dart';
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
@@ -122,7 +123,7 @@ class UpdateChecker {
         // 获取第一个发布版本（最新版本）
         return releases[0];
       } else {
-        debugPrint('获取最新版本失败: ${response.statusCode}');
+        Logger.info('获取最新版本失败: ${response.statusCode}');
         return {
           // 返回错误信息
           'tag_name': '错误 ${response.statusCode}',
@@ -131,7 +132,7 @@ class UpdateChecker {
         };
       }
     } catch (e) {
-      debugPrint('网络请求异常: $e');
+      Logger.info('网络请求异常: $e');
       return null;
     }
   }
@@ -141,7 +142,7 @@ class UpdateChecker {
     try {
       return AppInfoUtil.getVersion();
     } catch (e) {
-      debugPrint('获取版本信息失败: $e');
+      Logger.info('获取版本信息失败: $e');
       return "0.0.0"; // 返回默认版本号避免后续比较崩溃
     }
   }
@@ -286,7 +287,7 @@ class UpdateChecker {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      debugPrint('无法打开链接: $url');
+      Logger.info('无法打开链接: $url');
     }
   }
 }

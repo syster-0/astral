@@ -1,3 +1,4 @@
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
@@ -223,7 +224,7 @@ class ServerListConfig implements ConfigModel {
         // 确保至少有一个服务器被选中
         if (!serverList.any((server) => server.selected) &&
             serverList.isNotEmpty) {
-          print('没有选中的服务器，将第一个服务器设为选中状态');
+          Logger.info('没有选中的服务器，将第一个服务器设为选中状态');
           serverList[0] = ServerConfig(
             url: serverList[0].url,
             name: serverList[0].name,
@@ -235,17 +236,17 @@ class ServerListConfig implements ConfigModel {
             quic: serverList[0].quic,
           );
         } else {
-          print('已有选中的服务器，保持原状');
+          Logger.info('已有选中的服务器，保持原状');
         }
       } catch (e) {
-        print('解析服务器列表失败: $e');
+        Logger.info('解析服务器列表失败: $e');
         // 解析失败时使用默认值
       }
     }
 
     // 如果列表为空，添加默认服务器
     if (serverList.isEmpty) {
-      print('服务器列表为空，添加默认服务器');
+      Logger.info('服务器列表为空，添加默认服务器');
       serverList = [
         ServerConfig(
           url: 'public.easytier.cn:11010',
@@ -367,7 +368,7 @@ class AppConfig {
   // 在AppConfig类中添加静态方法setConfigDir
   static void setConfigDir(String dirPath) {
     _configDirectory = dirPath;
-    print('配置目录已设置为: $_configDirectory');
+    Logger.info('配置目录已设置为: $_configDirectory');
   }
 
   AppConfig._internal() {
@@ -446,29 +447,29 @@ class AppConfig {
       if (!_configDirectory.isNotEmpty) {
         _configDirectory = File(Platform.resolvedExecutable).parent.path;
       }
-      print('配置目录: $_configDirectory');
+      Logger.info('配置目录: $_configDirectory');
 
       // 初始化Hive
       await Hive.initFlutter(_configDirectory);
-      print('Hive初始化完成');
+      Logger.info('Hive初始化完成');
 
       // 打开配置Box
       _configBox = await Hive.openBox('app_config');
-      print('配置Box打开成功，包含 ${_configBox.length} 个条目');
+      Logger.info('配置Box打开成功，包含 ${_configBox.length} 个条目');
 
       // 打印所有键值，用于调试
-      print('配置Box中的所有键: ${_configBox.keys.toList()}');
+      Logger.info('配置Box中的所有键: ${_configBox.keys.toList()}');
 
       // 先创建实例并注册所有配置类型
       // 由于AppConfig是单例模式，这里不需要显式创建实例
 
       // 加载并验证配置
       await _instance._loadAndValidateConfig();
-      print('配置加载和验证完成');
+      Logger.info('配置加载和验证完成');
 
       _initialized = true;
     } catch (e) {
-      print('AppConfig初始化失败: $e');
+      Logger.info('AppConfig初始化失败: $e');
       // 尝试使用备用目录
       try {
         // 使用应用文档目录作为备用目录
@@ -482,16 +483,16 @@ class AppConfig {
         }
 
         _configDirectory = appDocDir.path;
-        print('尝试使用备用目录: $_configDirectory');
+        Logger.info('尝试使用备用目录: $_configDirectory');
 
         await Hive.initFlutter(_configDirectory);
         _configBox = await Hive.openBox('app_config');
 
         await _instance._loadAndValidateConfig();
         _initialized = true;
-        print('使用备用目录初始化成功');
+        Logger.info('使用备用目录初始化成功');
       } catch (e2) {
-        print('备用初始化也失败: $e2');
+        Logger.info('备用初始化也失败: $e2');
         rethrow;
       }
     }
@@ -499,7 +500,7 @@ class AppConfig {
 
   // 加载并验证所有配置
   Future<void> _loadAndValidateConfig() async {
-    print('开始加载配置...');
+    Logger.info('开始加载配置...');
     // 加载所有注册的配置
     for (var entry in _configFactories.entries) {
       final type = entry.key;
@@ -507,7 +508,7 @@ class AppConfig {
       final defaultValue = _configModels[type]!;
       final configKey = defaultValue.configKey;
 
-      print('加载配置: $configKey (${type.toString()})');
+      Logger.info('加载配置: $configKey (${type.toString()})');
       _configModels[type] = _loadConfig(
         configKey,
         fromJson as ConfigModel Function(Map<String, dynamic>),
@@ -517,11 +518,11 @@ class AppConfig {
 
     // 更新服务器列表缓存
     _serverConfigs = (getModel<ServerListConfig>()).servers;
-    print('服务器列表缓存更新完成，共 ${_serverConfigs.length} 个服务器');
+    Logger.info('服务器列表缓存更新完成，共 ${_serverConfigs.length} 个服务器');
 
     // 打印服务器列表，用于调试
     for (var server in _serverConfigs) {
-      print(
+      Logger.info(
         '服务器: ${server.name} (${server.url}), 选中: ${server.selected}, 协议: TCP=${server.tcp}, UDP=${server.udp}, WS=${server.ws}, WSS=${server.wss}, QUIC=${server.quic}',
       );
     }
@@ -534,23 +535,23 @@ class AppConfig {
     T defaultValue,
   ) {
     final dynamic config = _configBox.get(key);
-    print('读取配置 $key: ${config != null ? '存在' : '不存在'}');
+    Logger.info('读取配置 $key: ${config != null ? '存在' : '不存在'}');
 
     if (config != null) {
       try {
-        print('配置内容: $config');
+        Logger.info('配置内容: $config');
         final result = fromJson(Map<String, dynamic>.from(config));
-        print('配置解析成功');
+        Logger.info('配置解析成功');
         return result;
       } catch (e) {
-        print('配置解析失败: $e');
+        Logger.info('配置解析失败: $e');
         // 如果解析失败，使用默认值
       }
     }
 
     // 保存默认值
     final defaultMap = defaultValue.toJson();
-    print('使用默认配置: $defaultMap');
+    Logger.info('使用默认配置: $defaultMap');
     _configBox.put(key, defaultMap);
 
     return defaultValue;
@@ -581,7 +582,7 @@ class AppConfig {
   Future<void> _saveServerList() async {
     try {
       // 打印调试信息
-      print('保存服务器列表: ${_serverConfigs.length} 个服务器');
+      Logger.info('保存服务器列表: ${_serverConfigs.length} 个服务器');
 
       // 确保配置模型已更新
       await updateModel<ServerListConfig>(
@@ -591,9 +592,9 @@ class AppConfig {
       // 强制刷新 Hive 存储
       await _configBox.flush();
 
-      print('服务器列表保存完成');
+      Logger.info('服务器列表保存完成');
     } catch (e) {
-      print('保存服务器列表时出错: $e');
+      Logger.info('保存服务器列表时出错: $e');
     }
   }
 
@@ -633,7 +634,7 @@ class AppConfig {
 
   Future<void> setServerList(List<Map<String, dynamic>> servers) async {
     try {
-      print('设置服务器列表: ${servers.length} 个服务器');
+      Logger.info('设置服务器列表: ${servers.length} 个服务器');
 
       _serverConfigs = servers.map((server) {
         // 确保所有必要的字段都存在
@@ -652,11 +653,11 @@ class AppConfig {
       await _saveServerList();
 
       // 打印保存后的服务器列表，用于调试
-      print(
+      Logger.info(
         '服务器列表已更新: ${_serverConfigs.map((s) => '${s.name}(${s.url})').join(', ')}',
       );
     } catch (e) {
-      print('设置服务器列表时出错: $e');
+      Logger.info('设置服务器列表时出错: $e');
     }
   }
 

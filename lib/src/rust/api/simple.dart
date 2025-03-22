@@ -37,26 +37,31 @@ Future<KVNetworkStatus> getNetworkStatus() =>
 Future<String> getRunningInfo() =>
     RustLib.instance.api.crateApiSimpleGetRunningInfo();
 
-Future<void> createServer({
-  required String username,
-  required bool enableDhcp,
-  required String specifiedIp,
-  required String roomName,
-  required String roomPassword,
-  required List<String> severurl,
-  required FlagsC flag,
-}) => RustLib.instance.api.crateApiSimpleCreateServer(
-  username: username,
-  enableDhcp: enableDhcp,
-  specifiedIp: specifiedIp,
-  roomName: roomName,
-  roomPassword: roomPassword,
-  severurl: severurl,
-  flag: flag,
-);
+Future<void> createServer(
+        {required String username,
+        required bool enableDhcp,
+        required String specifiedIp,
+        required String roomName,
+        required String roomPassword,
+        required List<String> severurl,
+        required FlagsC flag}) =>
+    RustLib.instance.api.crateApiSimpleCreateServer(
+        username: username,
+        enableDhcp: enableDhcp,
+        specifiedIp: specifiedIp,
+        roomName: roomName,
+        roomPassword: roomPassword,
+        severurl: severurl,
+        flag: flag);
 
 Future<void> closeAllServer() =>
     RustLib.instance.api.crateApiSimpleCloseAllServer();
+
+Future<NetworkInterfaceHops> getNetworkInterfaceHops() =>
+    RustLib.instance.api.crateApiSimpleGetNetworkInterfaceHops();
+
+Future<bool> setNetworkInterfaceHops({required int hop}) =>
+    RustLib.instance.api.crateApiSimpleSetNetworkInterfaceHops(hop: hop);
 
 Future<void> initApp() => RustLib.instance.api.crateApiSimpleInitApp();
 
@@ -173,7 +178,10 @@ class KVNetworkStatus {
   final BigInt totalNodes;
   final List<KVNodeInfo> nodes;
 
-  const KVNetworkStatus({required this.totalNodes, required this.nodes});
+  const KVNetworkStatus({
+    required this.totalNodes,
+    required this.nodes,
+  });
 
   @override
   int get hashCode => totalNodes.hashCode ^ nodes.hashCode;
@@ -271,6 +279,45 @@ class KVNodeInfo {
           connections == other.connections &&
           version == other.version &&
           cost == other.cost;
+}
+
+class NetworkInterfaceHop {
+  final String interfaceName;
+  final int hopCount;
+
+  const NetworkInterfaceHop({
+    required this.interfaceName,
+    required this.hopCount,
+  });
+
+  @override
+  int get hashCode => interfaceName.hashCode ^ hopCount.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NetworkInterfaceHop &&
+          runtimeType == other.runtimeType &&
+          interfaceName == other.interfaceName &&
+          hopCount == other.hopCount;
+}
+
+class NetworkInterfaceHops {
+  final List<NetworkInterfaceHop> hops;
+
+  const NetworkInterfaceHops({
+    required this.hops,
+  });
+
+  @override
+  int get hashCode => hops.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NetworkInterfaceHops &&
+          runtimeType == other.runtimeType &&
+          hops == other.hops;
 }
 
 class NodeHopStats {

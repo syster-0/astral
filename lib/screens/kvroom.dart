@@ -1,5 +1,6 @@
 // 导入必要的包
 import 'package:astral/src/rust/api/simple.dart';
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/services.dart'; // 添加这一行导入剪贴板服务
 
 import 'package:astral/utils/kv_state.dart';
@@ -276,7 +277,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         isLoading = false;
       });
     } catch (e) {
-      print("加载节点数据失败: $e");
+      Logger.info("加载节点数据失败: $e");
       if (mounted) {
         setState(() {
           isLoading = false;

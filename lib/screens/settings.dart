@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/utils/app_info.dart';
+import 'package:astral/utils/logger.dart';
 import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 添加 Riverpod 导入
@@ -855,51 +858,53 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ],
             ),
-            // 网卡越点设置 - 移动到ExpansionTile的children中
-            const Divider(),
-
-            SwitchListTile(
-              title: const Text('启用网卡跃点'),
-              subtitle: const Text('允许网卡跃点重叠'),
-              value: ref.watch(networkOverlapEnabledProvider),
-              onChanged: (value) {
-                ref.read(networkOverlapProvider.notifier).setEnabled(value);
-              },
-            ),
-            if (ref.watch(networkOverlapEnabledProvider))
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: '越点值',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        controller: TextEditingController(
-                          text:
-                              ref.watch(networkOverlapValueProvider).toString(),
-                        ),
-                        onChanged: (value) {
-                          final overlapValue = int.tryParse(value) ?? 0;
-                          ref
-                              .read(networkOverlapProvider.notifier)
-                              .setValue(overlapValue);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+            // 网卡跃点设置 - 移动到ExpansionTile的children中
+            if (Platform.isWindows) ...[
+              const Divider(),
+              SwitchListTile(
+                title: const Text('启用网卡跃点'),
+                subtitle: const Text('允许网卡跃点重叠'),
+                value: ref.watch(networkOverlapEnabledProvider),
+                onChanged: (value) {
+                  ref.read(networkOverlapProvider.notifier).setEnabled(value);
+                },
               ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text('网卡跃点列表'),
-              subtitle: const Text('查看网卡名称和对应的跃点值'),
-              onTap: () => _showNetworkInterfaceMetricsDialog(context),
-            ),
+              if (ref.watch(networkOverlapEnabledProvider))
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            labelText: '跃点值',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          controller: TextEditingController(
+                            text: ref
+                                .watch(networkOverlapValueProvider)
+                                .toString(),
+                          ),
+                          onChanged: (value) {
+                            final overlapValue = int.tryParse(value) ?? 0;
+                            ref
+                                .read(networkOverlapProvider.notifier)
+                                .setValue(overlapValue);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.list),
+                title: const Text('网卡跃点列表'),
+                subtitle: const Text('查看网卡名称和对应的跃点值'),
+                onTap: () => _showNetworkInterfaceMetricsDialog(context),
+              ),
+            ],
           ],
         ),
       ),
@@ -1378,7 +1383,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
       if (response.statusCode == 200) {
         // 请求成功，打印响应内容
-        print('EasyTier 状态: ${response.body}');
+        Logger.info('EasyTier 状态: ${response.body}');
 
         // 提取 window.preloadData = 和 </script> 之间的内容
         try {
@@ -1394,7 +1399,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             final extractedData =
                 responseBody.substring(startDataIndex, endIndex).trim();
 
-            print('提取的数据: $extractedData');
+            Logger.info('提取的数据: $extractedData');
 
             // 尝试解析提取的JSON数据
             try {
@@ -1406,7 +1411,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               Map<String, dynamic> jsonMap = json.decode(cleanData);
               StatusPageData? pageData = StatusPageData.fromJson(jsonMap);
               // 打印解析后的数据
-              print('解析后的数据: $pageData');
+              Logger.info('解析后的数据: $pageData');
 
               // 初始化空列表
               final List<Pserver> pGroupList = [];
@@ -1471,7 +1476,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ));
                     }
                   } catch (e) {
-                    print('Error parsing server data: $e');
+                    Logger.info('Error parsing server data: $e');
                   }
                 });
               }
@@ -1536,7 +1541,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ));
                     }
                   } catch (e) {
-                    print('Error parsing server data: $e');
+                    Logger.info('Error parsing server data: $e');
                   }
                 });
               }
@@ -1601,7 +1606,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ));
                     }
                   } catch (e) {
-                    print('Error parsing server data: $e');
+                    Logger.info('Error parsing server data: $e');
                   }
                 });
               }
@@ -1620,7 +1625,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 );
               }
             } catch (e) {
-              print('JSON 解析错误: $e');
+              Logger.info('JSON 解析错误: $e');
               // 确保状态被设置为空列表，而不是null
               ref.read(pServerProvider.notifier).state = [];
               if (mounted) {
@@ -1630,7 +1635,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               }
             }
           } else {
-            print('未找到目标数据标记');
+            Logger.info('未找到目标数据标记');
             // 确保状态被设置为空列表
             ref.read(pServerProvider.notifier).state = [];
             if (mounted) {
@@ -1640,7 +1645,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             }
           }
         } catch (e) {
-          print('数据提取错误: $e');
+          Logger.info('数据提取错误: $e');
           // 确保状态被设置为空列表
           ref.read(pServerProvider.notifier).state = [];
           if (mounted) {
@@ -1651,7 +1656,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         }
       } else {
         // 请求失败
-        print('请求失败，状态码: ${response.statusCode}');
+        Logger.info('请求失败，状态码: ${response.statusCode}');
         // 确保状态被设置为空列表
         ref.read(pServerProvider.notifier).state = [];
         if (mounted) {
@@ -1662,7 +1667,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       }
     } catch (e) {
       // 捕获网络错误
-      print('网络请求错误: $e');
+      Logger.info('网络请求错误: $e');
       // 确保状态被设置为空列表
       ref.read(pServerProvider.notifier).state = [];
       if (mounted) {
@@ -1674,7 +1679,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
-// 显示网卡跃点列表对话框
 Future<void> _showNetworkInterfaceMetricsDialog(BuildContext context) async {
   // 显示加载指示器
   showDialog(
@@ -1687,15 +1691,13 @@ Future<void> _showNetworkInterfaceMetricsDialog(BuildContext context) async {
 
   try {
     // 从系统API获取网卡跃点列表
-    final Map<String, int> interfaceMetrics = await compute(
-      (message) => NetworkUtil.getInterfaceMetrics(),
-      null,
-    );
+    final NetworkInterfaceHops interfaceMetrics =
+        await NetworkUtil.getInterfaceMetrics();
 
     // 关闭加载指示器
     Navigator.of(context).pop();
 
-    if (interfaceMetrics.isEmpty) {
+    if (interfaceMetrics.hops.isEmpty) {
       // 如果获取失败，显示错误信息
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('获取网卡跃点列表失败')),
@@ -1713,18 +1715,18 @@ Future<void> _showNetworkInterfaceMetricsDialog(BuildContext context) async {
           height: 300, // 设置一个固定高度
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: interfaceMetrics.length,
+            itemCount: interfaceMetrics.hops.length,
             itemBuilder: (context, index) {
-              final entry = interfaceMetrics.entries.elementAt(index);
+              final hop = interfaceMetrics.hops[index];
               return ListTile(
-                title: Text(entry.key),
+                title: Text(hop.interfaceName),
                 trailing: Text(
-                  '${entry.value}',
+                  '${hop.hopCount}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: entry.value < 50
+                    color: hop.hopCount < 50
                         ? Colors.green
-                        : (entry.value < 100 ? Colors.orange : Colors.red),
+                        : (hop.hopCount < 100 ? Colors.orange : Colors.red),
                   ),
                 ),
               );

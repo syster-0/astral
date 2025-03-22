@@ -18,6 +18,7 @@ humansize = "1.1.1"
 tokio = "1.39.2"
 anyhow = "1.0.95"
 easytier = { path = "./easytier" }
+winapi = { version = "0.3", features = ["iphlpapi", "iptypes"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

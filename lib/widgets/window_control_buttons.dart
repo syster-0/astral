@@ -1,3 +1,4 @@
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import '../config/app_config.dart';
@@ -54,7 +55,7 @@ class _WindowControlsState extends State<WindowControls> with WindowListener {
       setState(() {
         _isMaximized = true;
       });
-      print("窗口已最大化: $_isMaximized"); // 添加调试信息
+      Logger.info("窗口已最大化: $_isMaximized"); // 添加调试信息
     }
   }
 
@@ -64,14 +65,14 @@ class _WindowControlsState extends State<WindowControls> with WindowListener {
       setState(() {
         _isMaximized = false;
       });
-      print("窗口已还原: $_isMaximized"); // 添加调试信息
+      Logger.info("窗口已还原: $_isMaximized"); // 添加调试信息
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // 添加调试信息
-    print("构建窗口控制按钮，当前最大化状态: $_isMaximized");
+    Logger.info("构建窗口控制按钮，当前最大化状态: $_isMaximized");
     
     return Row(
       children: [

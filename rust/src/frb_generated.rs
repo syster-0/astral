@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.9.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 165480634;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -474084300;
 
 // Section: executor
 
@@ -187,6 +187,39 @@ fn wire__crate__api__simple__get_all_ips_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(crate::api::simple::get_all_ips())?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__simple__get_network_interface_hops_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_network_interface_hops",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Result::<_, ()>::Ok(crate::api::simple::get_network_interface_hops())?;
                     Ok(output_ok)
                 })())
             }
@@ -413,6 +446,41 @@ fn wire__crate__api__simple__is_easytier_running_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(crate::api::simple::is_easytier_running())?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__simple__set_network_interface_hops_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_network_interface_hops",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_hop = <i32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::simple::set_network_interface_hops(api_hop),
+                    )?;
                     Ok(output_ok)
                 })())
             }
@@ -763,6 +831,20 @@ impl SseDecode for Vec<crate::api::simple::KVNodeInfo> {
     }
 }
 
+impl SseDecode for Vec<crate::api::simple::NetworkInterfaceHop> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::simple::NetworkInterfaceHop>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::simple::NodeHopStats> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -784,6 +866,26 @@ impl SseDecode for Vec<u8> {
             ans_.push(<u8>::sse_decode(deserializer));
         }
         return ans_;
+    }
+}
+
+impl SseDecode for crate::api::simple::NetworkInterfaceHop {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_interfaceName = <String>::sse_decode(deserializer);
+        let mut var_hopCount = <u32>::sse_decode(deserializer);
+        return crate::api::simple::NetworkInterfaceHop {
+            interface_name: var_interfaceName,
+            hop_count: var_hopCount,
+        };
+    }
+}
+
+impl SseDecode for crate::api::simple::NetworkInterfaceHops {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_hops = <Vec<crate::api::simple::NetworkInterfaceHop>>::sse_decode(deserializer);
+        return crate::api::simple::NetworkInterfaceHops { hops: var_hops };
     }
 }
 
@@ -858,14 +960,26 @@ fn pde_ffi_dispatcher_primary_impl(
         2 => wire__crate__api__simple__create_server_impl(port, ptr, rust_vec_len, data_len),
         3 => wire__crate__api__simple__easytier_version_impl(port, ptr, rust_vec_len, data_len),
         4 => wire__crate__api__simple__get_all_ips_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__simple__get_network_status_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__simple__get_node_info_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__simple__get_peer_route_pairs_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__simple__get_peers_and_routes_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__simple__get_running_info_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__simple__is_easytier_running_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__simple__set_tun_fd_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__simple__get_network_interface_hops_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        6 => wire__crate__api__simple__get_network_status_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__simple__get_node_info_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__simple__get_peer_route_pairs_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__simple__get_peers_and_routes_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__simple__get_running_info_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__simple__is_easytier_running_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__simple__set_network_interface_hops_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        14 => wire__crate__api__simple__set_tun_fd_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1048,6 +1162,44 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::KVNodeInfo>
     for crate::api::simple::KVNodeInfo
 {
     fn into_into_dart(self) -> crate::api::simple::KVNodeInfo {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::NetworkInterfaceHop {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.interface_name.into_into_dart().into_dart(),
+            self.hop_count.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::simple::NetworkInterfaceHop
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::NetworkInterfaceHop>
+    for crate::api::simple::NetworkInterfaceHop
+{
+    fn into_into_dart(self) -> crate::api::simple::NetworkInterfaceHop {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::NetworkInterfaceHops {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.hops.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::simple::NetworkInterfaceHops
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::NetworkInterfaceHops>
+    for crate::api::simple::NetworkInterfaceHops
+{
+    fn into_into_dart(self) -> crate::api::simple::NetworkInterfaceHops {
         self
     }
 }
@@ -1303,6 +1455,16 @@ impl SseEncode for Vec<crate::api::simple::KVNodeInfo> {
     }
 }
 
+impl SseEncode for Vec<crate::api::simple::NetworkInterfaceHop> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::simple::NetworkInterfaceHop>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::simple::NodeHopStats> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1320,6 +1482,21 @@ impl SseEncode for Vec<u8> {
         for item in self {
             <u8>::sse_encode(item, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::simple::NetworkInterfaceHop {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.interface_name, serializer);
+        <u32>::sse_encode(self.hop_count, serializer);
+    }
+}
+
+impl SseEncode for crate::api::simple::NetworkInterfaceHops {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<crate::api::simple::NetworkInterfaceHop>>::sse_encode(self.hops, serializer);
     }
 }
 

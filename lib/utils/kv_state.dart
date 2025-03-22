@@ -1,4 +1,5 @@
 import 'package:astral/src/rust/api/simple.dart';
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
@@ -170,7 +171,7 @@ final serverIPProvider = Provider<List<String>>((ref) {
         .map((server) => server['url'] as String)
         .toList();
   } catch (e) {
-    debugPrint('获取服务器IP时出错: $e');
+    Logger.info('获取服务器IP时出错: $e');
     return [];
   }
 });
@@ -465,16 +466,16 @@ class VpnStatusNotifier extends StateNotifier<VpnStatus> {
 
     // 状态发生变化时的处理
     if (previous.state != value.state) {
-      debugPrint('VPN状态变化: ${previous.state} -> ${value.state}');
+      Logger.info('VPN状态变化: ${previous.state} -> ${value.state}');
     }
     if (previous.ipv4Addr != value.ipv4Addr) {
-      debugPrint('IPv4地址变化: ${previous.ipv4Addr} -> ${value.ipv4Addr}');
+      Logger.info('IPv4地址变化: ${previous.ipv4Addr} -> ${value.ipv4Addr}');
     }
     if (previous.ipv4Cidr != value.ipv4Cidr) {
-      debugPrint('CIDR变化: ${previous.ipv4Cidr} -> ${value.ipv4Cidr}');
+      Logger.info('CIDR变化: ${previous.ipv4Cidr} -> ${value.ipv4Cidr}');
     }
     if (!listEquals(previous.routes, value.routes)) {
-      debugPrint('路由变化: ${previous.routes} -> ${value.routes}');
+      Logger.info('路由变化: ${previous.routes} -> ${value.routes}');
     }
   }
 

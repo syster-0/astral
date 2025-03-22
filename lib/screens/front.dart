@@ -7,6 +7,7 @@ import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/src/rust/frb_generated.dart';
 import 'package:astral/utils/kv_state.dart';
 import 'package:astral/utils/app_info.dart';
+import 'package:astral/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -82,7 +83,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         disallowedApplications: disallowedApplications,
       );
     } else {
-      debugPrint("错误：无法启动VPN，IP地址为空");
+      Logger.info("错误：无法启动VPN，IP地址为空");
     }
   }
 
@@ -231,14 +232,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (Platform.isAndroid) {
       // 监听VPN服务启动事件
       vpnPlugin.onVpnServiceStarted.listen((data) {
-        print('VPN服务已启动，文件描述符: ${data['fd']}');
+        Logger.info('VPN服务已启动，文件描述符: ${data['fd']}');
         setTunFd(fd: data['fd']);
         // 在这里处理VPN启动后的逻辑
       });
 
       // 监听VPN服务停止事件
       vpnPlugin.onVpnServiceStopped.listen((data) {
-        print('VPN服务已停止');
+        Logger.info('VPN服务已停止');
         // 在这里处理VPN停止后的逻辑
       });
     }
@@ -328,10 +329,10 @@ class _HomePageState extends ConsumerState<HomePage> {
             validRoutes.add(processedRoute);
           }
         } else {
-          debugPrint('跳过无效路由IP: $ipPart');
+          Logger.info('跳过无效路由IP: $ipPart');
         }
       } catch (e) {
-        debugPrint('处理路由时出错: $route, 错误: $e');
+        Logger.info('处理路由时出错: $route, 错误: $e');
       }
     }
 
@@ -522,7 +523,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           // 获取网络状态
           final networkStatus = await getNetworkStatus();
           final networkStatus2 = await getRunningInfo();
-          print(networkStatus2);
           ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
 
           // 获取所有IP列表
@@ -547,17 +547,22 @@ class _HomePageState extends ConsumerState<HomePage> {
               if (Platform.isAndroid) {
                 // 确保IP地址不为空且格式正确
                 if (ipStr.isNotEmpty) {
-                  // 使用公共方法启动VPN
                   _startVpn(
                     ipv4Addr: ipStr,
                   );
                 } else {
                   // 处理IP为空的情况
-                  print("错误：无法获取有效的IP地址");
+                  Logger.info("错误：无法获取有效的IP地址");
                   // 可能需要停止连接过程
                 }
               }
-
+              // 使用公共方法启动VPN
+              if (Platform.isWindows) {
+                if (ref.watch(networkOverlapEnabledProvider)) {
+                  setNetworkInterfaceHops(
+                      hop: ref.watch(networkOverlapValueProvider));
+                }
+              }
               setState(() {
                 _connectionState = ConnectionState.connected;
               });
@@ -604,7 +609,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           }
         });
       } else {
-        vpnPlugin.stopVpn();
+        if (Platform.isAndroid) {
+          vpnPlugin.stopVpn();
+        }
         // 停止时重置状态
         _connectionState = ConnectionState.notStarted;
         closeAllServer();
@@ -716,11 +723,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         if (previous != null) {
           // 状态发生变化时的处理
           if (previous.state != current.state) {
-            debugPrint('VPN状态变化: ${previous.state} -> ${current.state}');
+            Logger.info('VPN状态变化: ${previous.state} -> ${current.state}');
           }
 
           if (previous.ipv4Addr != current.ipv4Addr) {
-            debugPrint('IPv4地址变化: ${previous.ipv4Addr} -> ${current.ipv4Addr}');
+            Logger.info('IPv4地址变化: ${previous.ipv4Addr} -> ${current.ipv4Addr}');
             //判断ip有没有变化
             if (publicIP != current.ipv4Addr &&
                 current.ipv4Addr?.isNotEmpty == true) {
@@ -730,11 +737,11 @@ class _HomePageState extends ConsumerState<HomePage> {
           }
 
           if (previous.ipv4Cidr != current.ipv4Cidr) {
-            debugPrint('CIDR变化: ${previous.ipv4Cidr} -> ${current.ipv4Cidr}');
+            Logger.info('CIDR变化: ${previous.ipv4Cidr} -> ${current.ipv4Cidr}');
           }
 
           if (!listEquals(previous.routes, current.routes)) {
-            debugPrint('路由变化: ${previous.routes} -> ${current.routes}');
+            Logger.info('路由变化: ${previous.routes} -> ${current.routes}');
           }
         }
       });

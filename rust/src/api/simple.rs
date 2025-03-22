@@ -904,6 +904,168 @@ pub fn close_all_server() {
     });
 }
 
+// 创建一个网卡跃点数据结构 
+// 网卡跃点数据结构
+pub struct NetworkInterfaceHop {
+    // 网卡名称
+    pub interface_name: String,
+    // 跃点数
+    pub hop_count: u32,
+}
+
+// 网卡跃点集合
+pub struct NetworkInterfaceHops {
+    // 网卡跃点列表
+    pub hops: Vec<NetworkInterfaceHop>,
+}
+
+
+// 获取网卡跃点信息
+pub fn get_network_interface_hops() -> NetworkInterfaceHops {
+    // 获取所有网卡信息
+    let mut hops = Vec::new();
+    
+    #[cfg(target_os = "windows")]
+    {
+        use std::mem;
+        use winapi::shared::winerror::ERROR_BUFFER_OVERFLOW;
+        use winapi::shared::ws2def::SOCKADDR;
+        // Fix: Import GAA_FLAG_INCLUDE_PREFIX from the correct module
+        use winapi::um::iphlpapi::GetAdaptersAddresses;
+        use winapi::um::iptypes::{IP_ADAPTER_ADDRESSES, IP_ADAPTER_UNICAST_ADDRESS};
+        // Fix: Import the flag from the correct location
+        use winapi::um::iptypes::GAA_FLAG_INCLUDE_PREFIX;
+
+        // 初始化缓冲区大小
+        let mut size = 0;
+        let family = winapi::shared::ws2def::AF_UNSPEC;
+        // Fix: Ensure flags is u32 as expected by the API
+        let flags = GAA_FLAG_INCLUDE_PREFIX as u32;
+        
+        // 第一次调用获取所需缓冲区大小
+        unsafe {
+            let result = GetAdaptersAddresses(family as u32, flags, std::ptr::null_mut(), std::ptr::null_mut(), &mut size);
+            // Fix: Ensure comparison is with u32
+            if result == ERROR_BUFFER_OVERFLOW as u32 {
+                // 分配足够的内存
+                let mut buffer = vec![0u8; size as usize];
+                let addresses = buffer.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES;
+                
+                // 再次调用获取实际数据
+                let result = GetAdaptersAddresses(family as u32, flags, std::ptr::null_mut(), addresses, &mut size);
+                if result == 0 {
+                    // 成功获取数据，遍历所有适配器
+                    let mut current_addresses = addresses;
+                    while !current_addresses.is_null() {
+                        let adapter = &*current_addresses;
+                        
+                        // 获取适配器名称
+                        let name = if !adapter.FriendlyName.is_null() {
+                            let name_slice = std::slice::from_raw_parts(
+                                adapter.FriendlyName,
+                                (0..255).find(|&i| *adapter.FriendlyName.offset(i as isize) == 0).unwrap_or(0)
+                            );
+                            String::from_utf16_lossy(name_slice)
+                        } else {
+                            String::from("Unknown")
+                        };
+                        
+                        // 获取跃点数
+                        let hop_count = adapter.Ipv4Metric;
+                        
+                        // 添加到结果列表
+                        hops.push(NetworkInterfaceHop {
+                            interface_name: name,
+                            hop_count,
+                        });
+                        
+                        // 移动到下一个适配器
+                        current_addresses = adapter.Next;
+                    }
+                }
+            }
+        }
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        // 对于非Windows系统，返回一个空列表或实现其他平台的逻辑
+        println!("获取网卡跃点信息仅支持Windows系统");
+    }
+    
+    NetworkInterfaceHops { hops }
+}
+
+
+//给INSTANCE_MAP所有的网卡设置跃点
+pub fn set_network_interface_hops(hop: i32) -> bool {
+    // 遍历所有实例
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        let mut success = true;
+        
+        // 从INSTANCE_MAP获取所有实例
+        for instance in INSTANCE_MAP.iter() {
+            // 获取实例的运行信息
+            if let Some(info) = instance.get_running_info() {
+                // 获取设备名称
+                let dev_name = info.dev_name.clone();
+                
+                if !dev_name.is_empty() {
+                    println!("设置EasyTier网卡 {} 的跃点数为 {}", dev_name, hop);
+                    // 使用Windows命令行工具设置网卡跃点数
+                    let output = Command::new("netsh")
+                        .args(&[
+                            "interface", 
+                            "ipv4", 
+                            "set", 
+                            "interface", 
+                            &dev_name, 
+                            &format!("metric={}", hop)
+                        ])
+                        .output();
+                        
+                    match output {
+                        Ok(output) => {
+                            if output.status.success() {
+                                println!("成功设置EasyTier网卡 {} 的跃点数为 {}", dev_name, hop);
+                            } else {
+                                let error = String::from_utf8_lossy(&output.stderr);
+                                println!("设置EasyTier网卡 {} 跃点数失败: {}", dev_name, error);
+                                success = false;
+                            }
+                        },
+                        Err(e) => {
+                            println!("执行命令失败: {}", e);
+                            success = false;
+                        }
+                    }
+                } else {
+                    println!("实例的设备名称为空");
+                    success = false;
+                }
+            } else {
+                println!("无法获取实例的运行信息");
+                success = false;
+            }
+        }
+        
+        // 如果INSTANCE_MAP为空，则返回失败
+        if INSTANCE_MAP.is_empty() {
+            println!("没有找到任何EasyTier网络实例");
+            success = false;
+        }
+        
+        success
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        println!("设置网卡跃点数仅支持Windows系统");
+        false
+    }
+}
 pub fn init_app() {
     lazy_static::initialize(&RT);
     // Default utilities - feel free to customize
