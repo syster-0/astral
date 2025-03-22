@@ -34,6 +34,8 @@ jobs:
           sudo apt-get install -y liblzma-dev
           sudo apt-get install -y libsecret-1-dev libjsoncpp-dev
           sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y libayatana-appindicator3-dev
+          sudo apt-get install -y libappindicator3-dev
 
       - name: 🐦 安装 Flutter
         run: |
