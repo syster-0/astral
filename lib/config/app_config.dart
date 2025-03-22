@@ -86,27 +86,27 @@ class AdvancedConfig implements ConfigModel {
 
   @override
   Map<String, dynamic> toJson() => {
-    'defaultProtocol': defaultProtocol,
-    'devName': devName,
-    'enableEncryption': enableEncryption,
-    'enableIpv6': enableIpv6,
-    'mtu': mtu,
-    'latencyFirst': latencyFirst,
-    'enableExitNode': enableExitNode,
-    'proxyForwardBySystem': proxyForwardBySystem,
-    'noTun': noTun,
-    'useSmoltcp': useSmoltcp,
-    'relayNetworkWhitelist': relayNetworkWhitelist,
-    'disableP2p': disableP2p,
-    'relayAllPeerRpc': relayAllPeerRpc,
-    'disableUdpHolePunching': disableUdpHolePunching,
-    'multiThread': multiThread,
-    'dataCompressAlgo': dataCompressAlgo,
-    'bindDevice': bindDevice,
-    'enableKcpProxy': enableKcpProxy,
-    'disableKcpInput': disableKcpInput,
-    'disableRelayKcp': disableRelayKcp,
-  };
+        'defaultProtocol': defaultProtocol,
+        'devName': devName,
+        'enableEncryption': enableEncryption,
+        'enableIpv6': enableIpv6,
+        'mtu': mtu,
+        'latencyFirst': latencyFirst,
+        'enableExitNode': enableExitNode,
+        'proxyForwardBySystem': proxyForwardBySystem,
+        'noTun': noTun,
+        'useSmoltcp': useSmoltcp,
+        'relayNetworkWhitelist': relayNetworkWhitelist,
+        'disableP2p': disableP2p,
+        'relayAllPeerRpc': relayAllPeerRpc,
+        'disableUdpHolePunching': disableUdpHolePunching,
+        'multiThread': multiThread,
+        'dataCompressAlgo': dataCompressAlgo,
+        'bindDevice': bindDevice,
+        'enableKcpProxy': enableKcpProxy,
+        'disableKcpInput': disableKcpInput,
+        'disableRelayKcp': disableRelayKcp,
+      };
 }
 
 // 配置模型类 - 保持原有结构
@@ -171,15 +171,15 @@ class ServerConfig implements ConfigModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'url': url,
-    'name': name,
-    'selected': selected,
-    'tcp': tcp,
-    'udp': udp,
-    'ws': ws,
-    'wss': wss,
-    'quic': quic,
-  };
+        'url': url,
+        'name': name,
+        'selected': selected,
+        'tcp': tcp,
+        'udp': udp,
+        'ws': ws,
+        'wss': wss,
+        'quic': quic,
+      };
 }
 
 // 创建一个新的服务器列表配置类
@@ -196,30 +196,29 @@ class ServerListConfig implements ConfigModel {
 
     if (json['list'] is List) {
       try {
-        serverList =
-            (json['list'] as List).map((item) {
-              // 安全地将 Map<dynamic, dynamic> 转换为 Map<String, dynamic>
-              if (item is Map) {
-                Map<String, dynamic> serverMap = {};
-                item.forEach((key, value) {
-                  if (key is String) {
-                    serverMap[key] = value;
-                  }
-                });
-                return ServerConfig.fromJson(serverMap);
+        serverList = (json['list'] as List).map((item) {
+          // 安全地将 Map<dynamic, dynamic> 转换为 Map<String, dynamic>
+          if (item is Map) {
+            Map<String, dynamic> serverMap = {};
+            item.forEach((key, value) {
+              if (key is String) {
+                serverMap[key] = value;
               }
-              // 如果不是 Map，返回默认服务器配置
-              return ServerConfig(
-                url: 'public.easytier.cn:11010',
-                name: '公共服务器',
-                selected: true,
-                tcp: true,
-                udp: true,
-                ws: false,
-                wss: false,
-                quic: false,
-              );
-            }).toList();
+            });
+            return ServerConfig.fromJson(serverMap);
+          }
+          // 如果不是 Map，返回默认服务器配置
+          return ServerConfig(
+            url: 'public.easytier.cn:11010',
+            name: '公共服务器',
+            selected: true,
+            tcp: true,
+            udp: true,
+            ws: false,
+            wss: false,
+            quic: false,
+          );
+        }).toList();
 
         // 确保至少有一个服务器被选中
         if (!serverList.any((server) => server.selected) &&
@@ -266,8 +265,8 @@ class ServerListConfig implements ConfigModel {
 
   @override
   Map<String, dynamic> toJson() => {
-    'list': servers.map((server) => server.toJson()).toList(),
-  };
+        'list': servers.map((server) => server.toJson()).toList(),
+      };
 }
 
 class RoomConfig implements ConfigModel {
@@ -321,9 +320,9 @@ class NetworkConfig implements ConfigModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'virtualIP': virtualIP,
-    'dynamicIP': dynamicIP,
-  };
+        'virtualIP': virtualIP,
+        'dynamicIP': dynamicIP,
+      };
 }
 
 class SystemConfig implements ConfigModel {
@@ -343,9 +342,9 @@ class SystemConfig implements ConfigModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'closeToTray': closeToTray,
-    'enablePing': enablePing,
-  };
+        'closeToTray': closeToTray,
+        'enablePing': enablePing,
+      };
 }
 
 // 配置管理器
@@ -421,6 +420,12 @@ class AppConfig {
     _registerConfig<AdvancedConfig>(
       (json) => AdvancedConfig.fromJson(json),
       AdvancedConfig(),
+    );
+
+    // 注册网卡越点配置
+    _registerConfig<NetworkOverlapConfig>(
+      (json) => NetworkOverlapConfig.fromJson(json),
+      NetworkOverlapConfig(),
     );
   }
 
@@ -630,20 +635,19 @@ class AppConfig {
     try {
       print('设置服务器列表: ${servers.length} 个服务器');
 
-      _serverConfigs =
-          servers.map((server) {
-            // 确保所有必要的字段都存在
-            return ServerConfig(
-              url: server['url'] ?? '',
-              name: server['name'] ?? '',
-              selected: server['selected'] ?? false,
-              tcp: server['tcp'] ?? true,
-              udp: server['udp'] ?? true,
-              ws: server['ws'] ?? false,
-              wss: server['wss'] ?? false,
-              quic: server['quic'] ?? false,
-            );
-          }).toList();
+      _serverConfigs = servers.map((server) {
+        // 确保所有必要的字段都存在
+        return ServerConfig(
+          url: server['url'] ?? '',
+          name: server['name'] ?? '',
+          selected: server['selected'] ?? false,
+          tcp: server['tcp'] ?? true,
+          udp: server['udp'] ?? true,
+          ws: server['ws'] ?? false,
+          wss: server['wss'] ?? false,
+          quic: server['quic'] ?? false,
+        );
+      }).toList();
 
       await _saveServerList();
 
@@ -859,4 +863,52 @@ class AppConfig {
       ),
     );
   }
+
+  NetworkOverlapConfig get networkOverlap => getModel<NetworkOverlapConfig>();
+  bool get networkOverlapEnabled => networkOverlap.enabled;
+  int get networkOverlapValue => networkOverlap.value;
+
+  Future<void> setNetworkOverlapEnabled(bool enabled) async {
+    await updateModel<NetworkOverlapConfig>(
+      NetworkOverlapConfig(
+        enabled: enabled,
+        value: networkOverlap.value,
+      ),
+    );
+  }
+
+  Future<void> setNetworkOverlapValue(int value) async {
+    await updateModel<NetworkOverlapConfig>(
+      NetworkOverlapConfig(
+        enabled: networkOverlap.enabled,
+        value: value,
+      ),
+    );
+  }
+}
+
+class NetworkOverlapConfig implements ConfigModel {
+  final bool enabled;
+  final int value;
+
+  @override
+  String get configKey => 'network_overlap';
+
+  NetworkOverlapConfig({
+    this.enabled = false,
+    this.value = 1,
+  });
+
+  factory NetworkOverlapConfig.fromJson(Map<String, dynamic> json) {
+    return NetworkOverlapConfig(
+      enabled: json['enabled'] ?? false,
+      value: json['value'] ?? 1,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'enabled': enabled,
+        'value': value,
+      };
 }

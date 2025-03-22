@@ -7,9 +7,9 @@ import '../config/app_config.dart';
 final appConfigProvider = Provider<AppConfig>((ref) => AppConfig());
 
 enum VpnRunningState {
-  stopped,    // VPN已停止
-  starting,   // VPN正在启动
-  running,    // VPN正在运行
+  stopped, // VPN已停止
+  starting, // VPN正在启动
+  running, // VPN正在运行
 }
 
 class VpnStatus {
@@ -25,6 +25,7 @@ class VpnStatus {
     this.routes = const [],
   });
 }
+
 // 计数器相关
 class CountNotifier extends StateNotifier<int> {
   CountNotifier() : super(0);
@@ -461,7 +462,7 @@ class VpnStatusNotifier extends StateNotifier<VpnStatus> {
   set state(VpnStatus value) {
     VpnStatus previous = state;
     super.state = value;
-    
+
     // 状态发生变化时的处理
     if (previous.state != value.state) {
       debugPrint('VPN状态变化: ${previous.state} -> ${value.state}');
@@ -492,6 +493,42 @@ class VpnStatusNotifier extends StateNotifier<VpnStatus> {
   }
 }
 
-final vpnStatusProvider = StateNotifierProvider<VpnStatusNotifier, VpnStatus>((ref) {
+final vpnStatusProvider =
+    StateNotifierProvider<VpnStatusNotifier, VpnStatus>((ref) {
   return VpnStatusNotifier();
+});
+
+// 网卡越点配置相关
+class NetworkOverlapNotifier extends StateNotifier<Map<String, dynamic>> {
+  final AppConfig _config;
+
+  NetworkOverlapNotifier(this._config)
+      : super({
+          'enabled': _config.networkOverlapEnabled,
+          'value': _config.networkOverlapValue,
+        });
+
+  void setEnabled(bool value) {
+    _config.setNetworkOverlapEnabled(value);
+    state = {...state, 'enabled': value};
+  }
+
+  void setValue(int value) {
+    _config.setNetworkOverlapValue(value);
+    state = {...state, 'value': value};
+  }
+}
+
+final networkOverlapProvider =
+    StateNotifierProvider<NetworkOverlapNotifier, Map<String, dynamic>>((ref) {
+  return NetworkOverlapNotifier(ref.watch(appConfigProvider));
+});
+
+// 为enabled和value创建单独的Provider以方便使用
+final networkOverlapEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(networkOverlapProvider)['enabled'] ?? false;
+});
+
+final networkOverlapValueProvider = Provider<int>((ref) {
+  return ref.watch(networkOverlapProvider)['value'] ?? 0;
 });

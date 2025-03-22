@@ -9,6 +9,8 @@ import 'package:astral/utils/kv_state.dart';
 import 'package:http/http.dart' as http; // 添加 http 包导入
 import 'dart:convert'; // 添加 json 解析支持
 import 'package:astral/utils/serverjs.dart';
+import 'package:astral/utils/network_util.dart'; // 添加网络工具类导入
+import 'package:flutter/foundation.dart'; // 添加compute支持
 
 class Pserver {
   final int id;
@@ -853,6 +855,51 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ],
             ),
+            // 网卡越点设置 - 移动到ExpansionTile的children中
+            const Divider(),
+
+            SwitchListTile(
+              title: const Text('启用网卡跃点'),
+              subtitle: const Text('允许网卡跃点重叠'),
+              value: ref.watch(networkOverlapEnabledProvider),
+              onChanged: (value) {
+                ref.read(networkOverlapProvider.notifier).setEnabled(value);
+              },
+            ),
+            if (ref.watch(networkOverlapEnabledProvider))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: '越点值',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        controller: TextEditingController(
+                          text:
+                              ref.watch(networkOverlapValueProvider).toString(),
+                        ),
+                        onChanged: (value) {
+                          final overlapValue = int.tryParse(value) ?? 0;
+                          ref
+                              .read(networkOverlapProvider.notifier)
+                              .setValue(overlapValue);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.list),
+              title: const Text('网卡跃点列表'),
+              subtitle: const Text('查看网卡名称和对应的跃点值'),
+              onTap: () => _showNetworkInterfaceMetricsDialog(context),
+            ),
           ],
         ),
       ),
@@ -1624,5 +1671,88 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         );
       }
     }
+  }
+}
+
+// 显示网卡跃点列表对话框
+Future<void> _showNetworkInterfaceMetricsDialog(BuildContext context) async {
+  // 显示加载指示器
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+
+  try {
+    // 从系统API获取网卡跃点列表
+    final Map<String, int> interfaceMetrics = await compute(
+      (message) => NetworkUtil.getInterfaceMetrics(),
+      null,
+    );
+
+    // 关闭加载指示器
+    Navigator.of(context).pop();
+
+    if (interfaceMetrics.isEmpty) {
+      // 如果获取失败，显示错误信息
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('获取网卡跃点列表失败')),
+      );
+      return;
+    }
+
+    // 显示网卡跃点列表对话框
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('网卡跃点列表'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300, // 设置一个固定高度
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: interfaceMetrics.length,
+            itemBuilder: (context, index) {
+              final entry = interfaceMetrics.entries.elementAt(index);
+              return ListTile(
+                title: Text(entry.key),
+                trailing: Text(
+                  '${entry.value}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: entry.value < 50
+                        ? Colors.green
+                        : (entry.value < 100 ? Colors.orange : Colors.red),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showNetworkInterfaceMetricsDialog(context); // 重新打开对话框以刷新数据
+            },
+            child: const Text('刷新'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    // 关闭加载指示器
+    Navigator.of(context).pop();
+
+    // 显示错误信息
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('获取网卡跃点列表失败: $e')),
+    );
   }
 }
