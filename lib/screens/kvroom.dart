@@ -45,8 +45,7 @@ class RoomPage extends ConsumerStatefulWidget {
   const RoomPage({super.key});
 
   @override
-  ConsumerState<RoomPage> createState() =>
-      _RoomPageState(); // 修改为 ConsumerState
+  ConsumerState<RoomPage> createState() => _RoomPageState(); // 修改为 ConsumerState
 }
 
 class _RoomPageState extends ConsumerState<RoomPage> {
@@ -84,10 +83,14 @@ class _RoomPageState extends ConsumerState<RoomPage> {
     if (searchQuery.isEmpty) {
       filteredPlayers = List.from(players); // 如果搜索为空，显示所有玩家
     } else {
-      filteredPlayers = players
-          .where((player) =>
-              player.name.toLowerCase().contains(searchQuery.toLowerCase()))
-          .toList(); // 根据名称过滤玩家
+      filteredPlayers =
+          players
+              .where(
+                (player) => player.name.toLowerCase().contains(
+                  searchQuery.toLowerCase(),
+                ),
+              )
+              .toList(); // 根据名称过滤玩家
     }
   }
 
@@ -126,9 +129,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: colorScheme.primary,
-                  ),
+                  CircularProgressIndicator(color: colorScheme.primary),
                   const SizedBox(height: 16),
                   Text(
                     '加载玩家信息...',
@@ -177,16 +178,15 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                 SliverPadding(
                   padding: const EdgeInsets.all(16.0),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child:
-                              _buildPlayerListItem(players[index], colorScheme),
-                        );
-                      },
-                      childCount: players.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _buildPlayerListItem(
+                          players[index],
+                          colorScheme,
+                        ),
+                      );
+                    }, childCount: players.length),
                   ),
                 ),
               ],
@@ -223,7 +223,10 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         int sentPackets = 0;
         int receivedPackets = 0;
         String connectionType = _mapConnectionType(
-            node.cost, node.ipv4, ref.read(virtualIPProvider));
+          node.cost,
+          node.ipv4,
+          ref.read(virtualIPProvider),
+        );
 
         // 获取跃点信息 (示例，实际需要从节点数据中获取)
         List<NodeHopStats> hops = [];
@@ -295,17 +298,35 @@ class _RoomPageState extends ConsumerState<RoomPage> {
     return FloatingCard(
       colorScheme: colorScheme,
       maxWidth: double.infinity,
-      child: isSmallScreen
-          ? _buildMobilePlayerListItem(
-              player, colorScheme, latencyColor, connectionIcon)
-          : _buildDesktopPlayerListItem(
-              player, colorScheme, latencyColor, connectionIcon),
+      child:
+          isSmallScreen
+              ? _buildMobilePlayerListItem(
+                player,
+                colorScheme,
+                latencyColor,
+                connectionIcon,
+              )
+              : _buildDesktopPlayerListItem(
+                player,
+                colorScheme,
+                latencyColor,
+                connectionIcon,
+              ),
     );
   }
 
   // 为移动设备优化的列表项布局
-  Widget _buildMobilePlayerListItem(PlayerInfo player, ColorScheme colorScheme,
-      Color latencyColor, IconData connectionIcon) {
+  Widget _buildMobilePlayerListItem(
+    PlayerInfo player,
+    ColorScheme colorScheme,
+    Color latencyColor,
+    IconData connectionIcon,
+  ) {
+    // 处理显示名称
+    String displayName =
+        player.name.startsWith('PublicServer_')
+            ? player.name.substring('PublicServer_'.length)
+            : player.name;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -316,27 +337,27 @@ class _RoomPageState extends ConsumerState<RoomPage> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                player.name,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                displayName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color:
-                    _getConnectionTypeColor(player.connectionType, colorScheme),
+                color: _getConnectionTypeColor(
+                  player.connectionType,
+                  colorScheme,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    connectionIcon,
-                    size: 14,
-                    color: Colors.white,
-                  ),
+                  Icon(connectionIcon, size: 14, color: Colors.white),
                   const SizedBox(width: 4),
                   Text(
                     player.connectionType,
@@ -374,12 +395,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         const SizedBox(height: 8),
 
         // ET版本
-        _buildInfoRow(
-          Icons.memory,
-          'ET版本',
-          player.etVersion,
-          colorScheme,
-        ),
+        _buildInfoRow(Icons.memory, 'ET版本', player.etVersion, colorScheme),
         const SizedBox(height: 8),
         // NAT类型
         _buildInfoRow(
@@ -463,8 +479,16 @@ class _RoomPageState extends ConsumerState<RoomPage> {
   }
 
   // 为桌面设备优化的列表项布局
-  Widget _buildDesktopPlayerListItem(PlayerInfo player, ColorScheme colorScheme,
-      Color latencyColor, IconData connectionIcon) {
+  Widget _buildDesktopPlayerListItem(
+    PlayerInfo player,
+    ColorScheme colorScheme,
+    Color latencyColor,
+    IconData connectionIcon,
+  ) {
+    String displayName =
+        player.name.startsWith('PublicServer_')
+            ? player.name.substring('PublicServer_'.length)
+            : player.name;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -481,28 +505,30 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      player.name,
+                      displayName,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _getConnectionTypeColor(
-                          player.connectionType, colorScheme),
+                        player.connectionType,
+                        colorScheme,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          connectionIcon,
-                          size: 14,
-                          color: Colors.white,
-                        ),
+                        Icon(connectionIcon, size: 14, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
                           player.connectionType,
@@ -648,10 +674,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(label, style: const TextStyle(fontSize: 12)),
             Text(
               value,
               style: TextStyle(
@@ -679,10 +702,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
       children: [
         Icon(icon, size: 20, color: colorScheme.primary),
         const SizedBox(width: 12),
-        Text(
-          '$label:',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
         // 添加复制按钮到标签和值之间
         if (showCopyButton)
@@ -780,7 +800,9 @@ class _RoomPageState extends ConsumerState<RoomPage> {
 
   // 根据连接类型获取颜色
   Color _getConnectionTypeColor(
-      String connectionType, ColorScheme colorScheme) {
+    String connectionType,
+    ColorScheme colorScheme,
+  ) {
     // 将连接类型转为小写并进行匹配
     String lowerType = connectionType.toLowerCase();
     if (lowerType.contains('server') || lowerType.contains('服务器')) {
@@ -916,12 +938,15 @@ class _PlayerSearchDelegate extends SearchDelegate<String> {
 
   // 修改方法签名，添加 BuildContext 参数
   Widget _buildSearchResults(BuildContext context) {
-    final filteredPlayers = query.isEmpty
-        ? players
-        : players
-            .where((player) =>
-                player.name.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+    final filteredPlayers =
+        query.isEmpty
+            ? players
+            : players
+                .where(
+                  (player) =>
+                      player.name.toLowerCase().contains(query.toLowerCase()),
+                )
+                .toList();
 
     if (filteredPlayers.isEmpty) {
       return Center(
@@ -945,9 +970,7 @@ class _PlayerSearchDelegate extends SearchDelegate<String> {
             const SizedBox(height: 8),
             Text(
               '尝试使用其他搜索关键词',
-              style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.7),
-              ),
+              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7)),
             ),
           ],
         ),
@@ -984,10 +1007,7 @@ Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '跃点路径:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text('跃点路径:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Wrap(
               spacing: 4,
@@ -996,14 +1016,16 @@ Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
               children: [
                 for (int i = 0; i < hops.length; i++) ...[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      hops[i].nodeName ,
+                      hops[i].nodeName,
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onPrimaryContainer,
