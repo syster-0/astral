@@ -1,0 +1,70 @@
+name: 🍎 构建 macOS 应用
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'   # 当推送版本标签时触发
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - name: 🛠️ 检出代码仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: 🦀 设置 Rust 工具链
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: 📦 安装系统依赖
+        run: |
+          brew update
+          brew install cmake ninja
+          brew install protobuf
+
+      - name: 🐦 安装 Flutter
+        run: |
+          git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
+          echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          export PATH="$HOME/flutter/bin:$PATH"
+          chmod +x $HOME/flutter/bin/flutter
+          flutter --version
+
+      - name: 🎯 启用 macOS 桌面支持
+        run: |
+          flutter config --enable-macos-desktop
+          flutter create --platforms=macos .
+
+      - name: 📚 安装 Flutter 依赖
+        run: |
+          flutter pub get
+
+      - name: 🛠️ 构建 macOS 应用
+        run: |
+          flutter build macos --release
+
+      - name: 📦 打包应用
+        run: |
+          mkdir -p release
+          cd build/macos/Build/Products/Release
+          # 创建 DMG 文件
+          hdiutil create -volname "Astral" -srcfolder astral.app -ov -format UDZO $GITHUB_WORKSPACE/release/astral-macos.dmg
+          echo "打包完成，检查文件大小："
+          ls -lh $GITHUB_WORKSPACE/release/
+
+      - name: 📤 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: release/astral-macos.dmg
+          retention-days: 7
