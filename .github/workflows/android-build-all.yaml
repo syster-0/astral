@@ -3,8 +3,8 @@ name: 🛠️ 构建 Android-build-all
 on:
   workflow_dispatch:
   push:  # 每次 push 到仓库时触发
-    branches:
-      - auto  # 指定触发分支
+    tags:
+      - 'v*'   # 指定触发分支
 
 jobs:
   setup:
@@ -63,7 +63,7 @@ jobs:
       - name: 📚 安装 Flutter 依赖
         run: |
           flutter pub get
-          
+
       - name: 🔐 设置签名配置
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
