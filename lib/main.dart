@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:astral/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/src/rust/frb_generated.dart';
@@ -24,6 +26,12 @@ Future<void> main() async {
     Logger.error('堆栈跟踪: ${details.stack}');
     // 继续将错误报告给Flutter
     FlutterError.dumpErrorToConsole(details);
+  };
+  // 捕获未处理的异步错误
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    Logger.error('平台分发器错误: $error');
+    Logger.error('堆栈跟踪: $stack');
+    return true; // 返回true表示错误已处理
   };
   // 为Android平台设置配置目录
   if (Platform.isAndroid) {

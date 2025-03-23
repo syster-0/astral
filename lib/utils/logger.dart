@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'dart:async'; // 添加这个导入
 
 class Logger {
   static Logger? _instance;
@@ -146,6 +147,32 @@ class Logger {
     if (stackTrace != null) {
       logger.log('堆栈: $stackTrace', LogLevel.ERROR);
     }
+  }
+
+  // 设置全局错误捕获
+  static void setupErrorLogging() {
+    // 捕获Flutter框架错误
+    FlutterError.onError = (FlutterErrorDetails details) {
+      error('Flutter错误: ${details.exception}');
+      exception(details.exception, details.stack);
+      // 继续将错误传递给Flutter默认处理程序
+      FlutterError.presentError(details);
+    };
+
+    // 捕获未处理的异步错误
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      exception(error, stack);
+      // 返回true表示错误已处理
+      return true;
+    };
+
+    // 捕获Zone中的所有未处理错误
+    runZonedGuarded<Future<void>>(() async {
+      // 这里不需要任何代码，只是设置错误处理区域
+      // 实际的runApp()应该在应用的main()函数中被包裹在runZonedGuarded中
+    }, (Object error, StackTrace stack) {
+      exception(error, stack);
+    });
   }
 }
 

@@ -970,12 +970,4 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
 }
 pub fn init_app() {
     lazy_static::initialize(&RT);
-    // Default utilities - feel free to customize
-    flutter_rust_bridge::setup_default_user_utils();
-
-       // 注册关闭钩子，确保程序退出时清理资源
-       std::panic::set_hook(Box::new(|_| {
-        println!("程序发生异常，正在清理资源...");
-        close_all_server();
-    }));
 }

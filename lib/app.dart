@@ -33,6 +33,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    closeAllServer();
+
     // 从配置中加载设置
     final config = AppConfig();
     _themeMode = config.themeMode;
@@ -125,7 +127,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    closeAllServer();
     // 返回应用程序的根Widget
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 隐藏调试标签
