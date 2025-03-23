@@ -474,7 +474,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         true,
                 enableIpv6:
                     ref.read(advancedConfigProvider)['enableIpv6'] ?? true,
-                mtu: ref.read(advancedConfigProvider)['mtu'] ?? 1380,
+                mtu: ref.read(advancedConfigProvider)['mtu'] ??
+                    (ref.read(advancedConfigProvider)['enableEncryption'] ?? true
+                        ? 1360
+                        : 1380),
                 multiThread:
                     ref.read(advancedConfigProvider)['multiThread'] ?? true,
                 latencyFirst:
@@ -493,10 +496,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ref.read(advancedConfigProvider)['relayAllPeerRpc'] ??
                         false,
                 disableUdpHolePunching:
-                    ref.read(advancedConfigProvider)['disableUdpHolePunching'] ??
-                        false,
-                dataCompressAlgo: ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
-                        "Invalid"
+                    ref.read(advancedConfigProvider)['disableUdpHolePunching'] ?? false,
+                dataCompressAlgo: ref.read(advancedConfigProvider)['dataCompressAlgo'] == "Invalid"
                     ? 0
                     : ref.read(advancedConfigProvider)['dataCompressAlgo'] == "None"
                         ? 1
@@ -727,7 +728,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           }
 
           if (previous.ipv4Addr != current.ipv4Addr) {
-            Logger.info('IPv4地址变化: ${previous.ipv4Addr} -> ${current.ipv4Addr}');
+            Logger.info(
+                'IPv4地址变化: ${previous.ipv4Addr} -> ${current.ipv4Addr}');
             //判断ip有没有变化
             if (publicIP != current.ipv4Addr &&
                 current.ipv4Addr?.isNotEmpty == true) {

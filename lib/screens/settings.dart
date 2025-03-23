@@ -858,27 +858,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ],
             ),
-            // 网卡跃点设置 - 移动到ExpansionTile的children中
             if (Platform.isWindows) ...[
               const Divider(),
-              SwitchListTile(
-                title: const Text('启用网卡跃点'),
-                subtitle: const Text('允许网卡跃点重叠'),
-                value: ref.watch(networkOverlapEnabledProvider),
-                onChanged: (value) {
-                  ref.read(networkOverlapProvider.notifier).setEnabled(value);
-                },
-              ),
-              if (ref.watch(networkOverlapEnabledProvider))
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
+              Row(
+                children: [
+                  Expanded(
+                    child: SwitchListTile(
+                      title: const Text('启用网卡跃点'),
+                      subtitle: const Text('允许网卡跃点重叠'),
+                      value: ref.watch(networkOverlapEnabledProvider),
+                      onChanged: (value) {
+                        ref
+                            .read(networkOverlapProvider.notifier)
+                            .setEnabled(value);
+                      },
+                    ),
+                  ),
+                  if (ref.watch(networkOverlapEnabledProvider))
+                    SizedBox(
+                      width: 100,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
                         child: TextField(
                           decoration: const InputDecoration(
                             labelText: '跃点值',
                             border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 8),
                           ),
                           keyboardType: TextInputType.number,
                           controller: TextEditingController(
@@ -894,9 +900,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           },
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 8),
               ListTile(
                 leading: const Icon(Icons.list),
@@ -1009,33 +1015,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 .setDevName(value);
                           });
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // MTU设置
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'MTU值',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              controller:
-                                  TextEditingController(text: _mtu.toString()),
-                              onChanged: (value) {
-                                final mtuValue = int.tryParse(value) ?? 1380;
-                                setState(() {
-                                  _mtu = mtuValue;
-                                  ref
-                                      .read(advancedConfigProvider.notifier)
-                                      .updateConfig('mtu', mtuValue);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 16),
 

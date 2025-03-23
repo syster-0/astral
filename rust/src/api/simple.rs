@@ -1002,7 +1002,14 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
     // 遍历所有实例
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
+        use std::ffi::OsStr;
+        use std::iter::once;
+        use std::os::windows::ffi::OsStrExt;
+        use winapi::shared::winerror::ERROR_SUCCESS;
+        use winapi::um::iphlpapi::SetIfEntry;
+        use winapi::um::iphlpapi::GetIfEntry;
+        use winapi::um::iptypes::MIB_IFROW;
+        
         let mut success = true;
         
         // 从INSTANCE_MAP获取所有实例
@@ -1014,30 +1021,50 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
                 
                 if !dev_name.is_empty() {
                     println!("设置EasyTier网卡 {} 的跃点数为 {}", dev_name, hop);
-                    // 使用Windows命令行工具设置网卡跃点数
-                    let output = Command::new("netsh")
-                        .args(&[
-                            "interface", 
-                            "ipv4", 
-                            "set", 
-                            "interface", 
-                            &dev_name, 
-                            &format!("metric={}", hop)
-                        ])
-                        .output();
+                    
+                    // 使用WinAPI设置网卡跃点
+                    unsafe {
+                        // 首先需要获取网卡的索引
+                        let wide_name: Vec<u16> = OsStr::new(&dev_name)
+                            .encode_wide()
+                            .chain(once(0))
+                            .collect();
                         
-                    match output {
-                        Ok(output) => {
-                            if output.status.success() {
-                                println!("成功设置EasyTier网卡 {} 的跃点数为 {}", dev_name, hop);
-                            } else {
-                                let error = String::from_utf8_lossy(&output.stderr);
-                                println!("设置EasyTier网卡 {} 跃点数失败: {}", dev_name, error);
-                                success = false;
+                        // 创建MIB_IFROW结构体
+                        let mut if_row: MIB_IFROW = std::mem::zeroed();
+                        
+                        // 查找匹配的网卡
+                        let mut found = false;
+                        
+                        // 从1开始遍历网卡索引
+                        for index in 1..100 { // 设置一个合理的上限
+                            if_row.dwIndex = index;
+                            
+                            // 获取网卡信息
+                            if GetIfEntry(&mut if_row) == ERROR_SUCCESS {
+                                // 检查网卡名称是否匹配
+                                let if_name = &if_row.wszName[0..255]; // 最大长度为256
+                                if if_name.starts_with(&wide_name[..wide_name.len()-1]) {
+                                    found = true;
+                                    
+                                    // 设置跃点值
+                                    if_row.dwForwardMetric1 = hop as u32;
+                                    
+                                    // 应用更改
+                                    let result = SetIfEntry(&if_row);
+                                    if result == ERROR_SUCCESS {
+                                        println!("成功设置EasyTier网卡 {} 的跃点数为 {}", dev_name, hop);
+                                    } else {
+                                        println!("设置EasyTier网卡 {} 跃点数失败，错误码: {}", dev_name, result);
+                                        success = false;
+                                    }
+                                    break;
+                                }
                             }
-                        },
-                        Err(e) => {
-                            println!("执行命令失败: {}", e);
+                        }
+                        
+                        if !found {
+                            println!("未找到网卡: {}", dev_name);
                             success = false;
                         }
                     }

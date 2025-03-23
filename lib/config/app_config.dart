@@ -40,9 +40,9 @@ class AdvancedConfig implements ConfigModel {
   AdvancedConfig({
     this.defaultProtocol = "tcp",
     this.devName = "",
-    this.enableEncryption = false,
+    this.enableEncryption = true,
     this.enableIpv6 = true,
-    this.mtu = 1380,
+    this.mtu = 1360,
     this.latencyFirst = false,
     this.enableExitNode = false,
     this.proxyForwardBySystem = false,
