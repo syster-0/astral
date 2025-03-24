@@ -479,35 +479,33 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ref.read(advancedConfigProvider)['latencyFirst'] ?? false,
                 enableExitNode:
                     ref.read(advancedConfigProvider)['enableExitNode'] ?? false,
-                noTun: ref.read(advancedConfigProvider)['noTun'] ?? false,
-                useSmoltcp:
-                    ref.read(advancedConfigProvider)['useSmoltcp'] ?? false,
+                noTun: false,
+                useSmoltcp: false,
                 relayNetworkWhitelist:
                     ref.read(advancedConfigProvider)['relayNetworkWhitelist'] ??
                         "*",
-                disableP2P:
-                    ref.read(advancedConfigProvider)['disableP2p'] ?? false,
-                relayAllPeerRpc:
-                    ref.read(advancedConfigProvider)['relayAllPeerRpc'] ??
-                        false,
+                disableP2P: false,
+                relayAllPeerRpc: false,
                 disableUdpHolePunching:
                     ref.read(advancedConfigProvider)['disableUdpHolePunching'] ??
                         false,
-                dataCompressAlgo: ref
-                            .read(advancedConfigProvider)['dataCompressAlgo'] ==
+                dataCompressAlgo: ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
                         "Invalid"
                     ? 0
                     : ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
                             "None"
                         ? 1
-                        : ref.read(advancedConfigProvider)['dataCompressAlgo'] == "Zstd"
+                        : ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
+                                "Zstd"
                             ? 2
                             : 1,
-                bindDevice: ref.read(advancedConfigProvider)['bindDevice'] ?? true,
-                enableKcpProxy: ref.read(advancedConfigProvider)['enableKcpProxy'] ?? false,
-                disableKcpInput: ref.read(advancedConfigProvider)['disableKcpInput'] ?? false,
-                disableRelayKcp: ref.read(advancedConfigProvider)['disableRelayKcp'] ?? true,
-                proxyForwardBySystem: ref.read(advancedConfigProvider)['proxyForwardBySystem'] ?? false));
+                bindDevice: true,
+                enableKcpProxy:
+                    ref.read(advancedConfigProvider)['enableKcpProxy'] ?? false,
+                disableKcpInput: false,
+                disableRelayKcp:
+                    ref.read(advancedConfigProvider)['disableRelayKcp'] ?? true,
+                proxyForwardBySystem: false));
 
         // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
         timer = Timer.periodic(const Duration(seconds: 1), (timer) async {

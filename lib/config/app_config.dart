@@ -43,7 +43,7 @@ class AdvancedConfig implements ConfigModel {
     this.enableEncryption = true,
     this.enableIpv6 = true,
     this.mtu = 1360,
-    this.latencyFirst = false,
+    this.latencyFirst = true,
     this.enableExitNode = false,
     this.proxyForwardBySystem = false,
     this.noTun = false,

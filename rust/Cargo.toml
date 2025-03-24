@@ -18,8 +18,8 @@ humansize = "1.1.1"
 tokio = "1.39.2"
 anyhow = "1.0.95"
 easytier = { path = "./easytier" }
-winapi = { version = "0.3", features = ["iphlpapi", "iptypes", "netioapi", "winerror", "ws2def"] }
-
+# 修正 winapi 的特性，移除 windows crate 的特性
+windows = { version = "0.48", features = ["Win32_NetworkManagement_IpHelper", "Win32_Networking_WinSock", "Win32_Foundation", "Win32_System_WindowsProgramming"] }
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 

@@ -1101,48 +1101,48 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       //     });
                       //   },
                       // ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('系统代理转发'),
-                        subtitle: const Text('通过系统代理转发流量'),
-                        value: _proxyForwardBySystem,
-                        onChanged: (value) {
-                          setState(() {
-                            _proxyForwardBySystem = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('proxyForwardBySystem', value);
-                          });
-                        },
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('禁用TUN'),
-                        subtitle: const Text('不使用TUN虚拟网络接口'),
-                        value: _noTun,
-                        onChanged: (value) {
-                          setState(() {
-                            _noTun = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('noTun', value);
-                          });
-                        },
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('使用Smoltcp'),
-                        subtitle: const Text('使用Smoltcp网络栈'),
-                        value: _useSmoltcp,
-                        onChanged: (value) {
-                          setState(() {
-                            _useSmoltcp = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('useSmoltcp', value);
-                          });
-                        },
-                      ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('系统代理转发'),
+                      //   subtitle: const Text('通过系统代理转发流量'),
+                      //   value: _proxyForwardBySystem,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _proxyForwardBySystem = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('proxyForwardBySystem', value);
+                      //     });
+                      //   },
+                      // ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('禁用TUN'),
+                      //   subtitle: const Text('不使用TUN虚拟网络接口'),
+                      //   value: _noTun,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _noTun = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('noTun', value);
+                      //     });
+                      //   },
+                      // ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('使用Smoltcp'),
+                      //   subtitle: const Text('使用Smoltcp网络栈'),
+                      //   value: _useSmoltcp,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _useSmoltcp = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('useSmoltcp', value);
+                      //     });
+                      //   },
+                      // ),
 
                       // 中继设置
                       const ListTile(
@@ -1170,34 +1170,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('禁用P2P'),
-                        subtitle: const Text('禁用点对点直接连接'),
-                        value: _disableP2p,
-                        onChanged: (value) {
-                          setState(() {
-                            _disableP2p = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('disableP2p', value);
-                          });
-                        },
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('中继所有对等RPC'),
-                        subtitle: const Text('通过中继服务器转发所有RPC请求'),
-                        value: _relayAllPeerRpc,
-                        onChanged: (value) {
-                          setState(() {
-                            _relayAllPeerRpc = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('relayAllPeerRpc', value);
-                          });
-                        },
-                      ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('禁用P2P'),
+                      //   subtitle: const Text('禁用点对点直接连接'),
+                      //   value: _disableP2p,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _disableP2p = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('disableP2p', value);
+                      //     });
+                      //   },
+                      // ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('中继所有对等RPC'),
+                      //   subtitle: const Text('通过中继服务器转发所有RPC请求'),
+                      //   value: _relayAllPeerRpc,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _relayAllPeerRpc = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('relayAllPeerRpc', value);
+                      //     });
+                      //   },
+                      // ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('禁用UDP打洞'),
@@ -1258,27 +1258,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       const SizedBox(height: 16),
 
                       // KCP设置
-                      const ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          'KCP设置',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('绑定设备'),
-                        subtitle: const Text('将连接绑定到特定网络设备'),
-                        value: _bindDevice,
-                        onChanged: (value) {
-                          setState(() {
-                            _bindDevice = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('bindDevice', value);
-                          });
-                        },
-                      ),
+                      // const ListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: Text(
+                      //     'KCP设置',
+                      //     style: TextStyle(fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('绑定设备'),
+                      //   subtitle: const Text('将连接绑定到特定网络设备'),
+                      //   value: _bindDevice,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _bindDevice = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('bindDevice', value);
+                      //     });
+                      //   },
+                      // ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('启用KCP代理'),
@@ -1293,20 +1293,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           });
                         },
                       ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('禁用KCP输入'),
-                        subtitle: const Text('禁止KCP协议输入'),
-                        value: _disableKcpInput,
-                        onChanged: (value) {
-                          setState(() {
-                            _disableKcpInput = value;
-                            ref
-                                .read(advancedConfigProvider.notifier)
-                                .updateConfig('disableKcpInput', value);
-                          });
-                        },
-                      ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('禁用KCP输入'),
+                      //   subtitle: const Text('禁止KCP协议输入'),
+                      //   value: _disableKcpInput,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _disableKcpInput = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('disableKcpInput', value);
+                      //     });
+                      //   },
+                      // ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('禁用中继KCP'),
