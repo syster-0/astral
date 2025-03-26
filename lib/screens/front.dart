@@ -281,72 +281,24 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (!_virtualIPFocusNode.hasFocus && !_isAutoIP) {
       // 当失去焦点且不是自动IP模式时更新值
       ref
-          .read(virtualIPProvider.notifier)
+          .read(KConfig.provider.notifier)
           .setVirtualIP(_virtualIPController.text);
     }
   }
 
   // 添加一个处理VPN路由的方法
-  List<String> _getValidRoutesForVpn(List<String> routes) {
-    if (routes.isEmpty) {
-      return [];
-    }
-
-    // 处理每个路由地址，确保格式正确
-    List<String> validRoutes = [];
-    for (String route in routes) {
-      if (route.isEmpty) continue;
-
-      String processedRoute = route;
-      // 如果不包含CIDR格式（没有"/"），则添加"/32"
-      if (!processedRoute.contains('/')) {
-        processedRoute += '/32';
-      }
-
-      try {
-        // 解析IP和CIDR部分
-        final parts = processedRoute.split('/');
-        final ipPart = parts[0];
-        final cidrPart = parts[1];
-
-        // 验证IP地址格式
-        if (_isValidIPv4(ipPart)) {
-          // 对于主机IP（如10.126.126.2），使用/32而不是/24
-          // 对于网络IP（如10.126.126.0），使用/24
-          final ipOctets = ipPart.split('.');
-          final lastOctet = int.parse(ipOctets[3]);
-
-          // 如果最后一个八位字节不是0，且CIDR是24，可能需要调整为/32
-          if (lastOctet != 0 && cidrPart == "24") {
-            // 这是一个主机IP，使用/32
-            validRoutes.add("$ipPart/32");
-          } else {
-            // 保持原样
-            validRoutes.add(processedRoute);
-          }
-        } else {
-          Logger.info('跳过无效路由IP: $ipPart');
-        }
-      } catch (e) {
-        Logger.info('处理路由时出错: $route, 错误: $e');
-      }
-    }
-
-    // 去重并排序
-    return validRoutes.toSet().toList()..sort();
-  }
 
   // 添加用户名焦点变化监听方法
   void _onUsernameFocusChange() {
     if (!_usernameControllerFocusNode.hasFocus) {
-      ref.read(usernameProvider.notifier).setUsername(_usernameController.text);
+      ref.read(KConfig.provider.notifier).setUsername(_usernameController.text);
     }
   }
 
   // 添加房间名焦点变化监听方法
   void _onRoomNameFocusChange() {
     if (!_roomNameControllerFocusNode.hasFocus) {
-      ref.read(roomNameProvider.notifier).setRoomName(_roomNameController.text);
+      ref.read(KConfig.provider.notifier).setRoomname(_roomNameController.text);
     }
   }
 
@@ -354,8 +306,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _onRoomPasswordFocusChange() {
     if (!_roomPasswordControllerFocusNode.hasFocus) {
       ref
-          .read(roomPasswordProvider.notifier)
-          .setRoomPassword(_roomPasswordController.text);
+          .read(KConfig.provider.notifier)
+          .setRoomname(_roomPasswordController.text);
     }
   }
 
@@ -461,46 +413,34 @@ class _HomePageState extends ConsumerState<HomePage> {
             roomPassword: roomPassword,
             severurl: ssServerip,
             flag: FlagsC(
-                defaultProtocol:
-                    ref.read(advancedConfigProvider)['defaultProtocol'] ??
-                        "tcp",
-                devName: ref.read(advancedConfigProvider)['devName'] ?? "",
+                defaultProtocol: ref.read(KConfig.provider).defaultProtocol,
+                devName: ref.read(KConfig.provider).devName,
                 enableEncryption: true,
-                enableIpv6:
-                    ref.read(advancedConfigProvider)['enableIpv6'] ?? true,
+                enableIpv6: ref.read(KConfig.provider).enableIpv6,
                 mtu: 1360,
-                multiThread:
-                    ref.read(advancedConfigProvider)['multiThread'] ?? true,
-                latencyFirst:
-                    ref.read(advancedConfigProvider)['latencyFirst'] ?? false,
-                enableExitNode:
-                    ref.read(advancedConfigProvider)['enableExitNode'] ?? false,
+                multiThread: ref.read(KConfig.provider).multiThread,
+                latencyFirst: ref.read(KConfig.provider).latencyFirst,
+                enableExitNode: ref.read(KConfig.provider).enableExitNode,
                 noTun: false,
                 useSmoltcp: false,
                 relayNetworkWhitelist:
-                    ref.read(advancedConfigProvider)['relayNetworkWhitelist'] ??
-                        "*",
+                    ref.read(KConfig.provider).relayNetworkWhitelist,
                 disableP2P: false,
                 relayAllPeerRpc: false,
                 disableUdpHolePunching:
-                    ref.read(advancedConfigProvider)['disableUdpHolePunching'] ??
-                        false,
-                dataCompressAlgo: ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
-                        "Invalid"
-                    ? 0
-                    : ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
-                            "None"
-                        ? 1
-                        : ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
-                                "Zstd"
-                            ? 2
-                            : 1,
+                    ref.read(KConfig.provider).disableUdpHolePunching,
+                // 根据配置的压缩算法设置对应的数值
+                dataCompressAlgo: switch (
+                    ref.read(KConfig.provider).dataCompressAlgo) {
+                  "Invalid" => 0,
+                  "None" => 1,
+                  "Zstd" => 2,
+                  _ => 1,
+                },
                 bindDevice: true,
-                enableKcpProxy:
-                    ref.read(advancedConfigProvider)['enableKcpProxy'] ?? false,
+                enableKcpProxy: ref.read(KConfig.provider).enableKcpProxy,
                 disableKcpInput: false,
-                disableRelayKcp:
-                    ref.read(advancedConfigProvider)['disableRelayKcp'] ?? true,
+                disableRelayKcp: ref.read(KConfig.provider).disableRelayKcp,
                 proxyForwardBySystem: false));
 
         // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
@@ -516,7 +456,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
           // 获取网络状态
           final networkStatus = await getNetworkStatus();
-          ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
+          ref.read(KP.notifier).setValue("networkStatus", networkStatus);
 
           // 获取所有IP列表
           List<String> llk = await getAllIps();

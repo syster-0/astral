@@ -1,7 +1,7 @@
 import 'package:astral/sys/config_core.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
-
+import 'dart:io';
 part 'config_model.g.dart';
 
 // 添加 Color 类型的 JsonConverter
@@ -48,10 +48,17 @@ class ServerConfig {
 class ConfigModel implements BaseConfigModel {
   @override
   String get configKey => 'config';
+  final String roompass;
+  final String roomname;
+  final String username;
+  final String virtualIP;
   final bool closeToTray; // 添加关闭进入托盘变量
   final bool pingEnabled; // 添加全局ping开关
   final ThemeMode themeMode;
   @ColorConverter() // 使用 ColorConverter
+  final int overlapValue; // 跃点值
+  //启用网卡跃点
+  final bool enableOverlap;
   final Color seedColor;
   final String defaultProtocol;
   final String devName;
@@ -76,6 +83,12 @@ class ConfigModel implements BaseConfigModel {
   final List<ServerConfig> servers;
 
   const ConfigModel({
+    this.roompass = "",
+    this.roomname = "", // Add roomname field with default value of empty string
+    this.username = "",
+    this.virtualIP = "",
+    this.overlapValue = 0,
+    this.enableOverlap = true,
     this.closeToTray = false,
     this.pingEnabled = true,
     this.themeMode = ThemeMode.system,
@@ -113,6 +126,11 @@ class ConfigModel implements BaseConfigModel {
       ),
     ],
   });
+
+  factory ConfigModel.withDefaults() => ConfigModel(
+        username: Platform.localHostname,
+        // 其他参数使用默认值
+      );
 
   factory ConfigModel.fromJson(Map<String, dynamic> json) =>
       _$ConfigModelFromJson(json);

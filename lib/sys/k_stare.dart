@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:astral/model/config_model.dart';
 
+class KV {
+  final Map<String, dynamic> values;
+
+  const KV({Map<String, dynamic>? initialValues})
+      : values = initialValues ?? const {};
+
+  T? getValue<T>(String key) => values[key] as T?;
+
+  KV copyWith(String key, dynamic value) {
+    return KV(
+      initialValues: {...values, key: value},
+    );
+  }
+}
+
+final KP = StateNotifierProvider<K, KV>((ref) {
+  return K();
+});
+
+class K extends StateNotifier<KV> {
+  K()
+      : super(const KV(initialValues: {
+          'networkStatus': null,
+        }));
+
+  void setValue<T>(String key, T value) {
+    state = state.copyWith(key, value);
+  }
+
+  T? getValue<T>(String key) => state.getValue<T>(key);
+}
+
 // 配置状态管理类
 class KConfig extends StateNotifier<ConfigModel> {
   // 单例实例
@@ -15,6 +47,12 @@ class KConfig extends StateNotifier<ConfigModel> {
 
   void setConfig(Map<String, dynamic> updates) {
     state = ConfigModel(
+      roompass: updates['roompass'] ?? state.roompass,
+      roomname: updates['roomname'] ?? state.roomname,
+      username: updates['Username'] ?? state.username,
+      virtualIP: updates['virtualIP'] ?? state.virtualIP,
+      enableOverlap: updates['overlap'] ?? state.enableOverlap,
+      overlapValue: updates['overlapValue'] ?? state.overlapValue,
       closeToTray: updates['closeToTray'] ?? state.closeToTray,
       pingEnabled: updates['pingEnabled'] ?? state.pingEnabled,
       themeMode: updates['mode'] ?? state.themeMode,
@@ -44,6 +82,30 @@ class KConfig extends StateNotifier<ConfigModel> {
       disableRelayKcp: updates['disableRelayKcp'] ?? state.disableRelayKcp,
       servers: updates['servers'] ?? state.servers,
     );
+  }
+
+  void setRoompass(String roompass) {
+    setConfig({'roompass': roompass});
+  }
+
+  void setRoomname(String roomname) {
+    setConfig({'roomname': roomname});
+  }
+
+  void setUsername(String username) {
+    setConfig({'username': username});
+  }
+
+  void setVirtualIP(String ip) {
+    setConfig({'virtualIP': ip});
+  }
+
+  void setoverlap(bool enable) {
+    setConfig({'overlap': enable});
+  }
+
+  void setoverlapValue(int value) {
+    setConfig({'overlapValue': value});
   }
 
   void setCloseToTray(bool enable) {
