@@ -62,6 +62,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _closeToTray = false; // 添加关闭进入托盘变量
   bool _pingEnabled = true; // 添加全局ping开关
 
+  // 添加自定义端口配置变量
+  bool _customPortEnabled = false;
+  bool _customPortIpv6 = false;
+  bool _customPortTcp = true;
+  bool _customPortUdp = true;
+  int _customPortValue = 11010;
   // 添加高级选项变量
   String _defaultProtocol = "tcp";
   String _devName = "";
@@ -97,6 +103,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _closeToTray = _appConfig.closeToTray; // 初始化托盘设置
     // 初始化全局ping开关
     _pingEnabled = _appConfig.enablePing;
+
+        // 初始化自定义端口配置
+    _customPortEnabled = _appConfig.customPortEnabled ?? false;
+    _customPortIpv6 = _appConfig.customPortIpv6 ?? false;
+    _customPortTcp = _appConfig.customPortTcp ?? true;
+    _customPortUdp = _appConfig.customPortUdp ?? true;
+    _customPortValue = _appConfig.customPortValue ?? 11010;
+
     _overlapValueController = TextEditingController();
 // 添加监听器以在provider值变化时更新控制器文本
     ref.listenManual(networkOverlapValueProvider, (previous, next) {
@@ -949,7 +963,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       const SizedBox(height: 16),
-      Card(
+Card(
         child: Column(
           children: [
             const ListTile(
@@ -972,6 +986,99 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               subtitle: const Text('定期测试所有服务器的网络延迟'),
               value: _pingEnabled,
               onChanged: _togglePingStatus,
+            ),
+            
+            // 添加自定义端口配置部分
+            ExpansionTile(
+              leading: const Icon(Icons.settings_ethernet),
+              title: const Text('自定义端口配置'),
+              children: [
+                SwitchListTile(
+                  title: const Text('启用自定义端口'),
+                  value: _customPortEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _customPortEnabled = value;
+                      _appConfig.setCustomPortEnabled(value);
+                    });
+                  },
+                ),
+                if (_customPortEnabled) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: '端口值',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                controller: TextEditingController(
+                                    text: _customPortValue.toString()),
+                                onChanged: (value) {
+                                  final portValue = int.tryParse(value) ?? 11010;
+                                  setState(() {
+                                    _customPortValue = portValue;
+                                    _appConfig.setCustomPortValue(portValue);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用IPv6'),
+                          value: _customPortIpv6,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortIpv6 = value;
+                              _appConfig.setCustomPortIpv6(value);
+                            });
+                          },
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用TCP'),
+                          value: _customPortTcp,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortTcp = value;
+                              _appConfig.setCustomPortTcp(value);
+                              // 确保至少有一个协议被启用
+                              if (!_customPortTcp && !_customPortUdp) {
+                                _customPortUdp = true;
+                                _appConfig.setCustomPortUdp(true);
+                              }
+                            });
+                          },
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用UDP'),
+                          value: _customPortUdp,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortUdp = value;
+                              _appConfig.setCustomPortUdp(value);
+                              // 确保至少有一个协议被启用
+                              if (!_customPortTcp && !_customPortUdp) {
+                                _customPortTcp = true;
+                                _appConfig.setCustomPortTcp(true);
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -1390,13 +1497,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
             Logger.info('提取的数据: $extractedData');
 
-            // 尝试解析提取的JSON数据
             try {
               // 先将字符串解析为Map
               // 去除最后的分号并将单引号替换为双引号
               String cleanData = extractedData
                   .replaceAll(RegExp(r';$'), '')
-                  .replaceAll("'", '"');
+                  .replaceAll("'", '"')
+                  // 只替换 \xA0 不间断空格字符
+                  .replaceAll(r'\xA0', ' ');
+
               Map<String, dynamic> jsonMap = json.decode(cleanData);
               StatusPageData? pageData = StatusPageData.fromJson(jsonMap);
               // 打印解析后的数据

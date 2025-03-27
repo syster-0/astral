@@ -377,56 +377,46 @@ class AppConfig {
       (json) => ThemeConfig.fromJson(json),
       ThemeConfig(),
     );
-
+    _registerConfig<ServerListConfig>(
+      (json) => ServerListConfig.fromJson(json),
+      ServerListConfig(servers: [
+        ServerConfig(
+          url: 'public.easytier.cn:11010',
+          name: '公共服务器',
+          selected: true,
+        ),
+      ]),
+    );
     _registerConfig<RoomConfig>(
       (json) => RoomConfig.fromJson(json),
       RoomConfig(),
     );
-
     _registerConfig<UserConfig>(
       (json) => UserConfig.fromJson(json),
       UserConfig(name: Platform.localHostname),
     );
-
     _registerConfig<NetworkConfig>(
       (json) => NetworkConfig.fromJson(json),
       NetworkConfig(),
     );
-
     _registerConfig<SystemConfig>(
       (json) => SystemConfig.fromJson(json),
       SystemConfig(),
     );
-
-    // 注册服务器列表配置
-    _registerConfig<ServerListConfig>(
-      (json) => ServerListConfig.fromJson(json),
-      ServerListConfig(
-        servers: [
-          ServerConfig(
-            url: 'public.easytier.cn:11010',
-            name: '公共服务器',
-            selected: true,
-            tcp: true,
-            udp: true,
-            ws: false,
-            wss: false,
-            quic: false,
-          ),
-        ],
-      ),
-    );
-
-    // 注册高级配置
     _registerConfig<AdvancedConfig>(
       (json) => AdvancedConfig.fromJson(json),
       AdvancedConfig(),
     );
-
     // 注册网卡越点配置
     _registerConfig<NetworkOverlapConfig>(
       (json) => NetworkOverlapConfig.fromJson(json),
       NetworkOverlapConfig(),
+    );
+
+    // 注册自定义端口配置
+    _registerConfig<CustomPortConfig>(
+      (json) => CustomPortConfig.fromJson(json),
+      CustomPortConfig(),
     );
   }
 
@@ -886,6 +876,93 @@ class AppConfig {
       ),
     );
   }
+
+  // 自定义端口配置
+  CustomPortConfig get customPort => getModel<CustomPortConfig>();
+  bool get customPortEnabled => customPort.enabled;
+  bool get customPortIpv6 => customPort.ipv6;
+  bool get customPortTcp => customPort.tcp;
+  bool get customPortUdp => customPort.udp;
+  int get customPortValue => customPort.value;
+
+  Future<void> setCustomPortEnabled(bool enabled) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: enabled,
+        ipv6: customPort.ipv6,
+        tcp: customPort.tcp,
+        udp: customPort.udp,
+        value: customPort.value,
+      ),
+    );
+  }
+
+  Future<void> setCustomPortIpv6(bool ipv6) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: customPort.enabled,
+        ipv6: ipv6,
+        tcp: customPort.tcp,
+        udp: customPort.udp,
+        value: customPort.value,
+      ),
+    );
+  }
+
+  Future<void> setCustomPortTcp(bool tcp) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: customPort.enabled,
+        ipv6: customPort.ipv6,
+        tcp: tcp,
+        udp: customPort.udp,
+        value: customPort.value,
+      ),
+    );
+  }
+
+  Future<void> setCustomPortUdp(bool udp) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: customPort.enabled,
+        ipv6: customPort.ipv6,
+        tcp: customPort.tcp,
+        udp: udp,
+        value: customPort.value,
+      ),
+    );
+  }
+
+  Future<void> setCustomPortValue(int value) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: customPort.enabled,
+        ipv6: customPort.ipv6,
+        tcp: customPort.tcp,
+        udp: customPort.udp,
+        value: value,
+      ),
+    );
+  }
+
+  // 更新自定义端口配置的通用方法
+  Future<void> updateCustomPortConfig({
+    bool? enabled,
+    bool? ipv6,
+    bool? tcp,
+    bool? udp,
+    int? value,
+  }) async {
+    await updateModel<CustomPortConfig>(
+      CustomPortConfig(
+        enabled: enabled ?? customPort.enabled,
+        ipv6: ipv6 ?? customPort.ipv6,
+        tcp: tcp ?? customPort.tcp,
+        udp: udp ?? customPort.udp,
+        value: value ?? customPort.value,
+      ),
+    );
+  }
 }
 
 class NetworkOverlapConfig implements ConfigModel {
@@ -910,6 +987,45 @@ class NetworkOverlapConfig implements ConfigModel {
   @override
   Map<String, dynamic> toJson() => {
         'enabled': enabled,
+        'value': value,
+      };
+}
+
+// 在NetworkOverlapConfig类后添加自定义端口配置类
+class CustomPortConfig implements ConfigModel {
+  final bool enabled;
+  final bool ipv6;
+  final bool tcp;
+  final bool udp;
+  final int value;
+
+  @override
+  String get configKey => 'custom_port';
+
+  CustomPortConfig({
+    this.enabled = false,
+    this.ipv6 = false,
+    this.tcp = true,
+    this.udp = true,
+    this.value = 11010,
+  });
+
+  factory CustomPortConfig.fromJson(Map<String, dynamic> json) {
+    return CustomPortConfig(
+      enabled: json['enabled'] ?? false,
+      ipv6: json['ipv6'] ?? false,
+      tcp: json['tcp'] ?? true,
+      udp: json['udp'] ?? true,
+      value: json['value'] ?? 11010,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'enabled': enabled,
+        'ipv6': ipv6,
+        'tcp': tcp,
+        'udp': udp,
         'value': value,
       };
 }
