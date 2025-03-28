@@ -8,7 +8,6 @@ pub use easytier::{
     launcher::NetworkInstance,
     proto,
 };
-use crate::api::kudp::KudpBroadcaster;
 pub use easytier::{
     common::{
         self,
@@ -45,32 +44,6 @@ static INSTANCE_MAP: Lazy<DashMap<String, NetworkInstance>> = Lazy::new(DashMap:
 // 创建一个 NetworkInstance 类型变量 储存当前服务器
 lazy_static! {
     static ref RT: Runtime = Runtime::new().expect("创建 Tokio 运行时失败");
-    static ref KUDP_BROADCASTER: Mutex<KudpBroadcaster> = Mutex::new(KudpBroadcaster::new());
-}
-
-
-// 添加启动广播服务的公开方法
-pub fn start_broadcast_service() -> Result<(), String> {
-    RT.block_on(async {
-        let mut broadcaster = KUDP_BROADCASTER.lock().await;
-        broadcaster.start().await
-    })
-}
-
-// 添加停止广播服务的公开方法
-pub fn stop_broadcast_service() -> Result<(), String> {
-    RT.block_on(async {
-        let mut broadcaster = KUDP_BROADCASTER.lock().await;
-        broadcaster.stop().await
-    })
-}
-
-// 添加检查广播服务状态的方法
-pub fn is_broadcast_service_running() -> bool {
-    RT.block_on(async {
-        let broadcaster = KUDP_BROADCASTER.lock().await;
-        broadcaster.is_running()
-    })
 }
 
 fn create_config() -> TomlConfigLoader {
@@ -392,7 +365,7 @@ pub fn get_network_status() -> KVNetworkStatus {
                                     if let Some(local_route) = info.routes.iter().find(|r| r.peer_id == route.peer_id) {
                                         // 收集中间节点
                                         let mut next_hops = collect_hops(
-                                            pairs.as_slice(),
+                                            &pairs,
                                             local_route.next_hop_peer_id,
                                             Vec::new(),
                                             &mut visited
