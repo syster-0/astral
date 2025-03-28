@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:astral/model/config_model.dart';
 import 'package:astral/src/rust/api/simple.dart';
-import 'package:astral/sys/k_stare.dart';
 import 'package:astral/utils/app_info.dart';
 import 'package:astral/utils/logger.dart';
 import 'package:astral/utils/up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 添加 Riverpod 导入
+import '../config/app_config.dart';
 import '../utils/ping_util.dart';
+import 'package:astral/utils/kv_state.dart';
 import 'package:http/http.dart' as http; // 添加 http 包导入
 import 'dart:convert'; // 添加 json 解析支持
 import 'package:astral/utils/serverjs.dart';
@@ -56,54 +56,113 @@ final pServerProvider = StateProvider<List<Pserver>>((ref) => []);
 
 // 将 State 改为 ConsumerState
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  late List<ServerConfig> _serverList;
+  late List<Map<String, dynamic>> _serverList;
   late TextEditingController _overlapValueController;
-  late bool _closeToTray; // 添加关闭进入托盘变量
-  late bool _pingEnabled; // 添加全局ping开关
+  final _appConfig = AppConfig();
+  bool _closeToTray = false; // 添加关闭进入托盘变量
+  bool _pingEnabled = true; // 添加全局ping开关
 
+  // 添加自定义端口配置变量
+  bool _customPortEnabled = false;
+  bool _customPortIpv6 = false;
+  bool _customPortTcp = true;
+  bool _customPortUdp = true;
+  int _customPortValue = 11010;
+  // 添加高级选项变量
   String _defaultProtocol = "tcp";
   String _devName = "";
+  bool _enableEncryption = true;
   bool _enableIpv6 = true;
+  int _mtu = 1380;
   bool _latencyFirst = false;
+  bool _enableExitNode = false;
+  bool _proxyForwardBySystem = false;
+  bool _noTun = false;
+  bool _useSmoltcp = false;
   String _relayNetworkWhitelist = "*";
+  bool _disableP2p = false;
+  bool _relayAllPeerRpc = false;
   bool _disableUdpHolePunching = false;
   bool _multiThread = true;
   String _dataCompressAlgo = "None";
+  bool _bindDevice = true;
   bool _enableKcpProxy = false;
+  bool _disableKcpInput = false;
   bool _disableRelayKcp = true;
+
+  String serverIP = "";
+  // 添加 ping 相关状态
+  Map<String, int?> pingResults = {};
 
   @override
   void initState() {
     super.initState();
-    final Cg = ref.watch(KConfig.provider);
+    // 从 Riverpod 获取服务器列表
+    _serverList = ref.read(serverListProvider);
+    serverIP = _getSelectedServersString();
+    _closeToTray = _appConfig.closeToTray; // 初始化托盘设置
+    // 初始化全局ping开关
+    _pingEnabled = _appConfig.enablePing;
 
-    _defaultProtocol = Cg.defaultProtocol;
-    _devName = Cg.devName;
-    _enableIpv6 = Cg.enableIpv6;
-    _latencyFirst = Cg.latencyFirst;
-    _relayNetworkWhitelist = Cg.relayNetworkWhitelist;
-    _disableUdpHolePunching = Cg.disableUdpHolePunching;
-    _multiThread = Cg.multiThread;
-    _dataCompressAlgo = Cg.dataCompressAlgo;
-    _enableKcpProxy = Cg.enableKcpProxy;
-    _disableRelayKcp = Cg.disableRelayKcp;
-    _serverList = Cg.servers;
-    _closeToTray = Cg.closeToTray; // 初始化托盘设置
-    _pingEnabled = Cg.pingEnabled;
+        // 初始化自定义端口配置
+    _customPortEnabled = _appConfig.customPortEnabled ?? false;
+    _customPortIpv6 = _appConfig.customPortIpv6 ?? false;
+    _customPortTcp = _appConfig.customPortTcp ?? true;
+    _customPortUdp = _appConfig.customPortUdp ?? true;
+    _customPortValue = _appConfig.customPortValue ?? 11010;
 
     _overlapValueController = TextEditingController();
-    ref.listenManual(KConfig.provider, (previous, next) {
+// 添加监听器以在provider值变化时更新控制器文本
+    ref.listenManual(networkOverlapValueProvider, (previous, next) {
       // 只有当文本框不是焦点时才更新文本，避免干扰用户输入
-      if (_overlapValueController.text.isNotEmpty &&
+      if (!_overlapValueController.text.isEmpty &&
           !FocusScope.of(context).hasFocus) {
         _overlapValueController.text = next.toString();
       }
     });
     // 设置初始值
     _overlapValueController.text =
-        ref.read(KConfig.provider).overlapValue.toString();
+        ref.read(networkOverlapValueProvider).toString();
+    // 初始化高级设置
+    final advancedConfig = ref.read(advancedConfigProvider);
+    _defaultProtocol = advancedConfig['defaultProtocol'] ?? "tcp";
+    _devName = advancedConfig['devName'] ?? "";
+    _enableEncryption = advancedConfig['enableEncryption'] ?? true;
+    _enableIpv6 = advancedConfig['enableIpv6'] ?? true;
+    _mtu = advancedConfig['mtu'] ?? 1380;
+    _latencyFirst = advancedConfig['latencyFirst'] ?? false;
+    _enableExitNode = advancedConfig['enableExitNode'] ?? false;
+    _proxyForwardBySystem = advancedConfig['proxyForwardBySystem'] ?? false;
+    _noTun = advancedConfig['noTun'] ?? false;
+    _useSmoltcp = advancedConfig['useSmoltcp'] ?? false;
+    _relayNetworkWhitelist = advancedConfig['relayNetworkWhitelist'] ?? "*";
+    _disableP2p = advancedConfig['disableP2p'] ?? false;
+    _relayAllPeerRpc = advancedConfig['relayAllPeerRpc'] ?? false;
+    _disableUdpHolePunching = advancedConfig['disableUdpHolePunching'] ?? false;
+    _multiThread = advancedConfig['multiThread'] ?? true;
+    _dataCompressAlgo = advancedConfig['dataCompressAlgo'] ?? "None";
+    _bindDevice = advancedConfig['bindDevice'] ?? true;
+    _enableKcpProxy = advancedConfig['enableKcpProxy'] ?? false;
+    _disableKcpInput = advancedConfig['disableKcpInput'] ?? false;
+    _disableRelayKcp = advancedConfig['disableRelayKcp'] ?? true;
 
+    // 初始化 ping 状态
+    for (var server in _serverList) {
+      pingResults[server['url']] = null;
+    }
+
+    // 开始 ping 所有服务器
     _startPingAllServers();
+  }
+
+  // 获取选中的服务器字符串
+  String _getSelectedServersString() {
+    final selected =
+        _serverList.where((server) => server['selected'] == true).toList();
+    if (selected.isEmpty && _serverList.isNotEmpty) {
+      return _serverList.first['url'];
+    }
+    return selected.map((server) => server['url']).join(', ');
   }
 
   // 添加一个计时器变量来控制 ping 操作
@@ -123,7 +182,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
       if (_pingEnabled) {
         for (var server in _serverList) {
-          _pingServerOnce(server.url);
+          _pingServerOnce(server['url']);
         }
       }
     });
@@ -138,36 +197,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   // 执行单次 ping 操作
-  Future<void> _pingServerOnce(String serverUrl) async {
-    try {
-      // 对指定服务器执行ping操作
-      final pingResult = await PingUtil.ping(serverUrl);
+  Future<void> _pingServerOnce(String server) async {
+    final pingResult = await PingUtil.ping(server);
 
-      // 获取当前服务器列表
-      final serverList = ref.read(KConfig.provider).servers;
-
-      // 更新对应服务器的ping值
-      final updatedServers = serverList.map((server) {
-        if (server.url == serverUrl) {
-          return ServerConfig(
-            url: server.url,
-            name: server.name,
-            selected: server.selected,
-            tcp: server.tcp,
-            udp: server.udp,
-            ws: server.ws,
-            wss: server.wss,
-            quic: server.quic,
-            ms: pingResult ?? 0,
-          );
-        }
-        return server;
-      }).toList();
-
-      // 更新配置
-      ref.read(KConfig.provider.notifier).setServers(updatedServers);
-    } catch (e) {
-      Logger.info('Ping服务器失败: $e');
+    if (mounted) {
+      setState(() {
+        pingResults[server] = pingResult;
+      });
     }
   }
 
@@ -325,19 +361,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void _addPublicServerToList(Pserver publicServer) {
     // 检查是否已存在相同地址的服务器
     final existingServer = _serverList.firstWhere(
-      (server) => server.url == publicServer.ip,
-      orElse: () => ServerConfig(
-          url: '',
-          name: '',
-          selected: false,
-          tcp: true,
-          udp: true,
-          ws: false,
-          wss: false,
-          quic: false),
+      (server) => server['url'] == publicServer.ip,
+      orElse: () => <String, dynamic>{},
     );
 
-    if (existingServer.url.isNotEmpty) {
+    if (existingServer.isNotEmpty) {
       // 已存在相同地址的服务器
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -348,16 +376,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       return;
     }
 
-    ref.read(KConfig.provider.notifier).addServer(ServerConfig(
-          url: publicServer.ip,
-          name: publicServer.name,
-          selected: false,
-          tcp: true,
-          udp: true,
-          ws: false,
-          wss: false,
-          quic: false,
-        ));
+    setState(() {
+      // 添加新服务器，默认不选中，使用IP地址而不是address
+      _serverList.add({
+        'url': publicServer.ip,
+        'name': publicServer.name,
+        'selected': false,
+        'tcp': true,
+        'udp': true,
+        'ws': false,
+        'wss': false,
+        'quic': false,
+      });
+      _appConfig.setServerList(_serverList);
+
+      // 初始化新服务器的 ping 状态
+      pingResults[publicServer.ip] = null;
+    });
 
     // 显示添加成功提示
     ScaffoldMessenger.of(context).showSnackBar(
@@ -376,9 +411,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   // 切换全局ping状态
   void _togglePingStatus(bool value) {
-    _pingEnabled = value;
-    ref.read(KConfig.provider.notifier).setPingEnabled(value);
-    if (!_pingEnabled) {}
+    setState(() {
+      _pingEnabled = value;
+      _appConfig.setEnablePing(_pingEnabled);
+      if (!_pingEnabled) {
+        // 如果关闭ping，清空所有结果
+        for (var server in _serverList) {
+          pingResults[server['url']] = null;
+        }
+      }
+    });
   }
 
   // 添加服务器对话框
@@ -482,30 +524,37 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
 
     if (result != null) {
-      ref.read(KConfig.provider.notifier).addServer(ServerConfig(
-            url: result['url'],
-            name: result['name'],
-            selected: false,
-            tcp: result['tcp'] ?? true,
-            udp: result['udp'] ?? true,
-            ws: result['ws'] ?? false,
-            wss: result['wss'] ?? false,
-            quic: result['quic'] ?? false,
-          ));
+      setState(() {
+        // 添加新服务器，默认不选中，包含协议设置
+        _serverList.add({
+          'url': result['url'],
+          'name': result['name'],
+          'selected': false,
+          'tcp': result['tcp'] ?? true,
+          'udp': result['udp'] ?? true,
+          'ws': result['ws'] ?? false,
+          'wss': result['wss'] ?? false,
+          'quic': result['quic'] ?? false,
+        });
+        _appConfig.setServerList(_serverList);
+
+        // 初始化新服务器的 ping 状态
+        pingResults[result['url']] = null;
+      });
     }
   }
 
   // 编辑服务器对话框
   Future<void> _showEditServerDialog(int index) async {
     final server = _serverList[index];
-    final urlController = TextEditingController(text: server.url);
-    final nameController = TextEditingController(text: server.name);
+    final urlController = TextEditingController(text: server['url']);
+    final nameController = TextEditingController(text: server['name']);
     // 初始化协议开关状态
-    bool tcpEnabled = server.tcp;
-    bool udpEnabled = server.udp;
-    bool wsEnabled = server.ws;
-    bool wssEnabled = server.wss;
-    bool quicEnabled = server.quic;
+    bool tcpEnabled = server['tcp'] ?? true;
+    bool udpEnabled = server['udp'] ?? true;
+    bool wsEnabled = server['ws'] ?? false;
+    bool wssEnabled = server['wss'] ?? false;
+    bool quicEnabled = server['quic'] ?? false;
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -597,18 +646,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
 
     if (result != null) {
-      final oldUrl = server.url;
-      _serverList[index] = ServerConfig(
-        url: result['url'],
-        name: result['name'],
-        selected: server.selected,
-        tcp: result['tcp'] ?? true,
-        udp: result['udp'] ?? true,
-        ws: result['ws'] ?? false,
-        wss: result['wss'] ?? false,
-        quic: result['quic'] ?? false,
-      );
-      ref.read(KConfig.provider.notifier).setServers(_serverList);
+      final oldUrl = server['url'];
+      setState(() {
+        _serverList[index] = {
+          'url': result['url'],
+          'name': result['name'],
+          'selected': server['selected'],
+          'tcp': result['tcp'] ?? true,
+          'udp': result['udp'] ?? true,
+          'ws': result['ws'] ?? false,
+          'wss': result['wss'] ?? false,
+          'quic': result['quic'] ?? false,
+        };
+        _appConfig.setServerList(_serverList);
+
+        // 更新 ping 状态
+        if (oldUrl != result['url']) {
+          pingResults[result['url']] = pingResults[oldUrl];
+          pingResults.remove(oldUrl);
+        }
+
+        // 更新当前选中的服务器显示
+        serverIP = _getSelectedServersString();
+        // 使用 Riverpod 更新服务器列表
+        ref.read(serverListProvider.notifier).setServerList(_serverList);
+      });
     }
   }
 
@@ -634,49 +696,50 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     if (confirm == true) {
       final server = _serverList[index];
-      ref.read(KConfig.provider.notifier).removeServer(server);
+
+      setState(() {
+        _serverList.removeAt(index);
+        _appConfig.setServerList(_serverList);
+
+        // 移除 ping 状态
+        pingResults.remove(server['url']);
+
+        // 确保至少有一个服务器被选中
+        if (_serverList.isNotEmpty &&
+            !_serverList.any((server) => server['selected'] == true)) {
+          _serverList.first['selected'] = true;
+        }
+
+        // 更新当前选中的服务器显示
+        serverIP = _getSelectedServersString();
+        // 使用 Riverpod 更新服务器列表
+        ref.read(serverListProvider.notifier).setServerList(_serverList);
+      });
     }
   }
 
   // 切换服务器选中状态
   void _toggleServerSelection(int index) {
-    List<ServerConfig> currentServers = List.from(_serverList);
+    setState(() {
+      _serverList[index]['selected'] =
+          !(_serverList[index]['selected'] ?? false);
+      _appConfig.setServerList(_serverList);
 
-    // 通过创建新实例来更新选中状态
-    currentServers = currentServers
-        .map((server) => ServerConfig(
-              url: server.url,
-              name: server.name,
-              selected: false,
-              tcp: server.tcp,
-              udp: server.udp,
-              ws: server.ws,
-              wss: server.wss,
-              quic: server.quic,
-            ))
-        .toList();
+      // 更新当前选中的服务器显示
+      serverIP = _getSelectedServersString();
 
-    // 设置当前选中的服务器
-    currentServers[index] = ServerConfig(
-      url: currentServers[index].url,
-      name: currentServers[index].name,
-      selected: true,
-      tcp: currentServers[index].tcp,
-      udp: currentServers[index].udp,
-      ws: currentServers[index].ws,
-      wss: currentServers[index].wss,
-      quic: currentServers[index].quic,
-    );
-
-    // 更新服务器列表
-    ref.read(KConfig.provider.notifier).setServers(currentServers);
+      // 使用 Riverpod 更新服务器列表
+      ref.read(serverListProvider.notifier).setServerList(_serverList);
+    });
   }
 
   // 添加构建 ping 显示组件的方法
-  Widget _buildPingWidget(ServerConfig se) {
-    final pingResult = se.ms;
+  Widget _buildPingWidget(String url) {
+    final pingResult = pingResults[url];
     if (!_pingEnabled) {
       return const Text('Ping已关闭', style: TextStyle(color: Colors.grey));
+    } else if (pingResult == null) {
+      return const Text('测试中...', style: TextStyle(color: Colors.grey));
     } else {
       return Text(
         '${pingResult}ms',
@@ -690,10 +753,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   // 添加一个方法来显示服务器支持的协议
-  Widget _buildProtocolChips(ServerConfig server) {
+  Widget _buildProtocolChips(Map<String, dynamic> server) {
     List<Widget> chips = [];
 
-    if (server.tcp == true) {
+    if (server['tcp'] == true) {
       chips.add(Chip(
         label: const Text('TCP', style: TextStyle(fontSize: 10)),
         backgroundColor: Colors.blue.withOpacity(0.2),
@@ -702,7 +765,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ));
     }
 
-    if (server.udp == true) {
+    if (server['udp'] == true) {
       chips.add(Chip(
         label: const Text('UDP', style: TextStyle(fontSize: 10)),
         backgroundColor: Colors.green.withOpacity(0.2),
@@ -711,7 +774,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ));
     }
 
-    if (server.ws == true) {
+    if (server['ws'] == true) {
       chips.add(Chip(
         label: const Text('WS', style: TextStyle(fontSize: 10)),
         backgroundColor: Colors.orange.withOpacity(0.2),
@@ -720,7 +783,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ));
     }
 
-    if (server.wss == true) {
+    if (server['wss'] == true) {
       chips.add(Chip(
         label: const Text('WSS', style: TextStyle(fontSize: 10)),
         backgroundColor: Colors.purple.withOpacity(0.2),
@@ -729,7 +792,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ));
     }
 
-    if (server.quic == true) {
+    if (server['quic'] == true) {
       chips.add(Chip(
         label: const Text('QUIC', style: TextStyle(fontSize: 10)),
         backgroundColor: Colors.teal.withOpacity(0.2),
@@ -763,7 +826,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   itemCount: _serverList.length,
                   itemBuilder: (context, index) {
                     final server = _serverList[index];
-                    final isSelected = server.selected == true;
+                    final isSelected = server['selected'] == true;
 
                     return ListTile(
                       leading: Icon(
@@ -774,18 +837,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              server.name,
+                              server['name'],
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildPingWidget(server),
+                          _buildPingWidget(server['url']),
                         ],
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(server.url),
+                          Text(server['url']),
                           const SizedBox(height: 4),
                           _buildProtocolChips(server),
                         ],
@@ -829,13 +892,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     child: SwitchListTile(
                       title: const Text('启用网卡跃点'),
                       subtitle: const Text('允许网卡跃点重叠'),
-                      value: ref.watch(KConfig.provider).enableOverlap,
+                      value: ref.watch(networkOverlapEnabledProvider),
                       onChanged: (value) {
-                        ref.read(KConfig.provider.notifier).setoverlap(value);
+                        ref
+                            .read(networkOverlapProvider.notifier)
+                            .setEnabled(value);
                       },
                     ),
                   ),
-                  if (ref.watch(KConfig.provider).enableOverlap)
+                  if (ref.watch(networkOverlapEnabledProvider))
                     Row(
                       children: [
                         SizedBox(
@@ -855,8 +920,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               onChanged: (value) {
                                 final overlapValue = int.tryParse(value) ?? 0;
                                 ref
-                                    .read(KConfig.provider.notifier)
-                                    .setoverlapValue(overlapValue);
+                                    .read(networkOverlapProvider.notifier)
+                                    .setValue(overlapValue);
                               },
                             ),
                           ),
@@ -867,7 +932,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             onPressed: () {
                               // 获取当前跃点值并应用
                               final overlapValue =
-                                  ref.read(KConfig.provider).overlapValue;
+                                  ref.read(networkOverlapValueProvider);
                               // 调用Rust函数设置跃点值
                               setNetworkInterfaceHops(hop: overlapValue);
                               // 显示应用成功提示
@@ -898,7 +963,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       const SizedBox(height: 16),
-      Card(
+Card(
         child: Column(
           children: [
             const ListTile(
@@ -910,7 +975,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               subtitle: const Text('关闭窗口时应用将继续在后台运行'),
               value: _closeToTray,
               onChanged: (value) {
-                ref.read(KConfig.provider.notifier).setCloseToTray(value);
+                setState(() {
+                  _closeToTray = value;
+                  _appConfig.setCloseToTray(value);
+                });
               },
             ),
             SwitchListTile(
@@ -918,6 +986,99 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               subtitle: const Text('定期测试所有服务器的网络延迟'),
               value: _pingEnabled,
               onChanged: _togglePingStatus,
+            ),
+            
+            // 添加自定义端口配置部分
+            ExpansionTile(
+              leading: const Icon(Icons.settings_ethernet),
+              title: const Text('自定义端口配置'),
+              children: [
+                SwitchListTile(
+                  title: const Text('启用自定义端口'),
+                  value: _customPortEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _customPortEnabled = value;
+                      _appConfig.setCustomPortEnabled(value);
+                    });
+                  },
+                ),
+                if (_customPortEnabled) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: '端口值',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                controller: TextEditingController(
+                                    text: _customPortValue.toString()),
+                                onChanged: (value) {
+                                  final portValue = int.tryParse(value) ?? 11010;
+                                  setState(() {
+                                    _customPortValue = portValue;
+                                    _appConfig.setCustomPortValue(portValue);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用IPv6'),
+                          value: _customPortIpv6,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortIpv6 = value;
+                              _appConfig.setCustomPortIpv6(value);
+                            });
+                          },
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用TCP'),
+                          value: _customPortTcp,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortTcp = value;
+                              _appConfig.setCustomPortTcp(value);
+                              // 确保至少有一个协议被启用
+                              if (!_customPortTcp && !_customPortUdp) {
+                                _customPortUdp = true;
+                                _appConfig.setCustomPortUdp(true);
+                              }
+                            });
+                          },
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('启用UDP'),
+                          value: _customPortUdp,
+                          onChanged: (value) {
+                            setState(() {
+                              _customPortUdp = value;
+                              _appConfig.setCustomPortUdp(value);
+                              // 确保至少有一个协议被启用
+                              if (!_customPortTcp && !_customPortUdp) {
+                                _customPortTcp = true;
+                                _appConfig.setCustomPortTcp(true);
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -962,9 +1123,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               value: 'wss', child: Text('WebSocket Secure')),
                         ],
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setDefaultProtocol(value!);
+                          setState(() {
+                            _defaultProtocol = value!;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .setDefaultProtocol(value);
+                          });
                         },
                       ),
                       const SizedBox(height: 16),
@@ -985,7 +1149,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                         controller: TextEditingController(text: _devName),
                         onChanged: (value) {
-                          ref.read(KConfig.provider.notifier).setDevName(value);
+                          setState(() {
+                            _devName = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .setDevName(value);
+                          });
                         },
                       ),
                       const SizedBox(height: 16),
@@ -1003,9 +1172,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         subtitle: const Text('允许IPv6网络连接'),
                         value: _enableIpv6,
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setEnableIpv6(value);
+                          setState(() {
+                            _enableIpv6 = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('enableIpv6', value);
+                          });
                         },
                       ),
                       SwitchListTile(
@@ -1014,11 +1186,71 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         subtitle: const Text('优先考虑连接延迟而非带宽'),
                         value: _latencyFirst,
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setLatencyFirst(value);
+                          setState(() {
+                            _latencyFirst = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('latencyFirst', value);
+                          });
                         },
                       ),
+                      // SwitchListTile(
+                      //   contentPadding: EdgeInsets.zero,
+                      //   title: const Text('启用出口节点'),
+                      //   subtitle: const Text('允许作为网络出口节点'),
+                      //   value: _enableExitNode,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       _enableExitNode = value;
+                      //       ref
+                      //           .read(advancedConfigProvider.notifier)
+                      //           .updateConfig('enableExitNode', value);
+                      //     });
+                      //   },
+                      // ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('系统代理转发'),
+                        subtitle: const Text('通过系统代理转发流量'),
+                        value: _proxyForwardBySystem,
+                        onChanged: (value) {
+                          setState(() {
+                            _proxyForwardBySystem = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('proxyForwardBySystem', value);
+                          });
+                        },
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('禁用TUN'),
+                        subtitle: const Text('不使用TUN虚拟网络接口'),
+                        value: _noTun,
+                        onChanged: (value) {
+                          setState(() {
+                            _noTun = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('noTun', value);
+                          });
+                        },
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('使用Smoltcp'),
+                        subtitle: const Text('使用Smoltcp网络栈'),
+                        value: _useSmoltcp,
+                        onChanged: (value) {
+                          setState(() {
+                            _useSmoltcp = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('useSmoltcp', value);
+                          });
+                        },
+                      ),
+
                       // 中继设置
                       const ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -1036,22 +1268,55 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         controller:
                             TextEditingController(text: _relayNetworkWhitelist),
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setRelayNetworkWhitelist([value]);
+                          setState(() {
+                            _relayNetworkWhitelist = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('relayNetworkWhitelist', value);
+                          });
                         },
                       ),
                       const SizedBox(height: 16),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('禁用P2P'),
+                        subtitle: const Text('禁用点对点直接连接'),
+                        value: _disableP2p,
+                        onChanged: (value) {
+                          setState(() {
+                            _disableP2p = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('disableP2p', value);
+                          });
+                        },
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('中继所有对等RPC'),
+                        subtitle: const Text('通过中继服务器转发所有RPC请求'),
+                        value: _relayAllPeerRpc,
+                        onChanged: (value) {
+                          setState(() {
+                            _relayAllPeerRpc = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('relayAllPeerRpc', value);
+                          });
+                        },
+                      ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('禁用UDP打洞'),
                         subtitle: const Text('禁用UDP NAT穿透技术'),
                         value: _disableUdpHolePunching,
                         onChanged: (value) {
-                          _disableUdpHolePunching = value;
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setDisableRelayKcp(value);
+                          setState(() {
+                            _disableUdpHolePunching = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('disableUdpHolePunching', value);
+                          });
                         },
                       ),
 
@@ -1069,9 +1334,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         subtitle: const Text('启用多线程处理以提高性能'),
                         value: _multiThread,
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setMultiThread(value);
+                          setState(() {
+                            _multiThread = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('multiThread', value);
+                          });
                         },
                       ),
                       DropdownButtonFormField<String>(
@@ -1086,33 +1354,78 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           DropdownMenuItem(value: 'Zstd', child: Text('Zstd')),
                         ],
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setDataCompressAlgo(value!);
+                          setState(() {
+                            _dataCompressAlgo = value!;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('dataCompressAlgo', value);
+                          });
                         },
                       ),
                       const SizedBox(height: 16),
+
+                      // KCP设置
+                      const ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'KCP设置',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('绑定设备'),
+                        subtitle: const Text('将连接绑定到特定网络设备'),
+                        value: _bindDevice,
+                        onChanged: (value) {
+                          setState(() {
+                            _bindDevice = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('bindDevice', value);
+                          });
+                        },
+                      ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('启用KCP代理'),
                         subtitle: const Text('使用KCP协议进行代理'),
                         value: _enableKcpProxy,
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setEnableKcpProxy(value);
+                          setState(() {
+                            _enableKcpProxy = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('enableKcpProxy', value);
+                          });
                         },
                       ),
-
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('禁用KCP输入'),
+                        subtitle: const Text('禁止KCP协议输入'),
+                        value: _disableKcpInput,
+                        onChanged: (value) {
+                          setState(() {
+                            _disableKcpInput = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('disableKcpInput', value);
+                          });
+                        },
+                      ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('禁用中继KCP'),
                         subtitle: const Text('禁用中继服务器的KCP协议'),
                         value: _disableRelayKcp,
                         onChanged: (value) {
-                          ref
-                              .read(KConfig.provider.notifier)
-                              .setDisableRelayKcp(value);
+                          setState(() {
+                            _disableRelayKcp = value;
+                            ref
+                                .read(advancedConfigProvider.notifier)
+                                .updateConfig('disableRelayKcp', value);
+                          });
                         },
                       ),
                     ],
@@ -1184,13 +1497,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
             Logger.info('提取的数据: $extractedData');
 
-            // 尝试解析提取的JSON数据
             try {
               // 先将字符串解析为Map
               // 去除最后的分号并将单引号替换为双引号
               String cleanData = extractedData
                   .replaceAll(RegExp(r';$'), '')
-                  .replaceAll("'", '"');
+                  .replaceAll("'", '"')
+                  // 只替换 \xA0 不间断空格字符
+                  .replaceAll(r'\xA0', ' ');
+
               Map<String, dynamic> jsonMap = json.decode(cleanData);
               StatusPageData? pageData = StatusPageData.fromJson(jsonMap);
               // 打印解析后的数据

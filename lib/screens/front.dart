@@ -399,7 +399,43 @@ class _HomePageState extends ConsumerState<HomePage> {
             ssServerip.add("quic://${item.url}");
           }
         }
-        // 复制 创建服务器
+
+        List<String> onip = [];
+
+        // 获取自定义端口配置CustomPortConfig
+        final customPortConfig = AppConfig().customPort;
+        final customPortEnabled = customPortConfig.enabled;
+        final customPortValue = customPortConfig.value.toString();
+        final customPortIpv6 = customPortConfig.ipv6;
+        final customPortTcp = customPortConfig.tcp;
+        final customPortUdp = customPortConfig.udp;
+
+        // 根据自定义端口配置生成监听地址
+        if (customPortEnabled) {
+          // 添加IPv4监听地址
+          if (customPortTcp) {
+            onip.add("tcp://0.0.0.0:$customPortValue");
+          }
+          if (customPortUdp) {
+            onip.add("udp://0.0.0.0:$customPortValue");
+          }
+
+          // 添加IPv6监听地址(如果启用)
+          if (customPortIpv6) {
+            if (customPortTcp) {
+              onip.add("tcp://[::]:$customPortValue");
+            }
+            if (customPortUdp) {
+              onip.add("udp://[::]:$customPortValue");
+            }
+          }
+        } else {
+          // 使用默认端口配置
+          onip.add("tcp://0.0.0.0:11010");
+          onip.add("udp://0.0.0.0:11010");
+          onip.add("tcp://[::]:11010");
+        }
+
         // 启动VPN服务
         if (Platform.isAndroid) {
           vpnPlugin.prepareVpn();
@@ -412,6 +448,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             roomName: roomName,
             roomPassword: roomPassword,
             severurl: ssServerip,
+            onurl: onip,
             flag: FlagsC(
                 defaultProtocol: ref.read(KConfig.provider).defaultProtocol,
                 devName: ref.read(KConfig.provider).devName,

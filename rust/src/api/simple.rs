@@ -77,11 +77,7 @@ fn create_config() -> TomlConfigLoader {
     let mut cfg = TomlConfigLoader::default();
     // 构造 PeerConfig 实例并设置 peers
 
-    cfg.set_listeners(vec![
-        "tcp://0.0.0.0:11010".to_string().parse().unwrap(),
-        "udp://0.0.0.0:11010".to_string().parse().unwrap(),
-        "tcp://[::]:11010".to_string().parse().unwrap(),
-    ]);
+
     // cfg.set_inst_name("default".to_string());
     // cfg.set_inst_name(name);
     cfg
@@ -746,11 +742,18 @@ pub fn create_server(
     room_name: String,
     room_password: String,
     severurl: Vec<String>,
+    onurl: Vec<String>,
     flag:FlagsC,
 ) {
     RT.spawn(async move {
         // 创建一个示例配置
         let cfg = create_config();
+        // 使用传入的onurl参数设置监听地址
+        let mut listeners = Vec::new();
+        for url in onurl {
+            listeners.push(url.parse().unwrap());
+        }
+        cfg.set_listeners(listeners);
         cfg.set_hostname(Option::from(username));
         cfg.set_dhcp(enable_dhcp);
         let mut flags = cfg.get_flags();

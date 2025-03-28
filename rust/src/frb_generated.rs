@@ -108,6 +108,7 @@ fn wire__crate__api__simple__create_server_impl(
             let api_room_name = <String>::sse_decode(&mut deserializer);
             let api_room_password = <String>::sse_decode(&mut deserializer);
             let api_severurl = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_onurl = <Vec<String>>::sse_decode(&mut deserializer);
             let api_flag = <crate::api::simple::FlagsC>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -120,6 +121,7 @@ fn wire__crate__api__simple__create_server_impl(
                             api_room_name,
                             api_room_password,
                             api_severurl,
+                            api_onurl,
                             api_flag,
                         );
                     })?;
