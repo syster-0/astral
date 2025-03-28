@@ -1,11 +1,10 @@
 import 'package:astral/src/rust/api/simple.dart';
-import 'package:astral/sys/k_stare.dart';
 import 'package:astral/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import '../config/app_config.dart';
 import 'package:windows_notification/notification_message.dart';
 import 'package:windows_notification/windows_notification.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Create an instance of Windows Notification with your application name
 // application id must be null in packaged mode
@@ -19,15 +18,14 @@ NotificationMessage message = NotificationMessage.fromPluginTemplate(
   // image: file_path
 );
 
-class WindowControls extends ConsumerStatefulWidget {
+class WindowControls extends StatefulWidget {
   const WindowControls({super.key});
 
   @override
-  ConsumerState<WindowControls> createState() => _WindowControlsState();
+  State<WindowControls> createState() => _WindowControlsState();
 }
 
-class _WindowControlsState extends ConsumerState<WindowControls>
-    with WindowListener {
+class _WindowControlsState extends State<WindowControls> with WindowListener {
   bool _isMaximized = false;
 
   @override
@@ -105,7 +103,7 @@ class _WindowControlsState extends ConsumerState<WindowControls>
         IconButton(
           icon: const Icon(Icons.close),
           onPressed: () async {
-            if (ref.read(KConfig.provider).closeToTray) {
+            if (AppConfig().closeToTray) {
               await windowManager.hide(); // 隐藏主窗口
               // 替换托盘提示为系统通知
               _winNotifyPlugin.showNotificationPluginTemplate(message);

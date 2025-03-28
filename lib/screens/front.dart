@@ -2,13 +2,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:astral/config/app_config.dart';
 import 'package:astral/src/rust/api/simple.dart';
-import 'package:astral/sys/k_stare.dart';
+import 'package:astral/src/rust/frb_generated.dart';
 import 'package:astral/utils/kv_state.dart';
 import 'package:astral/utils/app_info.dart';
 import 'package:astral/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 替换 provider 导入
 import '../widgets/card.dart';
@@ -102,6 +104,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   bool _isAutoIP = true; // 只用于控制IP自动/手动模式
   double _connectionProgress = 0.0; // 连接进度，用于显示进度条动画
+  List<String> Serverip = [""];
+  List<ServerConfig> Serveripz = [];
   int _uploadBytes = 0;
   int _downloadBytes = 0;
   int _lastUploadBytes = 0;
@@ -281,24 +285,72 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (!_virtualIPFocusNode.hasFocus && !_isAutoIP) {
       // 当失去焦点且不是自动IP模式时更新值
       ref
-          .read(KConfig.provider.notifier)
+          .read(virtualIPProvider.notifier)
           .setVirtualIP(_virtualIPController.text);
     }
   }
 
   // 添加一个处理VPN路由的方法
+  List<String> _getValidRoutesForVpn(List<String> routes) {
+    if (routes.isEmpty) {
+      return [];
+    }
+
+    // 处理每个路由地址，确保格式正确
+    List<String> validRoutes = [];
+    for (String route in routes) {
+      if (route.isEmpty) continue;
+
+      String processedRoute = route;
+      // 如果不包含CIDR格式（没有"/"），则添加"/32"
+      if (!processedRoute.contains('/')) {
+        processedRoute += '/32';
+      }
+
+      try {
+        // 解析IP和CIDR部分
+        final parts = processedRoute.split('/');
+        final ipPart = parts[0];
+        final cidrPart = parts[1];
+
+        // 验证IP地址格式
+        if (_isValidIPv4(ipPart)) {
+          // 对于主机IP（如10.126.126.2），使用/32而不是/24
+          // 对于网络IP（如10.126.126.0），使用/24
+          final ipOctets = ipPart.split('.');
+          final lastOctet = int.parse(ipOctets[3]);
+
+          // 如果最后一个八位字节不是0，且CIDR是24，可能需要调整为/32
+          if (lastOctet != 0 && cidrPart == "24") {
+            // 这是一个主机IP，使用/32
+            validRoutes.add("$ipPart/32");
+          } else {
+            // 保持原样
+            validRoutes.add(processedRoute);
+          }
+        } else {
+          Logger.info('跳过无效路由IP: $ipPart');
+        }
+      } catch (e) {
+        Logger.info('处理路由时出错: $route, 错误: $e');
+      }
+    }
+
+    // 去重并排序
+    return validRoutes.toSet().toList()..sort();
+  }
 
   // 添加用户名焦点变化监听方法
   void _onUsernameFocusChange() {
     if (!_usernameControllerFocusNode.hasFocus) {
-      ref.read(KConfig.provider.notifier).setUsername(_usernameController.text);
+      ref.read(usernameProvider.notifier).setUsername(_usernameController.text);
     }
   }
 
   // 添加房间名焦点变化监听方法
   void _onRoomNameFocusChange() {
     if (!_roomNameControllerFocusNode.hasFocus) {
-      ref.read(KConfig.provider.notifier).setRoomname(_roomNameController.text);
+      ref.read(roomNameProvider.notifier).setRoomName(_roomNameController.text);
     }
   }
 
@@ -306,8 +358,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _onRoomPasswordFocusChange() {
     if (!_roomPasswordControllerFocusNode.hasFocus) {
       ref
-          .read(KConfig.provider.notifier)
-          .setRoomname(_roomPasswordController.text);
+          .read(roomPasswordProvider.notifier)
+          .setRoomPassword(_roomPasswordController.text);
     }
   }
 
@@ -382,21 +434,21 @@ class _HomePageState extends ConsumerState<HomePage> {
         });
         //利用 Serveripz 重组
         List<String> ssServerip = [];
-        for (var item in ref.read(KConfig.provider).servers) {
+        for (var item in Serveripz) {
           if (item.tcp) {
-            ssServerip.add("tcp://${item.url}");
+            ssServerip.add("tcp://" + item.url);
           }
           if (item.udp) {
-            ssServerip.add("udp://${item.url}");
+            ssServerip.add("udp://" + item.url);
           }
           if (item.ws) {
-            ssServerip.add("ws://${item.url}");
+            ssServerip.add("ws://" + item.url);
           }
           if (item.wss) {
-            ssServerip.add("wss://${item.url}");
+            ssServerip.add("wss://" + item.url);
           }
           if (item.quic) {
-            ssServerip.add("quic://${item.url}");
+            ssServerip.add("quic://" + item.url);
           }
         }
 
@@ -450,35 +502,49 @@ class _HomePageState extends ConsumerState<HomePage> {
             severurl: ssServerip,
             onurl: onip,
             flag: FlagsC(
-                defaultProtocol: ref.read(KConfig.provider).defaultProtocol,
-                devName: ref.read(KConfig.provider).devName,
+                defaultProtocol:
+                    ref.read(advancedConfigProvider)['defaultProtocol'] ??
+                        "tcp",
+                devName: ref.read(advancedConfigProvider)['devName'] ?? "",
                 enableEncryption: true,
-                enableIpv6: ref.read(KConfig.provider).enableIpv6,
+                enableIpv6:
+                    ref.read(advancedConfigProvider)['enableIpv6'] ?? true,
                 mtu: 1360,
-                multiThread: ref.read(KConfig.provider).multiThread,
-                latencyFirst: ref.read(KConfig.provider).latencyFirst,
-                enableExitNode: ref.read(KConfig.provider).enableExitNode,
-                noTun: false,
-                useSmoltcp: false,
+                multiThread:
+                    ref.read(advancedConfigProvider)['multiThread'] ?? true,
+                latencyFirst:
+                    ref.read(advancedConfigProvider)['latencyFirst'] ?? false,
+                enableExitNode:
+                    ref.read(advancedConfigProvider)['enableExitNode'] ?? false,
+                noTun: ref.read(advancedConfigProvider)['noTun'] ?? false,
+                useSmoltcp:
+                    ref.read(advancedConfigProvider)['useSmoltcp'] ?? false,
                 relayNetworkWhitelist:
-                    ref.read(KConfig.provider).relayNetworkWhitelist,
-                disableP2P: false,
-                relayAllPeerRpc: false,
+                    ref.read(advancedConfigProvider)['relayNetworkWhitelist'] ??
+                        "*",
+                disableP2P:
+                    ref.read(advancedConfigProvider)['disableP2p'] ?? false,
+                relayAllPeerRpc:
+                    ref.read(advancedConfigProvider)['relayAllPeerRpc'] ??
+                        false,
                 disableUdpHolePunching:
-                    ref.read(KConfig.provider).disableUdpHolePunching,
-                // 根据配置的压缩算法设置对应的数值
-                dataCompressAlgo: switch (
-                    ref.read(KConfig.provider).dataCompressAlgo) {
-                  "Invalid" => 0,
-                  "None" => 1,
-                  "Zstd" => 2,
-                  _ => 1,
-                },
-                bindDevice: true,
-                enableKcpProxy: ref.read(KConfig.provider).enableKcpProxy,
-                disableKcpInput: false,
-                disableRelayKcp: ref.read(KConfig.provider).disableRelayKcp,
-                proxyForwardBySystem: false));
+                    ref.read(advancedConfigProvider)['disableUdpHolePunching'] ??
+                        false,
+                dataCompressAlgo: ref
+                            .read(advancedConfigProvider)['dataCompressAlgo'] ==
+                        "Invalid"
+                    ? 0
+                    : ref.read(advancedConfigProvider)['dataCompressAlgo'] ==
+                            "None"
+                        ? 1
+                        : ref.read(advancedConfigProvider)['dataCompressAlgo'] == "Zstd"
+                            ? 2
+                            : 1,
+                bindDevice: ref.read(advancedConfigProvider)['bindDevice'] ?? true,
+                enableKcpProxy: ref.read(advancedConfigProvider)['enableKcpProxy'] ?? false,
+                disableKcpInput: ref.read(advancedConfigProvider)['disableKcpInput'] ?? false,
+                disableRelayKcp: ref.read(advancedConfigProvider)['disableRelayKcp'] ?? true,
+                proxyForwardBySystem: ref.read(advancedConfigProvider)['proxyForwardBySystem'] ?? false));
 
         // 不再使用固定延迟模拟连接成功，而是通过定时检查IP来确定连接状态
         timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
@@ -493,7 +559,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
           // 获取网络状态
           final networkStatus = await getNetworkStatus();
-          ref.read(KP.notifier).setValue("networkStatus", networkStatus);
+          final networkStatus2 = await getRunningInfo();
+          ref.read(nodesProvider.notifier).setNodes(networkStatus.nodes);
 
           // 获取所有IP列表
           List<String> llk = await getAllIps();
@@ -684,6 +751,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     roomName = ref.watch(roomNameProvider);
     roomPassword = ref.watch(roomPasswordProvider);
     username = ref.watch(usernameProvider);
+    Serverip = ref.watch(serverIPProvider);
+    // 从 selectedServerProvider 获取服务器配置列表
+    final serverConfigs =
+        ref.watch(selectedServerProvider) as List<ServerConfig>;
 
     if (Platform.isAndroid) {
       // 监听 VPN 状态,当状态为运行中时返回 true
@@ -715,6 +786,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
       });
     }
+
+    Serveripz = serverConfigs;
 
     // 使用 LayoutBuilder 来处理布局变化，同时保留状态
     return Scaffold(

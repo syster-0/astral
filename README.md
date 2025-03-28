@@ -1,5 +1,3 @@
-# 目前正在制作1.0稳定版   下一步制作2.0(这个版本将无法和其他et进行联机因为会对房间等各种内容进行加密防止串房)
-
 # AstralET 游戏联机工具
 
 [![GitHub](https://img.shields.io/badge/GitHub-AstralET-blue)](https://github.com/ldoubil/astral)
