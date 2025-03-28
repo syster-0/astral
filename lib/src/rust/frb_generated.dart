@@ -86,6 +86,7 @@ abstract class RustLibApi extends BaseApi {
       required String roomName,
       required String roomPassword,
       required List<String> severurl,
+      required List<String> onurl,
       required FlagsC flag});
 
   Future<String> crateApiSimpleEasytierVersion();
@@ -184,6 +185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required String roomName,
       required String roomPassword,
       required List<String> severurl,
+      required List<String> onurl,
       required FlagsC flag}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -194,6 +196,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(roomName, serializer);
         sse_encode_String(roomPassword, serializer);
         sse_encode_list_String(severurl, serializer);
+        sse_encode_list_String(onurl, serializer);
         sse_encode_box_autoadd_flags_c(flag, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 2, port: port_);
@@ -210,6 +213,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         roomName,
         roomPassword,
         severurl,
+        onurl,
         flag
       ],
       apiImpl: this,
@@ -225,6 +229,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "roomName",
           "roomPassword",
           "severurl",
+          "onurl",
           "flag"
         ],
       );

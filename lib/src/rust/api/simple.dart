@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `create_and_store_network_instance`, `create_config`, `graceful_shutdown`, `setup_control_handler`
+// These functions are ignored because they are not marked as `pub`: `create_and_store_network_instance`, `create_config`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `RT`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `initialize`
 
@@ -44,6 +44,7 @@ Future<void> createServer(
         required String roomName,
         required String roomPassword,
         required List<String> severurl,
+        required List<String> onurl,
         required FlagsC flag}) =>
     RustLib.instance.api.crateApiSimpleCreateServer(
         username: username,
@@ -52,6 +53,7 @@ Future<void> createServer(
         roomName: roomName,
         roomPassword: roomPassword,
         severurl: severurl,
+        onurl: onurl,
         flag: flag);
 
 Future<void> closeAllServer() =>
