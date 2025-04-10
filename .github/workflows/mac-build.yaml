@@ -32,6 +32,8 @@ jobs:
           brew update
           brew install cmake ninja
           brew install protobuf
+          export LDFLAGS="-L/opt/homebrew/opt/ruby/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/ruby/include"
 
       - name: 🐦 安装 Flutter
         run: |
