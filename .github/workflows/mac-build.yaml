@@ -32,6 +32,8 @@ jobs:
           brew update
           brew install cmake ninja
           brew install protobuf
+          brew install ruby
+          brew install cocoapods
           export LDFLAGS="-L/opt/homebrew/opt/ruby/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/ruby/include"
 
