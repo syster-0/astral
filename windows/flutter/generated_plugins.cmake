@@ -3,17 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  screen_retriever_windows
-  system_tray
-  tray_manager
-  url_launcher_windows
-  window_manager
-  windows_notification
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
-  flutter_local_notifications_windows
-  rust_lib_fltier
+  rust_lib_astral
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
