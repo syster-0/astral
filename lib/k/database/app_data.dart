@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/theme_settings.dart';
 import 'package:astral/k/models_mod/theme_settings_cz.dart';
+import 'package:path/path.dart' as path;
 
 class AppDatabase {
   static final AppDatabase _instance = AppDatabase._internal();
@@ -11,8 +14,26 @@ class AppDatabase {
   late final ThemeSettingsRepository themeSettings;
 
   /// 初始化数据库
-  Future<void> init(String directory) async {
-    isar = await Isar.open([ThemeSettingsSchema], directory: directory);
+  Future<void> init([String? customDbDir]) async {
+    late final String dbDir;
+
+    if (customDbDir != null) {
+      // 使用自定义数据库目录
+      dbDir = customDbDir;
+    } else if (Platform.isAndroid) {
+      // Android平台使用应用专属目录
+      dbDir =
+          Directory(path.join(Directory.systemTemp.path, 'data', 'db')).path;
+    } else {
+      // 其他平台使用可执行文件所在目录
+      final executablePath = Platform.resolvedExecutable;
+      final executableDir = Directory(executablePath).parent.path;
+      dbDir = Directory(path.join(executableDir, 'data', 'db')).path;
+    }
+
+    // 确保数据库目录存在
+    await Directory(dbDir).create(recursive: true);
+    isar = await Isar.open([ThemeSettingsSchema], directory: dbDir);
     themeSettings = ThemeSettingsRepository(isar);
   }
 }
