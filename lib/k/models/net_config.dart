@@ -24,43 +24,63 @@ class NetConfig {
 
   List<String> peer = []; // 服务器节点地址
 
+  /// 默认协议
   String default_protocol = '';
 
+  /// 设备名称
   String dev_name = '';
 
-  bool enable_encryption = true;
+  /// 是否启用加密
+  bool enable_encryption = true;  //x
 
-  bool enable_ipv6 = true;
+  /// 是否启用IPv6
+  bool enable_ipv6 = true; 
 
+  /// 最大传输单元
   int mtu = 1400;
 
+  /// 是否优先考虑延迟
   bool latency_first = false;
 
+  /// 是否启用出口节点
   bool enable_exit_node = false;
 
+  /// 是否禁用TUN设备
   bool no_tun = false;
 
+  /// 是否使用smoltcp网络栈
   bool use_smoltcp = false;
 
+  /// 中继网络白名单
   String relay_network_whitelist = '';
 
+  /// 是否禁用P2P
   bool disable_p2p = false;
 
+  /// 是否中继所有对等RPC
   bool relay_all_peer_rpc = false;
 
+  /// 是否禁用UDP打洞
   bool disable_udp_hole_punching = false;
 
+  /// 是否启用多线程
   bool multi_thread = true;
 
+  /// 数据压缩算法(0:不压缩)
   int data_compress_algo = 0;
 
+  /// 是否绑定设备
   bool bind_device = false;
 
+  /// 是否启用KCP代理
   bool enable_kcp_proxy = false;
 
+  /// 是否禁用KCP输入
   bool disable_kcp_input = false;
 
+  /// 是否禁用中继KCP
   bool disable_relay_kcp = false;
 
+  /// 是否使用系统代理转发
   bool proxy_forward_by_system = false;
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
-
+import 'package:astral/k/models/net_config.dart';
+import 'package:astral/k/models_mod/net_config_cz.dart';
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/theme_settings.dart';
 import 'package:astral/k/models_mod/theme_settings_cz.dart';
@@ -12,6 +13,7 @@ class AppDatabase {
 
   late final Isar isar;
   late final ThemeSettingsRepository themeSettings;
+  late final NetConfigRepository netConfigSetting;
 
   /// 初始化数据库
   Future<void> init([String? customDbDir]) async {
@@ -33,7 +35,11 @@ class AppDatabase {
 
     // 确保数据库目录存在
     await Directory(dbDir).create(recursive: true);
-    isar = await Isar.open([ThemeSettingsSchema], directory: dbDir);
+    isar = await Isar.open([
+      ThemeSettingsSchema,
+      NetConfigSchema,
+    ], directory: dbDir);
     themeSettings = ThemeSettingsRepository(isar);
+    netConfigSetting = NetConfigRepository(isar);
   }
 }

@@ -20,8 +20,8 @@ class LeftNav extends StatelessWidget {
     ) {
       final isSelected = Aps().selectedIndex.watch(context) == index;
       return MouseRegion(
-        onEnter: (_) => Aps().updateHoveredIndex(index),
-        onExit: (_) => Aps().updateHoveredIndex(null),
+        onEnter: (_) => Aps().hoveredIndex.set(index),
+        onExit: (_) => Aps().hoveredIndex.set(null),
         child: Container(
           height: 64,
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -29,7 +29,7 @@ class LeftNav extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             onTap: () {
               if (Aps().selectedIndex.watch(context) != index) {
-                Aps().updateSelectedIndex(index);
+                Aps().selectedIndex.set(index);
               }
             },
             child: Center(

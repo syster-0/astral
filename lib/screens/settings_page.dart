@@ -1,3 +1,4 @@
+import 'package:astral/k/app_s/Aps.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -10,6 +11,28 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return ListView(
+      padding: const EdgeInsets.all(16.0),
+      children: [
+        Card(
+          child: Column(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.settings),
+                title: Text('网络设置'),
+              ),
+              SwitchListTile(
+                title: const Text('是否启用加密'),
+                subtitle: const Text('会自动设置MTU'),
+                value: Aps().enableEncryption.watch(context),
+                onChanged: (value) {
+                  Aps().updateEnableEncryption(value);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

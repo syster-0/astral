@@ -1,3 +1,4 @@
+// 导入所需的包
 import 'package:astral/k/app_s/Aps.dart';
 import 'package:astral/screens/home_page.dart';
 import 'package:astral/screens/settings_page.dart';
@@ -7,6 +8,7 @@ import 'package:astral/wid/status_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/navigtion.dart';
 
+// 主屏幕Widget，使用StatefulWidget以管理状态
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -28,12 +30,14 @@ class _MainScreenState extends State<MainScreen>
     });
   }
 
+  // 组件销毁时移除观察者
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  // 屏幕尺寸变化时的回调
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
@@ -42,43 +46,50 @@ class _MainScreenState extends State<MainScreen>
     Aps().updateScreenSplitWidth(screenWidth);
   }
 
-  // 构建导航项
+  // 定义导航项列表
   final List<NavigationItem> navigationItems = [
     NavigationItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: '主页',
-      page: const HomePage(),
+      icon: Icons.home_outlined, // 未选中时的图标
+      activeIcon: Icons.home, // 选中时的图标
+      label: '主页', // 导航项标签
+      page: const HomePage(), // 对应的页面
     ),
     NavigationItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-      label: '设置',
-      page: const SettingsPage(),
+      icon: Icons.settings_outlined, // 未选中时的图标
+      activeIcon: Icons.settings, // 选中时的图标
+      label: '设置', // 导航项标签
+      page: const SettingsPage(), // 对应的页面
     ),
   ];
+
+  // 获取页面列表的getter方法
   List<Widget> get _pages => navigationItems.map((item) => item.page).toList();
 
   @override
   Widget build(BuildContext context) {
+    // 获取当前主题的颜色方案
     final colorScheme = Theme.of(context).colorScheme;
+
     // 构建Scaffold组件
     return Scaffold(
       // 自定义应用栏
       appBar: StatusBar(),
-      // 主体内容
+      // 主体内容：使用Row布局
       body: Row(
         children: [
+          // 根据是否为桌面端决定是否显示左侧导航
           if (Aps().isDesktop.watch(context))
             LeftNav(items: navigationItems, colorScheme: colorScheme),
+          // 主要内容区域
           Expanded(
             child: IndexedStack(
-              index: Aps().selectedIndex.watch(context),
-              children: _pages,
+              index: Aps().selectedIndex.watch(context), // 当前选中的页面索引
+              children: _pages, // 页面列表
             ),
           ),
         ],
       ),
+      // 底部导航栏：仅在非桌面端显示
       bottomNavigationBar:
           Aps().isDesktop.watch(context)
               ? null

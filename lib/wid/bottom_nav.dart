@@ -33,7 +33,7 @@ class BottomNav extends StatelessWidget {
               .toList(),
       currentIndex: Aps().selectedIndex.watch(context),
       onTap: (index) {
-        Aps().updateSelectedIndex(index);
+        Aps().selectedIndex.set(index);
       },
     );
   }
