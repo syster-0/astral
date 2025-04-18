@@ -25,62 +25,62 @@ class NetConfig {
   List<String> peer = []; // 服务器节点地址
 
   /// 默认协议
-  String default_protocol = '';
+  String default_protocol = 'tcp'; //x
 
   /// 设备名称
   String dev_name = '';
 
   /// 是否启用加密
-  bool enable_encryption = true;  //x
+  bool enable_encryption = true; //x
 
   /// 是否启用IPv6
-  bool enable_ipv6 = true; 
+  bool enable_ipv6 = true;
 
   /// 最大传输单元
-  int mtu = 1400;
+  int mtu = 1360; //x
 
   /// 是否优先考虑延迟
-  bool latency_first = false;
+  bool latency_first = false; //x
 
   /// 是否启用出口节点
-  bool enable_exit_node = false;
+  bool enable_exit_node = false; //x
 
   /// 是否禁用TUN设备
-  bool no_tun = false;
+  bool no_tun = false; //x
 
   /// 是否使用smoltcp网络栈
-  bool use_smoltcp = false;
+  bool use_smoltcp = false; //x
 
   /// 中继网络白名单
   String relay_network_whitelist = '';
 
   /// 是否禁用P2P
-  bool disable_p2p = false;
+  bool disable_p2p = false; //x
 
   /// 是否中继所有对等RPC
-  bool relay_all_peer_rpc = false;
+  bool relay_all_peer_rpc = false; //x
 
   /// 是否禁用UDP打洞
-  bool disable_udp_hole_punching = false;
+  bool disable_udp_hole_punching = false; //x
 
   /// 是否启用多线程
-  bool multi_thread = true;
+  bool multi_thread = true; //x
 
-  /// 数据压缩算法(0:不压缩)
-  int data_compress_algo = 0;
+  /// 数据压缩算法
+  int data_compress_algo = 1; //x
 
   /// 是否绑定设备
-  bool bind_device = false;
+  bool bind_device = true; //x
 
   /// 是否启用KCP代理
-  bool enable_kcp_proxy = false;
+  bool enable_kcp_proxy = true; //x
 
   /// 是否禁用KCP输入
-  bool disable_kcp_input = false;
+  bool disable_kcp_input = false; //x
 
   /// 是否禁用中继KCP
-  bool disable_relay_kcp = false;
+  bool disable_relay_kcp = true; //x
 
   /// 是否使用系统代理转发
-  bool proxy_forward_by_system = false;
+  bool proxy_forward_by_system = false; //x
 }

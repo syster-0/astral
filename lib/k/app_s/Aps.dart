@@ -86,7 +86,7 @@ class Aps {
   final Signal<String> devName = signal(''); // 设备名称
   final Signal<bool> enableEncryption = signal(true); // 加密设置
   final Signal<bool> enableIpv6 = signal(true); // IPv6设置
-  final Signal<int> mtu = signal(1400); // MTU值
+  final Signal<int> mtu = signal(1360); // MTU值
   final Signal<bool> latencyFirst = signal(false); // 延迟优先设置
   final Signal<bool> enableExitNode = signal(false); // 出口节点设置
   final Signal<bool> noTun = signal(false); // TUN设备禁用设置
