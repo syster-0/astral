@@ -113,8 +113,6 @@ class Aps {
   /// 是否禁用中继KCP
   final Signal<bool> proxyForwardBySystem = signal(false);
 
-  /// 是否使用系统代理转发
-
   // 更新网络配置
   /// 从数据库加载并更新所有网络配置
   Future<void> updateNetConfig() async {

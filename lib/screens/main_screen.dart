@@ -1,6 +1,7 @@
 // 导入所需的包
 import 'package:astral/k/app_s/Aps.dart';
 import 'package:astral/screens/home_page.dart';
+import 'package:astral/screens/room_page.dart';
 import 'package:astral/screens/settings_page.dart';
 import 'package:astral/wid/bottom_nav.dart';
 import 'package:astral/wid/left_nav.dart';
@@ -53,6 +54,12 @@ class _MainScreenState extends State<MainScreen>
       activeIcon: Icons.home, // 选中时的图标
       label: '主页', // 导航项标签
       page: const HomePage(), // 对应的页面
+    ),
+    NavigationItem(
+      icon: Icons.room_preferences_outlined, // 未选中时的图标
+      activeIcon: Icons.room_preferences, // 选中时的图标Icon(Icons.room_preferences)
+      label: '房间', // 导航项标签
+      page: const RoomPage(), // 对应的页面
     ),
     NavigationItem(
       icon: Icons.settings_outlined, // 未选中时的图标
