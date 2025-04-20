@@ -16,18 +16,7 @@ extension GetAllSettingsCollection on Isar {
 const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
-  properties: {
-    r'windowHeight': PropertySchema(
-      id: 0,
-      name: r'windowHeight',
-      type: IsarType.double,
-    ),
-    r'windowWidth': PropertySchema(
-      id: 1,
-      name: r'windowWidth',
-      type: IsarType.double,
-    )
-  },
+  properties: {},
   estimateSize: _allSettingsEstimateSize,
   serialize: _allSettingsSerialize,
   deserialize: _allSettingsDeserialize,
@@ -56,11 +45,7 @@ void _allSettingsSerialize(
   IsarWriter writer,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
-) {
-  writer.writeDouble(offsets[0], object.windowHeight);
-  writer.writeDouble(offsets[1], object.windowWidth);
-}
-
+) {}
 AllSettings _allSettingsDeserialize(
   Id id,
   IsarReader reader,
@@ -69,8 +54,6 @@ AllSettings _allSettingsDeserialize(
 ) {
   final object = AllSettings();
   object.id = id;
-  object.windowHeight = reader.readDouble(offsets[0]);
-  object.windowWidth = reader.readDouble(offsets[1]);
   return object;
 }
 
@@ -81,10 +64,6 @@ P _allSettingsDeserializeProp<P>(
   Map<Type, List<int>> allOffsets,
 ) {
   switch (propertyId) {
-    case 0:
-      return (reader.readDouble(offset)) as P;
-    case 1:
-      return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -235,138 +214,6 @@ extension AllSettingsQueryFilter
       ));
     });
   }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowHeightEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'windowHeight',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowHeightGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'windowHeight',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowHeightLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'windowHeight',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowHeightBetween(
-    double lower,
-    double upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'windowHeight',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowWidthEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'windowWidth',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowWidthGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'windowWidth',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowWidthLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'windowWidth',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
-      windowWidthBetween(
-    double lower,
-    double upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'windowWidth',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
-    });
-  }
 }
 
 extension AllSettingsQueryObject
@@ -376,32 +223,7 @@ extension AllSettingsQueryLinks
     on QueryBuilder<AllSettings, AllSettings, QFilterCondition> {}
 
 extension AllSettingsQuerySortBy
-    on QueryBuilder<AllSettings, AllSettings, QSortBy> {
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByWindowHeight() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowHeight', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
-      sortByWindowHeightDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowHeight', Sort.desc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByWindowWidth() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowWidth', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByWindowWidthDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowWidth', Sort.desc);
-    });
-  }
-}
+    on QueryBuilder<AllSettings, AllSettings, QSortBy> {}
 
 extension AllSettingsQuerySortThenBy
     on QueryBuilder<AllSettings, AllSettings, QSortThenBy> {
@@ -416,65 +238,16 @@ extension AllSettingsQuerySortThenBy
       return query.addSortBy(r'id', Sort.desc);
     });
   }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByWindowHeight() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowHeight', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
-      thenByWindowHeightDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowHeight', Sort.desc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByWindowWidth() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowWidth', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByWindowWidthDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'windowWidth', Sort.desc);
-    });
-  }
 }
 
 extension AllSettingsQueryWhereDistinct
-    on QueryBuilder<AllSettings, AllSettings, QDistinct> {
-  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByWindowHeight() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'windowHeight');
-    });
-  }
-
-  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByWindowWidth() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'windowWidth');
-    });
-  }
-}
+    on QueryBuilder<AllSettings, AllSettings, QDistinct> {}
 
 extension AllSettingsQueryProperty
     on QueryBuilder<AllSettings, AllSettings, QQueryProperty> {
   QueryBuilder<AllSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<AllSettings, double, QQueryOperations> windowHeightProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'windowHeight');
-    });
-  }
-
-  QueryBuilder<AllSettings, double, QQueryOperations> windowWidthProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'windowWidth');
     });
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:astral/k/models/room.dart';
+import 'package:astral/k/models/room_tags.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:astral/k/database/app_data.dart';
@@ -11,9 +13,14 @@ class Aps {
   Aps._internal() {
     _initThemeSettings();
     updateNetConfig();
+    initRoomTagsSetting();
   }
   static final Aps _instance = Aps._internal();
   factory Aps() => _instance;
+  // 初始化房间标签
+  Future<void> initRoomTagsSetting() async {
+    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+  }
 
   // 初始化主题设置
   Future<void> _initThemeSettings() async {
@@ -342,5 +349,72 @@ class Aps {
   Future<void> updateProxyForwardBySystem(bool value) async {
     proxyForwardBySystem.value = value;
     await AppDatabase().netConfigSetting.updateProxyForwardBySystem(value);
+  }
+
+  /// 房间标签
+  final Signal<List<RoomTags>> allRoomTags = signal([]);
+
+  /// 添加标签
+  Future<void> addTag(String tagName) async {
+    await AppDatabase().RoomTagsSetting.addTag(tagName);
+    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+  }
+
+  /// 设置标签选中状态
+  Future<void> setTagSelected(String tagName, bool isSelected) async {
+    await AppDatabase().RoomTagsSetting.setTagSelected(tagName, isSelected);
+    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+  }
+
+  /// 清除所有标签的选中状态
+  Future<void> clearAllTagSelections() async {
+    await AppDatabase().RoomTagsSetting.clearAllTagSelections();
+    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+  }
+
+  /// 删除标签
+  Future<void> deleteTag(String tagName) async {
+    await AppDatabase().RoomTagsSetting.deleteTag(tagName);
+    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+  }
+
+  /// 获取所有标签
+  Future<List<RoomTags>> getAllTags() async {
+    final tagsList = await AppDatabase().RoomTagsSetting.getAllTags();
+    allRoomTags.value = tagsList; // 更新 Signal
+    return tagsList;
+  }
+
+  /// 房间列表
+  final Signal<List<Room>> rooms = signal([]);
+
+  /// 添加房间
+  Future<void> addRoom(Room room) async {
+    await AppDatabase().RoomSetting.addRoom(room);
+    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
+  }
+
+  /// 删除房间
+  Future<void> deleteRoom(int id) async {
+    await AppDatabase().RoomSetting.deleteRoom(id);
+    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
+  }
+
+  /// 根据ID获取房间
+  Future<Room?> getRoomById(int id) async {
+    return await AppDatabase().RoomSetting.getRoomById(id);
+  }
+
+  /// 获取所有房间
+  Future<List<Room>> getAllRooms() async {
+    final roomsList = await AppDatabase().RoomSetting.getAllRooms();
+    rooms.value = roomsList; // 更新 Signal
+    return roomsList;
+  }
+
+  /// 更新房间
+  Future<int> updateRoom(Room room) async {
+    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
+    return await AppDatabase().RoomSetting.updateRoom(room);
   }
 }

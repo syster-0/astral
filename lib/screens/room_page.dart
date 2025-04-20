@@ -1,8 +1,13 @@
 import 'dart:math';
 
+import 'package:astral/wid/room_tags_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // 添加这一行导入Clipboard
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+// 导入 Aps 和相关模型
+import 'package:astral/k/app_s/Aps.dart';
+import 'package:astral/k/models/room.dart';
+import 'package:astral/k/models/room_tags.dart';
 
 class RoomPage extends StatefulWidget {
   const RoomPage({super.key});
@@ -12,66 +17,40 @@ class RoomPage extends StatefulWidget {
 }
 
 class _RoomPageState extends State<RoomPage> {
-  // 示例房间数据，添加category字段，现在category是List<String>类型
-  final List<Map<String, dynamic>> rooms = [
-    {
-      'name': '讨论组1',
-      'isEncrypted': true,
-      'encryptedText': 'E#RT%Y^U&I*O(P)',
-      'categories': ['工作'],
-    },
-    {
-      'name': '学习小组',
-      'isEncrypted': false,
-      'roomCode': 'STUDY01',
-      'password': '123456',
-      'categories': ['学习'],
-    },
-    {
-      'name': '项目会议',
-      'isEncrypted': true,
-      'encryptedText': 'A@S#DF%G^H&J*K',
-      'categories': ['工作'],
-    },
-    {
-      'name': '闲聊群',
-      'isEncrypted': false,
-      'roomCode': 'CHAT02',
-      'password': 'chat2023',
-      'categories': ['娱乐'],
-    },
-  ];
+  // 使用 Aps 实例
+  final _aps = Aps();
 
-  // 当前选中的分类，现在是Set类型，可以多选
-  final Set<String> _selectedCategories = {};
+  // 当前选中的分类标签ID，现在是Set类型，可以多选
+  final Set<int> _selectedCategoryIds = {};
 
-  // 编辑房间信息
-  void _editRoom(int index, Map<String, dynamic> updatedRoom) {
-    setState(() {
-      rooms[index] = updatedRoom;
-    });
+  @override
+  void initState() {
+    super.initState();
   }
 
-  // 获取所有分类
-  List<String> get _categories {
-    final Set<String> categories = {};
-    for (var room in rooms) {
-      categories.addAll(List<String>.from(room['categories']));
-    }
-    return categories.toList()..sort();
+  // 编辑房间信息 - 调用 Aps 更新
+  Future<void> _editRoom(Room updatedRoom) async {
+    await _aps.updateRoom(updatedRoom);
+    // Aps().rooms 信号会自动更新，UI 会通过 watch 响应
   }
 
-  // 根据当前选中的分类过滤房间
-  List<Map<String, dynamic>> get _filteredRooms {
-    if (_selectedCategories.isEmpty) {
-      return rooms;
+  // 添加新分类 - 调用 Aps 添加
+  Future<void> _addCategory(String categoryName) async {
+    await _aps.addTag(categoryName);
+    // Aps().roomTags 信号会自动更新
+  }
+
+  // 根据当前选中的分类过滤房间 - 使用 Aps 数据
+  List<Room> get _filteredRooms {
+    // 使用 watch 监听 Aps().rooms 的变化
+    final allRooms = _aps.rooms.watch(context);
+
+    if (_selectedCategoryIds.isEmpty) {
+      return allRooms;
     }
-    return rooms.where((room) {
-      List<String> roomCategories = List<String>.from(room['categories']);
-      // 只要房间的任一分类在选中的分类中，就显示该房间
-      return roomCategories.any(
-        (category) => _selectedCategories.contains(category),
-      );
+    return allRooms.where((room) {
+      // 检查房间的标签ID列表是否包含任何选中的标签ID
+      return room.tags.any((tagId) => _selectedCategoryIds.contains(tagId));
     }).toList();
   }
 
@@ -89,45 +68,48 @@ class _RoomPageState extends State<RoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    // 使用 watch 监听标签变化，以便在标签增删时更新分类选择器
+    final currentCategories = _aps.allRoomTags.watch(context);
+    // _filteredRooms 内部已经 watch 了 rooms
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // 根据约束计算列数
           final columnCount = _getColumnCount(constraints.maxWidth);
 
           return CustomScrollView(
-            // 添加这个属性来控制滚动行为
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // 添加分类选择器
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  child: _buildCategorySelector(),
+                  // 传递当前获取的分类列表
+                  child: RoomTagsSelector(),
                 ),
               ),
               SliverPadding(
                 padding: const EdgeInsets.all(12.0),
                 sliver: SliverMasonryGrid.count(
-                  crossAxisCount: columnCount, // 使用计算出的列数
-                  mainAxisSpacing: 12, // 主轴间距
-                  crossAxisSpacing: 12, // 交叉轴间距
-                  childCount: _filteredRooms.length, // 使用过滤后的房间列表
+                  crossAxisCount: columnCount,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  // 使用过滤后的房间列表长度
+                  childCount: _filteredRooms.length,
                   itemBuilder: (context, index) {
                     final room = _filteredRooms[index];
+                    // 查找房间对应的标签名称列表
+                    final roomCategoryNames =
+                        currentCategories
+                            .where((tag) => room.tags.contains(tag.id))
+                            .map((tag) => tag.tag)
+                            .toList();
+
                     return RoomCard(
-                      name: room['name'],
-                      isEncrypted: room['isEncrypted'],
-                      encryptedText: room['encryptedText'],
-                      roomCode: room['roomCode'],
-                      password: room['password'],
-                      categories: List<String>.from(room['categories']),
+                      // 传递 Room 对象和标签名称列表
+                      room: room,
+                      categories: roomCategoryNames,
                       onEdit: () {
-                        // 找到原始索引
-                        final originalIndex = rooms.indexOf(room);
-                        _showEditDialog(context, originalIndex, room);
+                        _showEditDialog(context, room);
                       },
                     );
                   },
@@ -146,65 +128,12 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  // 构建分类选择器
-  Widget _buildCategorySelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              // 全部分类选项
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: FilterChip(
-                  label: const Text('全部'),
-                  selected: _selectedCategories.isEmpty,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedCategories.clear();
-                    });
-                  },
-                ),
-              ),
-              // 各个分类选项
-              ..._categories.map((category) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: FilterChip(
-                    label: Text(category),
-                    selected: _selectedCategories.contains(category),
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedCategories.add(category);
-                        } else {
-                          _selectedCategories.remove(category);
-                        }
-                      });
-                    },
-                  ),
-                );
-              }).toList(),
-              // 添加新分类按钮
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ActionChip(
-                  label: const Text('+ 新分类'),
-                  onPressed: () => _showAddCategoryDialog(context),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // 显示添加分类对话框
+  // 显示添加分类对话框 - 调用 Aps 添加
   void _showAddCategoryDialog(BuildContext context) {
     final categoryController = TextEditingController();
+    // 获取当前所有标签名称，用于检查重复
+    final existingCategoryNames =
+        _aps.allRoomTags.peek().map((t) => t.tag).toSet();
 
     showDialog(
       context: context,
@@ -222,26 +151,24 @@ class _RoomPageState extends State<RoomPage> {
               child: const Text('取消'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                // 改为 async
                 final newCategory = categoryController.text.trim();
                 if (newCategory.isNotEmpty &&
-                    !_categories.contains(newCategory)) {
-                  // 添加一个带有新分类的空房间，这样分类就会被添加到列表中
-                  setState(() {
-                    // 这里我们不实际添加房间，只是更新一个现有房间的分类
-                    if (rooms.isNotEmpty) {
-                      final firstRoom = rooms[0];
-                      List<String> categories = List<String>.from(
-                        firstRoom['categories'],
-                      );
-                      if (!categories.contains(newCategory)) {
-                        categories.add(newCategory);
-                        firstRoom['categories'] = categories;
-                      }
-                    }
-                  });
+                    !existingCategoryNames.contains(newCategory)) {
+                  // 调用 Aps 的方法添加标签
+                  await _addCategory(newCategory);
+                  Navigator.pop(context); // 关闭对话框
+                  // 无需 setState，因为 Aps().roomTags 的 watch 会自动更新UI
+                } else if (newCategory.isEmpty) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('分类名称不能为空')));
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('该分类已存在')));
                 }
-                Navigator.pop(context);
               },
               child: const Text('添加'),
             ),
@@ -251,28 +178,24 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  // 显示编辑对话框
-  void _showEditDialog(
-    BuildContext context,
-    int index,
-    Map<String, dynamic> room,
-  ) {
-    final nameController = TextEditingController(text: room['name']);
-    final roomCodeController = TextEditingController(
-      text: room['roomCode'] ?? '',
-    );
-    final passwordController = TextEditingController(
-      text: room['password'] ?? '',
-    );
+  // 显示编辑对话框 - 使用 Room 对象和 Aps 数据
+  void _showEditDialog(BuildContext context, Room room) {
+    final nameController = TextEditingController(text: room.name);
+    final roomCodeController = TextEditingController(text: room.roomCode ?? '');
+    final passwordController = TextEditingController(text: room.password ?? '');
 
-    // 复制分类列表，避免直接修改原始数据
-    List<String> selectedCategories = List<String>.from(room['categories']);
+    // 使用标签 ID 列表
+    List<int> selectedCategoryIds = List<int>.from(room.tags);
+    // 获取当前所有可用标签
+    final allCategories = _aps.allRoomTags.peek();
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          // 使用 StatefulBuilder 来更新对话框内的状态
+          builder: (context, setStateDialog) {
+            // 重命名 setState 防止冲突
             return AlertDialog(
               title: const Text('编辑房间'),
               content: SingleChildScrollView(
@@ -283,23 +206,26 @@ class _RoomPageState extends State<RoomPage> {
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: '房间名称'),
-                      enabled: !room['isEncrypted'], // 加密房间不能修改名称
+                      enabled: !room.encrypted, // 加密房间不能修改名称
                     ),
                     const SizedBox(height: 16),
                     const Text('分类:'),
                     Wrap(
                       spacing: 8.0,
                       children:
-                          _categories.map((category) {
+                          allCategories.map((category) {
                             return FilterChip(
-                              label: Text(category),
-                              selected: selectedCategories.contains(category),
+                              label: Text(category.tag),
+                              selected: selectedCategoryIds.contains(
+                                category.id,
+                              ),
                               onSelected: (selected) {
-                                setState(() {
+                                setStateDialog(() {
+                                  // 更新对话框状态
                                   if (selected) {
-                                    selectedCategories.add(category);
+                                    selectedCategoryIds.add(category.id);
                                   } else {
-                                    selectedCategories.remove(category);
+                                    selectedCategoryIds.remove(category.id);
                                   }
                                 });
                               },
@@ -311,20 +237,20 @@ class _RoomPageState extends State<RoomPage> {
                       children: [
                         const Text('加密房间: '),
                         Switch(
-                          value: room['isEncrypted'],
+                          value: room.encrypted,
                           onChanged: null, // 不允许修改加密状态
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (room['isEncrypted'])
+                    if (room.encrypted)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('加密密文:'),
                           const SizedBox(height: 4),
                           Text(
-                            room['encryptedText'] ?? '',
+                            room.roomCode ?? '',
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
@@ -354,20 +280,25 @@ class _RoomPageState extends State<RoomPage> {
                   child: const Text('取消'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    final updatedRoom = Map<String, dynamic>.from(room);
+                  onPressed: () async {
+                    // 改为 async
+                    // 创建更新后的 Room 对象
+                    final updatedRoomData = Room(
+                      name: room.encrypted ? room.name : nameController.text,
+                      encrypted: room.encrypted,
+                      roomCode: room.roomCode,
+                      password:
+                          room.encrypted
+                              ? room.password
+                              : passwordController.text,
+                      tags:
+                          selectedCategoryIds
+                              .map((id) => id.toString())
+                              .toList(), // 将 int 类型的标签 ID 转换为 String 类型
+                    );
 
-                    // 只有非加密房间才能更新名称、房间码和密码
-                    if (!room['isEncrypted']) {
-                      updatedRoom['name'] = nameController.text;
-                      updatedRoom['roomCode'] = roomCodeController.text;
-                      updatedRoom['password'] = passwordController.text;
-                    }
-
-                    // 更新分类
-                    updatedRoom['categories'] = selectedCategories;
-
-                    _editRoom(index, updatedRoom);
+                    // 调用 Aps 更新房间
+                    await _editRoom(updatedRoomData);
                     Navigator.pop(context);
                   },
                   child: const Text('保存'),
@@ -393,25 +324,33 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  // 显示创建房间的步骤对话框
+  // 显示创建房间的步骤对话框 - 使用 Aps 数据和方法
   void _showCreateRoomDialog(BuildContext context) {
     int currentStep = 0;
     String roomName = '';
     bool isEncrypted = false;
-    List<String> selectedCategories = [];
+    List<int> selectedCategoryIds = []; // 使用标签 ID
     String roomCode = '';
     String password = '';
     String encryptedText = '';
 
+    // 获取当前所有可用标签
+    final allCategories = _aps.allRoomTags.peek(); // 使用 peek 获取当前值
+
     showDialog(
       context: context,
+      // barrierDismissible: false, // 防止点击外部关闭，根据需要启用
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          // 使用 StatefulBuilder 更新对话框状态
+          builder: (context, setStateDialog) {
             Widget stepContent;
+            // 获取最新的分类列表，因为可能在步骤中添加了新分类
+            final currentAvailableCategories = _aps.allRoomTags.peek();
 
             // 步骤1：输入房间名称
             if (currentStep == 0) {
+              // ... (内容不变) ...
               stepContent = Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -427,6 +366,7 @@ class _RoomPageState extends State<RoomPage> {
             }
             // 步骤2：选择是否加密
             else if (currentStep == 1) {
+              // ... (内容不变, 注意使用 setStateDialog) ...
               stepContent = Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -437,11 +377,13 @@ class _RoomPageState extends State<RoomPage> {
                       Switch(
                         value: isEncrypted,
                         onChanged: (value) {
-                          setState(() {
+                          setStateDialog(() {
+                            // 使用 setStateDialog
                             isEncrypted = value;
                             if (isEncrypted) {
-                              // 生成随机加密密文
                               encryptedText = _generateEncryptedText();
+                            } else {
+                              encryptedText = ''; // 清除非加密时的密文
                             }
                           });
                         },
@@ -461,16 +403,18 @@ class _RoomPageState extends State<RoomPage> {
                   Wrap(
                     spacing: 8.0,
                     children:
-                        _categories.map((category) {
+                        currentAvailableCategories.map((category) {
+                          // 使用最新的分类列表
                           return FilterChip(
-                            label: Text(category),
-                            selected: selectedCategories.contains(category),
+                            label: Text(category.tag),
+                            selected: selectedCategoryIds.contains(category.id),
                             onSelected: (selected) {
-                              setState(() {
+                              setStateDialog(() {
+                                // 使用 setStateDialog
                                 if (selected) {
-                                  selectedCategories.add(category);
+                                  selectedCategoryIds.add(category.id);
                                 } else {
-                                  selectedCategories.remove(category);
+                                  selectedCategoryIds.remove(category.id);
                                 }
                               });
                             },
@@ -481,9 +425,10 @@ class _RoomPageState extends State<RoomPage> {
                   ActionChip(
                     label: const Text('+ 添加新分类'),
                     onPressed: () async {
-                      _showAddCategoryDialog(context);
-                      // 强制刷新对话框以显示新分类
-                      setState(() {});
+                      // 弹出添加分类对话框
+                      await _showAddCategoryDialogInDialog(context);
+                      // 添加新分类后，强制刷新创建对话框以显示新分类
+                      setStateDialog(() {});
                     },
                   ),
                   const SizedBox(height: 16),
@@ -511,6 +456,7 @@ class _RoomPageState extends State<RoomPage> {
                         const SizedBox(height: 16),
                         TextField(
                           decoration: const InputDecoration(labelText: '房间密码'),
+                          obscureText: true, // 密码建议隐藏
                           onChanged: (value) {
                             password = value;
                           },
@@ -532,14 +478,16 @@ class _RoomPageState extends State<RoomPage> {
                 if (currentStep > 0)
                   TextButton(
                     onPressed: () {
-                      setState(() {
+                      setStateDialog(() {
+                        // 使用 setStateDialog
                         currentStep--;
                       });
                     },
                     child: const Text('上一步'),
                   ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // 改为 async
                     if (currentStep < 2) {
                       // 验证当前步骤
                       if (currentStep == 0 && roomName.trim().isEmpty) {
@@ -548,13 +496,15 @@ class _RoomPageState extends State<RoomPage> {
                         );
                         return;
                       }
+                      // 验证步骤 1 (加密选择) - 无需验证
 
-                      setState(() {
+                      setStateDialog(() {
+                        // 使用 setStateDialog
                         currentStep++;
                       });
                     } else {
-                      // 完成创建
-                      if (selectedCategories.isEmpty) {
+                      // 完成创建前的验证
+                      if (selectedCategoryIds.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('请至少选择一个分类')),
                         );
@@ -570,25 +520,31 @@ class _RoomPageState extends State<RoomPage> {
                         return;
                       }
 
-                      // 创建新房间
-                      final newRoom = {
-                        'name': roomName,
-                        'isEncrypted': isEncrypted,
-                        'categories': selectedCategories,
-                      };
+                      // 创建新房间对象
+                      final newRoom = Room(
+                        // id 会在数据库中自动生成，这里不需要传
+                        name: roomName.trim(),
+                        encrypted: isEncrypted, // 使用 isEncrypted 变量
+                        tags:
+                            selectedCategoryIds
+                                .map((id) => id.toString())
+                                .toList(), // 将 int 类型的标签 ID 转换为 String 类型
+                        roomCode:
+                            isEncrypted
+                                ? encryptedText
+                                : roomCode.trim(), // 根据是否加密设置 roomCode
+                        password:
+                            isEncrypted
+                                ? ""
+                                : password.trim(), // 加密房间密码设为 null 或根据实际模型调整
+                        // 移除 isEncrypted, tagIds, encryptedText 这些不存在的或错误的参数
+                      );
 
-                      if (isEncrypted) {
-                        newRoom['encryptedText'] = encryptedText;
-                      } else {
-                        newRoom['roomCode'] = roomCode;
-                        newRoom['password'] = password;
-                      }
+                      // 调用 Aps 添加房间
+                      await _aps.addRoom(newRoom);
 
-                      setState(() {
-                        rooms.add(newRoom);
-                      });
-
-                      Navigator.pop(context);
+                      Navigator.pop(context); // 关闭创建对话框
+                      // 无需 setState，Aps().rooms 的 watch 会自动更新列表
                     }
                   },
                   child: Text(currentStep < 2 ? '下一步' : '完成'),
@@ -600,25 +556,74 @@ class _RoomPageState extends State<RoomPage> {
       },
     );
   }
+
+  // 在创建/编辑对话框内部显示添加分类对话框
+  Future<void> _showAddCategoryDialogInDialog(BuildContext context) async {
+    final categoryController = TextEditingController();
+    final existingCategoryNames =
+        _aps.allRoomTags.peek().map((t) => t.tag).toSet();
+
+    // 使用 Completer 来等待对话框关闭
+    // final completer = Completer<void>();
+
+    await showDialog<void>(
+      // 等待对话框关闭
+      context: context,
+      // 使用一个新的 builder context，避免与外部 dialog 的 context 冲突
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('添加新分类'),
+          content: TextField(
+            controller: categoryController,
+            decoration: const InputDecoration(labelText: '分类名称'),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext); // 关闭当前添加分类对话框
+                // completer.complete();
+              },
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newCategory = categoryController.text.trim();
+                if (newCategory.isNotEmpty &&
+                    !existingCategoryNames.contains(newCategory)) {
+                  await _addCategory(newCategory); // 调用 Aps 添加
+                  Navigator.pop(dialogContext); // 关闭当前添加分类对话框
+                  // completer.complete();
+                } else if (newCategory.isEmpty) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('分类名称不能为空')));
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('该分类已存在')));
+                }
+                // 注意：这里不直接调用 setStateDialog，而是在外部调用处刷新
+              },
+              child: const Text('添加'),
+            ),
+          ],
+        );
+      },
+    );
+    // return completer.future; // 返回 Future，让调用者可以 await
+  }
 }
 
-// 修改RoomCard类，添加categories参数
+// 修改RoomCard类，接收 Room 对象和分类名称列表
 class RoomCard extends StatefulWidget {
-  final String name;
-  final bool isEncrypted;
-  final String? encryptedText;
-  final String? roomCode;
-  final String? password;
-  final List<String> categories;
+  final Room room; // 接收 Room 对象
+  final List<String> categories; // 接收分类名称列表
   final VoidCallback? onEdit;
 
   const RoomCard({
     super.key,
-    required this.name,
-    required this.isEncrypted,
-    this.encryptedText,
-    this.roomCode,
-    this.password,
+    required this.room,
     required this.categories,
     this.onEdit,
   });
@@ -645,6 +650,8 @@ class _RoomCardState extends State<RoomCard> {
 
   @override
   Widget build(BuildContext context) {
+    final room = widget.room; // 获取传入的 room 对象
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -661,7 +668,7 @@ class _RoomCardState extends State<RoomCard> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.name,
+                      room.name, // 使用 room.name
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -671,7 +678,6 @@ class _RoomCardState extends State<RoomCard> {
                   ),
                   Row(
                     children: [
-                      // 添加编辑按钮
                       if (widget.onEdit != null)
                         IconButton(
                           icon: const Icon(Icons.edit, size: 20),
@@ -682,8 +688,10 @@ class _RoomCardState extends State<RoomCard> {
                         ),
                       const SizedBox(width: 8),
                       Icon(
-                        widget.isEncrypted ? Icons.lock : Icons.lock_open,
-                        color: widget.isEncrypted ? Colors.red : Colors.green,
+                        room.encrypted
+                            ? Icons.lock
+                            : Icons.lock_open, // 使用 room.isEncrypted
+                        color: room.encrypted ? Colors.red : Colors.green,
                       ),
                       const SizedBox(width: 8),
                       Icon(
@@ -697,14 +705,15 @@ class _RoomCardState extends State<RoomCard> {
                 ],
               ),
               const SizedBox(height: 4),
-              // 显示分类标签
+              // 显示分类标签 - 使用传入的 categories 列表
               Wrap(
                 spacing: 4,
                 runSpacing: 4,
                 children:
-                    widget.categories.map((category) {
+                    widget.categories.map((categoryName) {
+                      // 使用 widget.categories
                       return Chip(
-                        label: Text(category),
+                        label: Text(categoryName),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 4,
@@ -717,21 +726,30 @@ class _RoomCardState extends State<RoomCard> {
               ),
               const SizedBox(height: 4),
               Text(
-                '类型: ${widget.isEncrypted ? "加密" : "不加密"}',
+                '类型: ${room.encrypted ? "加密" : "不加密"}', // 使用 room.isEncrypted
                 style: TextStyle(color: Colors.grey[600]),
               ),
-              // 展开时显示详细信息
+              // 展开时显示详细信息 - 使用 room 对象
               if (_isExpanded) ...[
                 const SizedBox(height: 16),
-                if (widget.isEncrypted)
-                  _buildCopyableRow('加密密文', widget.encryptedText ?? '')
+                if (room.encrypted)
+                  _buildCopyableRow(
+                    '加密密文',
+                    room.roomCode ?? '',
+                  ) // 使用 room.encryptedText
                 else
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildCopyableRow('房间码', widget.roomCode ?? ''),
+                      _buildCopyableRow(
+                        '房间码',
+                        room.roomCode ?? '',
+                      ), // 使用 room.roomCode
                       const SizedBox(height: 8),
-                      _buildCopyableRow('房间密码', widget.password ?? ''),
+                      _buildCopyableRow(
+                        '房间密码',
+                        room.password ?? '',
+                      ), // 使用 room.password
                     ],
                   ),
               ],
@@ -742,6 +760,7 @@ class _RoomCardState extends State<RoomCard> {
     );
   }
 
+  // _buildCopyableRow 方法保持不变
   Widget _buildCopyableRow(String label, String value) {
     return Row(
       children: [
@@ -754,7 +773,7 @@ class _RoomCardState extends State<RoomCard> {
               Text(
                 value,
                 style: const TextStyle(fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.ellipsis, // 防止长文本溢出
               ),
             ],
           ),

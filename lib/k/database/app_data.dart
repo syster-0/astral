@@ -1,6 +1,12 @@
 import 'dart:io';
+import 'package:astral/k/models/all_settings.dart';
 import 'package:astral/k/models/net_config.dart';
+import 'package:astral/k/models/room.dart';
+import 'package:astral/k/models/room_tags.dart';
+import 'package:astral/k/models_mod/all_settings_cz.dart';
 import 'package:astral/k/models_mod/net_config_cz.dart';
+import 'package:astral/k/models_mod/room_cz.dart';
+import 'package:astral/k/models_mod/room_tags_cz.dart';
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/theme_settings.dart';
 import 'package:astral/k/models_mod/theme_settings_cz.dart';
@@ -14,6 +20,9 @@ class AppDatabase {
   late final Isar isar;
   late final ThemeSettingsRepository themeSettings;
   late final NetConfigRepository netConfigSetting;
+  late final RoomTagsCz RoomTagsSetting;
+  late final RoomCz RoomSetting;
+  late final AllSettingsCz AllSettings;
 
   /// 初始化数据库
   Future<void> init([String? customDbDir]) async {
@@ -38,8 +47,13 @@ class AppDatabase {
     isar = await Isar.open([
       ThemeSettingsSchema,
       NetConfigSchema,
+      RoomTagsSchema,
+      AllSettingsSchema,
     ], directory: dbDir);
     themeSettings = ThemeSettingsRepository(isar);
     netConfigSetting = NetConfigRepository(isar);
+    RoomTagsSetting = RoomTagsCz(isar);
+    RoomSetting = RoomCz(isar);
+    AllSettings = AllSettingsCz(isar);
   }
 }
