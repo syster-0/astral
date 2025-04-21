@@ -48,6 +48,7 @@ class AppDatabase {
       ThemeSettingsSchema,
       NetConfigSchema,
       RoomTagsSchema,
+      RoomSchema,
       AllSettingsSchema,
     ], directory: dbDir);
     themeSettings = ThemeSettingsRepository(isar);

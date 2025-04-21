@@ -104,13 +104,13 @@ Room _roomDeserialize(
 ) {
   final object = Room(
     encrypted: reader.readBoolOrNull(offsets[0]) ?? false,
+    id: id,
     name: reader.readStringOrNull(offsets[1]) ?? "",
     password: reader.readStringOrNull(offsets[2]) ?? "",
     roomCode: reader.readStringOrNull(offsets[3]) ?? "",
     roomName: reader.readStringOrNull(offsets[4]) ?? "",
     tags: reader.readStringList(offsets[5]) ?? const [],
   );
-  object.id = id;
   return object;
 }
 

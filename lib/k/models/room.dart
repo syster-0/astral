@@ -21,6 +21,7 @@ class Room {
 
   //构造
   Room({
+    this.id = Isar.autoIncrement,
     this.name = "",
     this.encrypted = false,
     this.roomName = "",
