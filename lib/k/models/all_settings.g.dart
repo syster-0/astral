@@ -16,7 +16,13 @@ extension GetAllSettingsCollection on Isar {
 const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
-  properties: {},
+  properties: {
+    r'room': PropertySchema(
+      id: 0,
+      name: r'room',
+      type: IsarType.long,
+    )
+  },
   estimateSize: _allSettingsEstimateSize,
   serialize: _allSettingsSerialize,
   deserialize: _allSettingsDeserialize,
@@ -45,7 +51,10 @@ void _allSettingsSerialize(
   IsarWriter writer,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
-) {}
+) {
+  writer.writeLong(offsets[0], object.room);
+}
+
 AllSettings _allSettingsDeserialize(
   Id id,
   IsarReader reader,
@@ -54,6 +63,7 @@ AllSettings _allSettingsDeserialize(
 ) {
   final object = AllSettings();
   object.id = id;
+  object.room = reader.readLongOrNull(offsets[0]);
   return object;
 }
 
@@ -64,6 +74,8 @@ P _allSettingsDeserializeProp<P>(
   Map<Type, List<int>> allOffsets,
 ) {
   switch (propertyId) {
+    case 0:
+      return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -214,6 +226,76 @@ extension AllSettingsQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'room',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      roomIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'room',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'room',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'room',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'room',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'room',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension AllSettingsQueryObject
@@ -223,7 +305,19 @@ extension AllSettingsQueryLinks
     on QueryBuilder<AllSettings, AllSettings, QFilterCondition> {}
 
 extension AllSettingsQuerySortBy
-    on QueryBuilder<AllSettings, AllSettings, QSortBy> {}
+    on QueryBuilder<AllSettings, AllSettings, QSortBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByRoom() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'room', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByRoomDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'room', Sort.desc);
+    });
+  }
+}
 
 extension AllSettingsQuerySortThenBy
     on QueryBuilder<AllSettings, AllSettings, QSortThenBy> {
@@ -238,16 +332,40 @@ extension AllSettingsQuerySortThenBy
       return query.addSortBy(r'id', Sort.desc);
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByRoom() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'room', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByRoomDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'room', Sort.desc);
+    });
+  }
 }
 
 extension AllSettingsQueryWhereDistinct
-    on QueryBuilder<AllSettings, AllSettings, QDistinct> {}
+    on QueryBuilder<AllSettings, AllSettings, QDistinct> {
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByRoom() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'room');
+    });
+  }
+}
 
 extension AllSettingsQueryProperty
     on QueryBuilder<AllSettings, AllSettings, QQueryProperty> {
   QueryBuilder<AllSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AllSettings, int?, QQueryOperations> roomProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'room');
     });
   }
 }

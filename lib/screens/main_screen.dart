@@ -1,5 +1,5 @@
 // 导入所需的包
-import 'package:astral/k/app_s/Aps.dart';
+import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/screens/home_page.dart';
 import 'package:astral/screens/room_page.dart';
 import 'package:astral/screens/settings_page.dart';

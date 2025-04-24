@@ -1,4 +1,8 @@
+import 'package:astral/wid/home/time_display.dart';
+import 'package:astral/wid/home/virtual_ip.dart';
+import 'package:astral/wid/home/virtual_ip_mc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,8 +12,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // 根据宽度计算列数
+  int _getColumnCount(double width) {
+    if (width >= 1200) {
+      return 5;
+    } else if (width >= 900) {
+      return 4;
+    } else if (width >= 600) {
+      return 3;
+    }
+    return 2;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    final width = MediaQuery.of(context).size.width;
+    final columnCount = _getColumnCount(width);
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: StaggeredGrid.count(
+            crossAxisCount: columnCount,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            children: [VirtualIpBox(), VirtualIpBoxMC(), TimeDisplayBox()],
+          ),
+        ),
+      ),
+    );
   }
 }

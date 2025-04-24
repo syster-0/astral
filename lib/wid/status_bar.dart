@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:astral/k/app_s/Aps.dart';
+import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/wid/theme_selector.dart';
 import 'package:astral/wid/windows_controls.dart';
 import 'package:flutter/material.dart';

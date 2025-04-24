@@ -1,25 +1,28 @@
 import 'dart:ui';
 
+import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/room.dart';
-import 'package:astral/k/models/room_tags.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:astral/k/database/app_data.dart';
+import 'package:uuid/uuid.dart';
 export 'package:signals_flutter/signals_flutter.dart';
 
 /// 全局状态管理类
 class Aps {
-  //单例模式
+  // 静态单例实例
+  static Aps? _instance;
+
+  // 工厂构造函数，用于获取单例实例
+  factory Aps() {
+    _instance ??= Aps._internal();
+    return _instance!;
+  }
+
   Aps._internal() {
     _initThemeSettings();
     updateNetConfig();
-    initRoomTagsSetting();
-  }
-  static final Aps _instance = Aps._internal();
-  factory Aps() => _instance;
-  // 初始化房间标签
-  Future<void> initRoomTagsSetting() async {
-    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
+    initMisc();
   }
 
   // 初始化主题设置
@@ -27,6 +30,27 @@ class Aps {
     final database = AppDatabase();
     themeMode.value = await database.themeSettings.getThemeMode();
     themeColor.value = Color(await database.themeSettings.getThemeColor());
+  }
+
+  // 杂项初始化
+  Future<void> initMisc() async {
+    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
+    // 如果没有任何一个房间 就随机创建一个加密的
+    if (rooms.value.isEmpty) {
+      final s = Room(
+        name: RandomName(),
+        encrypted: true,
+        roomName: Uuid().v4(),
+        password: Uuid().v4(),
+        tags: [],
+      );
+      await addRoom(s);
+      // 并且 selectroom 如果没有选中任何一个房间 就选中第一个
+      if (await AppDatabase().AllSettings.getRoom() == null) {
+        await AppDatabase().AllSettings.updateRoom(s);
+      }
+    }
+    selectroom.value = await AppDatabase().AllSettings.getRoom();
   }
 
   /// **********************************************************************************************************
@@ -351,46 +375,13 @@ class Aps {
     await AppDatabase().netConfigSetting.updateProxyForwardBySystem(value);
   }
 
-  /// 房间标签
-  final Signal<List<RoomTags>> allRoomTags = signal([]);
-
-  /// 添加标签
-  Future<void> addTag(String tagName) async {
-    await AppDatabase().RoomTagsSetting.addTag(tagName);
-    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
-  }
-
-  /// 设置标签选中状态
-  Future<void> setTagSelected(String tagName, bool isSelected) async {
-    await AppDatabase().RoomTagsSetting.setTagSelected(tagName, isSelected);
-    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
-  }
-
-  /// 清除所有标签的选中状态
-  Future<void> clearAllTagSelections() async {
-    await AppDatabase().RoomTagsSetting.clearAllTagSelections();
-    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
-  }
-
-  /// 删除标签
-  Future<void> deleteTag(String tagName) async {
-    await AppDatabase().RoomTagsSetting.deleteTag(tagName);
-    allRoomTags.value = await AppDatabase().RoomTagsSetting.getAllTags();
-  }
-
-  /// 获取所有标签
-  Future<List<RoomTags>> getAllTags() async {
-    final tagsList = await AppDatabase().RoomTagsSetting.getAllTags();
-    allRoomTags.value = tagsList; // 更新 Signal
-    return tagsList;
-  }
-
   /// 房间列表
   final Signal<List<Room>> rooms = signal([]);
 
   /// 添加房间
   Future<void> addRoom(Room room) async {
     await AppDatabase().RoomSetting.addRoom(room);
+    print("添加房间" + room.name);
     rooms.value = await AppDatabase().RoomSetting.getAllRooms();
   }
 
@@ -414,7 +405,17 @@ class Aps {
 
   /// 更新房间
   Future<int> updateRoom(Room room) async {
+    await AppDatabase().RoomSetting.updateRoom(room);
     rooms.value = await AppDatabase().RoomSetting.getAllRooms();
-    return await AppDatabase().RoomSetting.updateRoom(room);
+    return room.id;
+  }
+
+  /// 所选房间
+  final Signal<Room?> selectroom = signal(null);
+
+  /// 设置当前选中的房间
+  Future<void> setRoom(Room room) async {
+    await AppDatabase().AllSettings.updateRoom(room);
+    selectroom.value = await AppDatabase().AllSettings.getRoom();
   }
 }

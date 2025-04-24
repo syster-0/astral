@@ -12,10 +12,6 @@ class Room {
   String roomName = "";
   // 房间密码
   String password = "";
-
-  // 房间联机码
-  String roomCode = "";
-
   // 房间标签
   List<String> tags = [];
 
@@ -26,7 +22,6 @@ class Room {
     this.encrypted = false,
     this.roomName = "",
     this.password = "",
-    this.roomCode = "",
     this.tags = const [],
   });
 }
