@@ -1,6 +1,5 @@
-import 'package:astral/wid/home/time_display.dart';
+import 'package:astral/wid/home/user_ip.dart';
 import 'package:astral/wid/home/virtual_ip.dart';
-import 'package:astral/wid/home/virtual_ip_mc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -36,7 +35,7 @@ class _HomePageState extends State<HomePage> {
             crossAxisCount: columnCount,
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            children: [VirtualIpBox(), VirtualIpBoxMC(), TimeDisplayBox()],
+            children: [VirtualIpBox(), UserIpBox()],
           ),
         ),
       ),

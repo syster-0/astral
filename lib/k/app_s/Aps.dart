@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +49,17 @@ class Aps {
       }
     }
     selectroom.value = await AppDatabase().AllSettings.getRoom();
+    // 更新玩家名称
+    PlayerName.value = await AppDatabase().AllSettings.getPlayerName();
+  }
+
+  /// PLAYERname
+  final Signal<String> PlayerName = signal(''); // 玩家名称
+
+  /// 更新玩家名称
+  Future<void> updatePlayerName(String name) async {
+    PlayerName.value = name;
+    await AppDatabase().AllSettings.setPlayerName(name);
   }
 
   /// **********************************************************************************************************

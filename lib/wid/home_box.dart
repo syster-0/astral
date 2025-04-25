@@ -58,7 +58,7 @@ class _HomeBoxState extends State<HomeBox> {
           highlightColor: theme.colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: EdgeInsets.all(widget.isBorder ?? true ? 8.0 : 1.0),
+            padding: EdgeInsets.all(widget.isBorder ?? true ? 12 : 1.0),
             height: widget.fixedCellHeight, // height 会自动适应内容
             width: double.infinity,
             child: widget.child,

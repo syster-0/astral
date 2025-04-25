@@ -26,6 +26,10 @@ dependencies:
   jwt_decoder: ^2.0.1
   dart_jsonwebtoken: ^3.2.0
   flutter_localization: ^0.3.2
+  flutter_localizations:
+    sdk: flutter
+  graphview: ^1.2.0
+  device_info_plus: ^11.4.0
 
 dev_dependencies:
   flutter_test:
@@ -43,14 +47,7 @@ flutter:
   fonts:
     - family: MiSans
       fonts:
-        - asset: fonts/MiSans-Bold.ttf
-        - asset: fonts/MiSans-Demibold.ttf
-        - asset: fonts/MiSans-ExtraLight.ttf
-        - asset: fonts/MiSans-Heavy.ttf
-        - asset: fonts/MiSans-Light.ttf
-        - asset: fonts/MiSans-Medium.ttf
-        - asset: fonts/MiSans-Normal.ttf
-        - asset: fonts/MiSans-Regular.ttf
-        - asset: fonts/MiSans-Semibold.ttf
-        - asset: fonts/MiSans-Thin.ttf
+          - asset: fonts/MiSans-Demibold.ttf
+          - asset: fonts/MiSans-Regular.ttf
+            weight: 800
 

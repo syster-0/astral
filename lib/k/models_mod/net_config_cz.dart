@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/net_config.dart';
 

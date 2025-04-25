@@ -29,17 +29,25 @@ class _KevinAppState extends State<KevinApp> {
       // Insert this line
       supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
       theme: ThemeData(
-        fontFamily: 'MiSans',
         useMaterial3: true,
-        
+
         colorSchemeSeed: _aps.themeColor.watch(context), // 设置当前主题颜色,
         brightness: Brightness.light,
+      ).copyWith(
+        textTheme: Typography.material2021().black.apply(fontFamily: 'MiSans'),
+        primaryTextTheme: Typography.material2021().black.apply(
+          fontFamily: 'MiSans',
+        ),
       ),
       darkTheme: ThemeData(
-        fontFamily: 'MiSans',
         useMaterial3: true,
         colorSchemeSeed: _aps.themeColor.watch(context),
         brightness: Brightness.dark,
+      ).copyWith(
+        textTheme: Typography.material2021().white.apply(fontFamily: 'MiSans'),
+        primaryTextTheme: Typography.material2021().white.apply(
+          fontFamily: 'MiSans',
+        ),
       ),
       themeMode: _aps.themeMode.watch(context), // 设置当前主题模式
       home: MainScreen(),

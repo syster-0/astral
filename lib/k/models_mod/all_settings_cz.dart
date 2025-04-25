@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:astral/k/models/all_settings.dart';
 import 'package:astral/k/models/room.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:isar/isar.dart';
 
 class AllSettingsCz {
@@ -15,6 +18,14 @@ class AllSettingsCz {
     if (allSettings == null) {
       await _isar.writeTxn(() async {
         await _isar.allSettings.put(AllSettings());
+      });
+    }
+    // 检查 playerName 是否为空，如果为空则设置为主机名
+    if (allSettings != null && allSettings.playerName == null) {
+      String deviceName = await _getDeviceName(); // 获取设备名称
+      await _isar.writeTxn(() async {
+        allSettings.playerName = deviceName; // 设置默认名称
+        await _isar.allSettings.put(allSettings);
       });
     }
   }
@@ -40,5 +51,55 @@ class AllSettingsCz {
   // 获取所有设置
   Future<AllSettings?> getAllSettings() async {
     return await _isar.allSettings.get(1);
+  }
+
+  // 设定玩家名称
+  Future<void> setPlayerName(String name) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.playerName = name;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 获取玩家名称
+  Future<String> getPlayerName() async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config?.playerName == null) {
+      String deviceName = await _getDeviceName();
+      await setPlayerName(deviceName);
+      return deviceName;
+    }
+    return config!.playerName!;
+  }
+}
+
+// 在同一个文件中添加这个方法
+Future<String> _getDeviceName() async {
+  try {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.model;
+    } else if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      return iosInfo.name;
+    } else if (Platform.isWindows) {
+      WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+      return windowsInfo.computerName;
+    } else if (Platform.isMacOS) {
+      MacOsDeviceInfo macOSInfo = await deviceInfo.macOsInfo;
+      return macOSInfo.computerName;
+    } else if (Platform.isLinux) {
+      LinuxDeviceInfo linuxInfo = await deviceInfo.linuxInfo;
+      return linuxInfo.name;
+    }
+
+    return "Default Player"; // 如果无法获取设备名称，则使用默认名称
+  } catch (e) {
+    return "Default Player"; // 错误处理，返回默认名称
   }
 }

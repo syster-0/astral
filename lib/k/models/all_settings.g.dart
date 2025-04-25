@@ -17,8 +17,13 @@ const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
   properties: {
-    r'room': PropertySchema(
+    r'playerName': PropertySchema(
       id: 0,
+      name: r'playerName',
+      type: IsarType.string,
+    ),
+    r'room': PropertySchema(
+      id: 1,
       name: r'room',
       type: IsarType.long,
     )
@@ -43,6 +48,12 @@ int _allSettingsEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.playerName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -52,7 +63,8 @@ void _allSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.room);
+  writer.writeString(offsets[0], object.playerName);
+  writer.writeLong(offsets[1], object.room);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -63,7 +75,8 @@ AllSettings _allSettingsDeserialize(
 ) {
   final object = AllSettings();
   object.id = id;
-  object.room = reader.readLongOrNull(offsets[0]);
+  object.playerName = reader.readStringOrNull(offsets[0]);
+  object.room = reader.readLongOrNull(offsets[1]);
   return object;
 }
 
@@ -75,6 +88,8 @@ P _allSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readStringOrNull(offset)) as P;
+    case 1:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -227,6 +242,160 @@ extension AllSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'playerName',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'playerName',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'playerName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'playerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'playerName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'playerName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      playerNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'playerName',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> roomIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -306,6 +475,18 @@ extension AllSettingsQueryLinks
 
 extension AllSettingsQuerySortBy
     on QueryBuilder<AllSettings, AllSettings, QSortBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByPlayerName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'playerName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByPlayerNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'playerName', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByRoom() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'room', Sort.asc);
@@ -333,6 +514,18 @@ extension AllSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByPlayerName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'playerName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByPlayerNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'playerName', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByRoom() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'room', Sort.asc);
@@ -348,6 +541,13 @@ extension AllSettingsQuerySortThenBy
 
 extension AllSettingsQueryWhereDistinct
     on QueryBuilder<AllSettings, AllSettings, QDistinct> {
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByPlayerName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'playerName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByRoom() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'room');
@@ -360,6 +560,12 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AllSettings, String?, QQueryOperations> playerNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'playerName');
     });
   }
 

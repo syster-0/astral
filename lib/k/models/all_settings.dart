@@ -8,4 +8,7 @@ class AllSettings {
 
   /// 当前启用的房间
   int? room;
+
+  /// 玩家名称
+  String? playerName;
 }
