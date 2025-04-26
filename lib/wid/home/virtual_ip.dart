@@ -1,3 +1,4 @@
+import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/wid/home_box.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
@@ -75,7 +76,7 @@ class VirtualIpBox extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
               Text(
-                "10.10.10.10",
+                Aps().ipv4.watch(context),
                 style: TextStyle(color: colorScheme.secondary),
               ),
             ],

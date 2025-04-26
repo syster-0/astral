@@ -1,5 +1,6 @@
 import 'package:astral/wid/home/user_ip.dart';
 import 'package:astral/wid/home/virtual_ip.dart';
+import 'package:astral/wid/home/connect_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -28,17 +29,22 @@ class _HomePageState extends State<HomePage> {
     final width = MediaQuery.of(context).size.width;
     final columnCount = _getColumnCount(width);
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: StaggeredGrid.count(
-            crossAxisCount: columnCount,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: [VirtualIpBox(), UserIpBox()],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: StaggeredGrid.count(
+                crossAxisCount: columnCount,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                children: [VirtualIpBox(), UserIpBox()],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
+      floatingActionButton: const ConnectButton(),
     );
   }
 }

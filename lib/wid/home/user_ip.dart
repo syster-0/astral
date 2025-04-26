@@ -20,7 +20,6 @@ class _UserIpBoxState extends State<UserIpBox> {
 
   final Aps _aps = Aps();
 
-  bool _isAutoIP = true;
   final ConnectionState _connectionState = ConnectionState.notStarted;
 
   @override
@@ -31,29 +30,18 @@ class _UserIpBoxState extends State<UserIpBox> {
       // 从 Aps 获取初始值
       _usernameController.text = _aps.PlayerName.value;
       _virtualIPController.text = _aps.ipv4.value;
-      _isAutoIP = _aps.dhcp.value;
 
       // 监听状态变化更新UI
       effect(() {
         final value = _aps.PlayerName.value;
+        final value2 = _aps.ipv4.value;
         if (_usernameController.text != value) {
           _usernameController.text = value;
         }
+        if (_virtualIPController.text != value2) {
+          _virtualIPController.text = value2;
+        }
       });
-
-      // _aps.ipv4.addListener((value) {
-      //   if (_virtualIPController.text != value) {
-      //     _virtualIPController.text = value;
-      //   }
-      // });
-
-      // _aps.dhcp.addListener((value) {
-      //   if (_isAutoIP != value) {
-      //     setState(() {
-      //       _isAutoIP = value;
-      //     });
-      //   }
-      // });
     });
   }
 
@@ -77,7 +65,7 @@ class _UserIpBoxState extends State<UserIpBox> {
   Widget build(BuildContext context) {
     var colorScheme = Theme.of(context).colorScheme;
     // 验证 IP 的有效性
-    var isValidIP = _isAutoIP || _isValidIPv4(_virtualIPController.text);
+    var isValidIP = _isValidIPv4(_aps.ipv4.value);
 
     return HomeBox(
       widthSpan: 2,
@@ -143,16 +131,15 @@ class _UserIpBoxState extends State<UserIpBox> {
                   controller: _virtualIPController,
                   focusNode: _virtualIPFocusNode,
                   enabled:
-                      !_isAutoIP &&
+                      !_aps.dhcp.watch(context) &&
                       _connectionState != ConnectionState.connected,
                   onChanged: (value) {
-                    setState(() {
-                      isValidIP = _isAutoIP || _isValidIPv4(value);
-                    });
-                  },
-                  onEditingComplete: () {
-                    if (!_isAutoIP) {
-                      _aps.ipv4.value = _virtualIPController.text;
+                    if (!_aps.dhcp.watch(context)) {
+                      setState(() {
+                        isValidIP =
+                            _aps.dhcp.watch(context) || _isValidIPv4(value);
+                      });
+                      _aps.updateIpv4(value);
                     }
                   },
                   decoration: InputDecoration(
@@ -160,7 +147,10 @@ class _UserIpBoxState extends State<UserIpBox> {
                     border: const OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lan, color: colorScheme.primary),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                    errorText: !isValidIP && !_isAutoIP ? '请输入有效的IPv4地址' : null,
+                    errorText:
+                        !isValidIP && !_aps.dhcp.watch(context)
+                            ? '请输入有效的IPv4地址'
+                            : null,
                   ),
                 ),
               ),
@@ -168,26 +158,20 @@ class _UserIpBoxState extends State<UserIpBox> {
               Column(
                 children: [
                   Switch(
-                    value: _isAutoIP,
-                    onChanged:
-                        _connectionState != ConnectionState.connected
-                            ? (value) {
-                              setState(() {
-                                _isAutoIP = value;
-                              });
-                              _aps.dhcp.value = value;
-                              if (!value) {
-                                _aps.ipv4.value = _virtualIPController.text;
-                              }
-                            }
-                            : null,
+                    value: _aps.dhcp.watch(context),
+                    onChanged: (value) {
+                      _aps.updateDhcp(value);
+                    },
                   ),
-                  Text(_isAutoIP ? "自动" : "手动", style: TextStyle(fontSize: 12)),
+                  Text(
+                    _aps.dhcp.watch(context) ? "自动" : "手动",
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ],
               ),
             ],
           ),
-          if (_isAutoIP)
+          if (_aps.dhcp.watch(context))
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(
