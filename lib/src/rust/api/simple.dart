@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `create_and_store_network_instance`, `peer_conn_info_to_string`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `KVNetworkStatus`, `KVNodeConnectionStats`, `KVNodeInfo`, `NodeHopStats`, `RT`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `RT`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `initialize`
 
 Future<JoinHandle> handleEvent({required EventBusSubscriber events}) =>
@@ -52,6 +52,12 @@ Future<void> closeServer() => RustLib.instance.api.crateApiSimpleCloseServer();
 Future<NetworkInterfaceHops> getNetworkInterfaceHops() =>
     RustLib.instance.api.crateApiSimpleGetNetworkInterfaceHops();
 
+Future<List<PeerRoutePair>> getPeerRoutePairs() =>
+    RustLib.instance.api.crateApiSimpleGetPeerRoutePairs();
+
+Future<KVNetworkStatus> getNetworkStatus() =>
+    RustLib.instance.api.crateApiSimpleGetNetworkStatus();
+
 Future<bool> setNetworkInterfaceHops({required int hop}) =>
     RustLib.instance.api.crateApiSimpleSetNetworkInterfaceHops(hop: hop);
 
@@ -65,6 +71,9 @@ abstract class JoinHandle implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<JoinHandle < Result < () , String > >>>
 abstract class JoinHandleResultString implements RustOpaqueInterface {}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PeerRoutePair>>
+abstract class PeerRoutePair implements RustOpaqueInterface {}
 
 class FlagsC {
   final String defaultProtocol;
@@ -161,6 +170,110 @@ class FlagsC {
           proxyForwardBySystem == other.proxyForwardBySystem;
 }
 
+class KVNetworkStatus {
+  final BigInt totalNodes;
+  final List<KVNodeInfo> nodes;
+
+  const KVNetworkStatus({required this.totalNodes, required this.nodes});
+
+  @override
+  int get hashCode => totalNodes.hashCode ^ nodes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KVNetworkStatus &&
+          runtimeType == other.runtimeType &&
+          totalNodes == other.totalNodes &&
+          nodes == other.nodes;
+}
+
+class KVNodeConnectionStats {
+  final String connType;
+  final BigInt rxBytes;
+  final BigInt txBytes;
+  final BigInt rxPackets;
+  final BigInt txPackets;
+
+  const KVNodeConnectionStats({
+    required this.connType,
+    required this.rxBytes,
+    required this.txBytes,
+    required this.rxPackets,
+    required this.txPackets,
+  });
+
+  @override
+  int get hashCode =>
+      connType.hashCode ^
+      rxBytes.hashCode ^
+      txBytes.hashCode ^
+      rxPackets.hashCode ^
+      txPackets.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KVNodeConnectionStats &&
+          runtimeType == other.runtimeType &&
+          connType == other.connType &&
+          rxBytes == other.rxBytes &&
+          txBytes == other.txBytes &&
+          rxPackets == other.rxPackets &&
+          txPackets == other.txPackets;
+}
+
+class KVNodeInfo {
+  final String hostname;
+  final String ipv4;
+  final double latencyMs;
+  final String nat;
+  final List<NodeHopStats> hops;
+  final double lossRate;
+  final List<KVNodeConnectionStats> connections;
+  final String version;
+  final int cost;
+
+  const KVNodeInfo({
+    required this.hostname,
+    required this.ipv4,
+    required this.latencyMs,
+    required this.nat,
+    required this.hops,
+    required this.lossRate,
+    required this.connections,
+    required this.version,
+    required this.cost,
+  });
+
+  @override
+  int get hashCode =>
+      hostname.hashCode ^
+      ipv4.hashCode ^
+      latencyMs.hashCode ^
+      nat.hashCode ^
+      hops.hashCode ^
+      lossRate.hashCode ^
+      connections.hashCode ^
+      version.hashCode ^
+      cost.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KVNodeInfo &&
+          runtimeType == other.runtimeType &&
+          hostname == other.hostname &&
+          ipv4 == other.ipv4 &&
+          latencyMs == other.latencyMs &&
+          nat == other.nat &&
+          hops == other.hops &&
+          lossRate == other.lossRate &&
+          connections == other.connections &&
+          version == other.version &&
+          cost == other.cost;
+}
+
 class NetworkInterfaceHop {
   final String interfaceName;
   final int hopCount;
@@ -196,4 +309,35 @@ class NetworkInterfaceHops {
       other is NetworkInterfaceHops &&
           runtimeType == other.runtimeType &&
           hops == other.hops;
+}
+
+class NodeHopStats {
+  final String targetIp;
+  final double latencyMs;
+  final double packetLoss;
+  final String nodeName;
+
+  const NodeHopStats({
+    required this.targetIp,
+    required this.latencyMs,
+    required this.packetLoss,
+    required this.nodeName,
+  });
+
+  @override
+  int get hashCode =>
+      targetIp.hashCode ^
+      latencyMs.hashCode ^
+      packetLoss.hashCode ^
+      nodeName.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeHopStats &&
+          runtimeType == other.runtimeType &&
+          targetIp == other.targetIp &&
+          latencyMs == other.latencyMs &&
+          packetLoss == other.packetLoss &&
+          nodeName == other.nodeName;
 }

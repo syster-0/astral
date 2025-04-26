@@ -31,6 +31,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   get rust_arc_decrement_strong_count_JoinHandleResultStringPtr =>
       wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJoinHandleResultString;
 
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_PeerRoutePairPtr =>
+      wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair;
+
   @protected
   EventBusSubscriber
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEventBusSubscriber(
@@ -46,6 +50,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   JoinHandleResultString
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJoinHandleResultString(
+    dynamic raw,
+  );
+
+  @protected
+  PeerRoutePair
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
     dynamic raw,
   );
 
@@ -68,6 +78,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PeerRoutePair
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    dynamic raw,
+  );
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
@@ -77,16 +93,48 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlagsC dco_decode_box_autoadd_flags_c(dynamic raw);
 
   @protected
+  double dco_decode_f_32(dynamic raw);
+
+  @protected
+  double dco_decode_f_64(dynamic raw);
+
+  @protected
   FlagsC dco_decode_flags_c(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
+  KVNetworkStatus dco_decode_kv_network_status(dynamic raw);
+
+  @protected
+  KVNodeConnectionStats dco_decode_kv_node_connection_stats(dynamic raw);
+
+  @protected
+  KVNodeInfo dco_decode_kv_node_info(dynamic raw);
+
+  @protected
+  List<PeerRoutePair>
+  dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    dynamic raw,
+  );
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<KVNodeConnectionStats> dco_decode_list_kv_node_connection_stats(
+    dynamic raw,
+  );
+
+  @protected
+  List<KVNodeInfo> dco_decode_list_kv_node_info(dynamic raw);
+
+  @protected
   List<NetworkInterfaceHop> dco_decode_list_network_interface_hop(dynamic raw);
+
+  @protected
+  List<NodeHopStats> dco_decode_list_node_hop_stats(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -98,7 +146,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   NetworkInterfaceHops dco_decode_network_interface_hops(dynamic raw);
 
   @protected
+  NodeHopStats dco_decode_node_hop_stats(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -128,6 +182,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PeerRoutePair
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   EventBusSubscriber
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEventBusSubscriber(
     SseDeserializer deserializer,
@@ -146,6 +206,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PeerRoutePair
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
@@ -155,16 +221,52 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlagsC sse_decode_box_autoadd_flags_c(SseDeserializer deserializer);
 
   @protected
+  double sse_decode_f_32(SseDeserializer deserializer);
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
   FlagsC sse_decode_flags_c(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  KVNetworkStatus sse_decode_kv_network_status(SseDeserializer deserializer);
+
+  @protected
+  KVNodeConnectionStats sse_decode_kv_node_connection_stats(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  KVNodeInfo sse_decode_kv_node_info(SseDeserializer deserializer);
+
+  @protected
+  List<PeerRoutePair>
+  sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
+  List<KVNodeConnectionStats> sse_decode_list_kv_node_connection_stats(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<KVNodeInfo> sse_decode_list_kv_node_info(SseDeserializer deserializer);
+
+  @protected
   List<NetworkInterfaceHop> sse_decode_list_network_interface_hop(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<NodeHopStats> sse_decode_list_node_hop_stats(
     SseDeserializer deserializer,
   );
 
@@ -182,7 +284,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  NodeHopStats sse_decode_node_hop_stats(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -216,6 +324,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    PeerRoutePair self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEventBusSubscriber(
     EventBusSubscriber self,
     SseSerializer serializer,
@@ -236,6 +351,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    PeerRoutePair self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
@@ -245,17 +367,63 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_flags_c(FlagsC self, SseSerializer serializer);
 
   @protected
+  void sse_encode_f_32(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
   void sse_encode_flags_c(FlagsC self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_kv_network_status(
+    KVNetworkStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_kv_node_connection_stats(
+    KVNodeConnectionStats self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_kv_node_info(KVNodeInfo self, SseSerializer serializer);
+
+  @protected
+  void
+  sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    List<PeerRoutePair> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_kv_node_connection_stats(
+    List<KVNodeConnectionStats> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_kv_node_info(
+    List<KVNodeInfo> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_network_interface_hop(
     List<NetworkInterfaceHop> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_node_hop_stats(
+    List<NodeHopStats> self,
     SseSerializer serializer,
   );
 
@@ -278,7 +446,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_node_hop_stats(NodeHopStats self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
@@ -342,6 +516,22 @@ class RustLibWire implements BaseWire {
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJoinHandleResultString(
         ptr,
       );
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+        ptr,
+      );
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+        ptr,
+      );
 }
 
 @JS('wasm_bindgen')
@@ -377,6 +567,16 @@ extension type RustLibWasmModule._(JSObject _) implements JSObject {
 
   external void
   rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJoinHandleResultString(
+    int ptr,
+  );
+
+  external void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
+    int ptr,
+  );
+
+  external void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPeerRoutePair(
     int ptr,
   );
 }

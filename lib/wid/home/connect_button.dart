@@ -125,6 +125,8 @@ class _ConnectButtonState extends State<ConnectButton>
           Aps().updateIpv4(
             intToIp(data['my_node_info']['ips']['interface_ipv4s'][0]['addr']),
           );
+          var b = await getNetworkStatus();
+          print(b);
         } else {
           timer.cancel(); // 如果组件已卸载，取消计时器
         }
