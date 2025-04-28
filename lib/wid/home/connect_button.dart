@@ -121,7 +121,6 @@ class _ConnectButtonState extends State<ConnectButton>
 
           var a = await getRunningInfo();
           var data = jsonDecode(a);
-          print(data);
           Aps().updateIpv4(
             intToIp(
               data['my_node_info']?['virtual_ipv4']?.isEmpty ?? true

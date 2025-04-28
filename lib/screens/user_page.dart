@@ -2,6 +2,7 @@ import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -71,17 +72,20 @@ class _UserPageState extends State<UserPage> {
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.all(16.0),
-                  sliver: SliverList(
+                  sliver: SliverMasonryGrid(
+                    gridDelegate:
+                        SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: _getColumnCount(
+                            MediaQuery.of(context).size.width,
+                          ),
+                        ),
+                    mainAxisSpacing: 16.0,
+                    crossAxisSpacing: 16.0,
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final player =
                             Aps().netStatus.watch(context)!.nodes[index];
-                        // 使用 player.ipv4 (或其他唯一标识符) 作为 Key
-                        return Padding(
-                          key: ValueKey(player.ipv4), // 添加 ValueKey
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: _buildPlayerListItem(player, colorScheme),
-                        );
+                        return _buildPlayerListItem(player, colorScheme);
                       },
                       childCount: Aps().netStatus.watch(context)!.nodes.length,
                     ),
@@ -93,6 +97,16 @@ class _UserPageState extends State<UserPage> {
         },
       ),
     );
+  }
+
+  // 根据宽度计算列数
+  int _getColumnCount(double width) {
+    if (width >= 1200) {
+      return 3;
+    } else if (width >= 900) {
+      return 2;
+    }
+    return 1; // 窄屏使用单列
   }
 
   // 构建列表项视图
@@ -126,182 +140,305 @@ class _UserPageState extends State<UserPage> {
         player.hostname.startsWith('PublicServer_')
             ? player.hostname.substring('PublicServer_'.length)
             : player.hostname;
-    return Row(
+
+    // Pre-calculate connection type string and color
+    final connectionType = _mapConnectionType(
+      player.cost,
+      player.ipv4,
+      Aps().ipv4.watch(context), // Assuming Aps().ipv4 provides the local IP
+    );
+    final connectionTypeColor = _getConnectionTypeColor(
+      connectionType,
+      colorScheme,
+    );
+    final natTypeString = _mapNatType(player.nat);
+    final natTypeColor = _getNatTypeColor(natTypeString);
+    final natTypeIcon = _getNatTypeIcon(natTypeString);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 左侧玩家基本信息
-        Expanded(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 玩家名称和连接类型
-              Row(
+        // --- Header Section (Name, Connection Type, Latency, Loss) ---
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
                 children: [
                   Icon(Icons.person, color: colorScheme.primary, size: 22),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      displayName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    child: Tooltip(
+                      message: displayName, // Show full name on hover
+                      child: Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getConnectionTypeColor(
-                        _mapConnectionType(
-                          player.cost,
-                          player.ipv4,
-                          Aps().ipv4.watch(context),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16), // Spacing
+            // Network Status Icons/Badges (Right Aligned)
+            Wrap(
+              spacing: 12.0,
+              runSpacing: 4.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.end,
+              children: [
+                // Connection Type Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: connectionTypeColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(connectionIcon, size: 14, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        connectionType,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        colorScheme,
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(connectionIcon, size: 14, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          _mapConnectionType(
-                            player.cost,
-                            player.ipv4,
-                            Aps().ipv4.watch(context),
-                          ),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    ],
+                  ),
+                ),
+                // Latency
+                Tooltip(
+                  message: "延迟",
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.timer_outlined, size: 18, color: latencyColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${player.latencyMs.toStringAsFixed(0)} ms', // No decimal for ms
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: latencyColor,
+                          fontSize: 13,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Packet Loss
+                Tooltip(
+                  message: "丢包率",
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 18,
+                        color: _getPacketLossColor(player.lossRate),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${player.lossRate.toStringAsFixed(1)}%', // One decimal place
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _getPacketLossColor(player.lossRate),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+        const Divider(),
+        const SizedBox(height: 12),
+
+        // Network Connection Stats Section
+        if (player.connections.isEmpty)
+          Center(
+            child: Text(
+              '无连接数据',
+              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
+            ),
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.wifi, size: 20, color: colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    '网络数据:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-
-              // IP地址
-              _buildInfoRow(
-                Icons.lan,
-                'IP地址',
-                player.ipv4,
-                colorScheme,
-                showCopyButton: true,
-              ),
-              const SizedBox(height: 8),
-
-              // ET版本
-              _buildInfoRow(Icons.memory, 'ET版本', player.version, colorScheme),
-              const SizedBox(height: 8),
-
-              // NAT类型
-              _buildInfoRow(
-                _getNatTypeIcon(player.nat),
-                'NAT类型',
-                player.nat,
-                colorScheme,
-                valueColor: _getNatTypeColor(player.nat),
-              ),
-
-              // 添加跃点信息显示
-              if (player.hops.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _buildHopsInfo(player.hops, colorScheme),
-              ],
-            ],
-          ),
-        ),
-
-        // 中间网络状态信息
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 延迟信息
-              _buildInfoRow(
-                Icons.speed,
-                '延迟',
-                '${player.latencyMs} ms',
-                colorScheme,
-                valueColor: latencyColor,
-              ),
-              const SizedBox(height: 8),
-
-              // 丢包率信息
-              _buildInfoRow(
-                Icons.error_outline,
-                '丢包率',
-                '${player.lossRate.toStringAsFixed(2)}%', // 修改这里，保留2位小数
-                colorScheme,
-                valueColor: _getPacketLossColor(player.lossRate),
-              ),
-              const SizedBox(height: 8),
-
-              // 上传下载速度
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildNetworkDataItem(
-                      '上传',
-                      _formatSpeed(
-                        player.connections.isEmpty
-                            ? 0.0
-                            : player.connections[0].rxPackets.toDouble(),
-                      ), // 使用格式化方法
-                      Icons.upload,
-                      colorScheme.primary,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildNetworkDataItem(
-                      '下载',
-                      _formatSpeed(
-                        player.connections.isEmpty
-                            ? 0.0
-                            : player.connections[0].txPackets.toDouble(),
-                      ), // 使用格式化方法
-                      Icons.download,
-                      colorScheme.secondary,
-                    ),
-                  ),
-                ],
+              SizedBox(
+                height: 90,
+                child: _buildConnectionStats(
+                  // Always display the first connection
+                  player.connections[0],
+                  colorScheme,
+                ),
               ),
             ],
           ),
+
+        const SizedBox(height: 8),
+        const Divider(),
+        const SizedBox(height: 8),
+
+        // --- Other Details Section ---
+        _buildInfoRow(
+          Icons.lan_outlined,
+          'IP地址',
+          player.ipv4,
+          colorScheme,
+          showCopyButton: true,
+        ),
+        const SizedBox(height: 8),
+
+        _buildInfoRow(
+          Icons.memory_outlined, // Changed icon
+          'ET版本',
+          player.version,
+          colorScheme,
+        ),
+        const SizedBox(height: 8),
+
+        _buildInfoRow(
+          natTypeIcon,
+          'NAT类型',
+          natTypeString,
+          colorScheme,
+          valueColor: natTypeColor,
         ),
 
-        // 右侧包数据信息
+        // Connection Path / Hops
+        if (player.hops.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildHopsInfo(player.hops, colorScheme),
+        ],
+      ],
+    );
+  }
+
+  // Helper widget to build the stats for a single connection
+  Widget _buildConnectionStats(
+    KVNodeConnectionStats connection,
+    ColorScheme colorScheme,
+  ) {
+    final double uploadSpeedKB = connection.txBytes.toDouble();
+    final double downloadSpeedKB = connection.rxBytes.toDouble();
+    final double sentPackets = connection.txPackets.toDouble();
+    final double receivedPackets = connection.rxPackets.toDouble();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Expanded(
-          flex: 1,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildNetworkDataItem(
-                '发送包',
-                '${player.connections.isEmpty ? 0.0 : player.connections[0].rxPackets.toDouble()}',
-                Icons.send,
+              _buildStatItem(
+                Icons.upload_rounded,
+                '上传速度',
+                _formatSpeed(uploadSpeedKB),
                 colorScheme.primary,
+                colorScheme,
               ),
-              const SizedBox(height: 8),
-              _buildNetworkDataItem(
-                '接收包',
-                '${player.connections.isEmpty ? 0.0 : player.connections[0].txPackets.toDouble()}',
-                Icons.call_received,
-                colorScheme.secondary,
+              const SizedBox(height: 10),
+              _buildStatItem(
+                Icons.arrow_upward_rounded,
+                '发送包',
+                '$sentPackets',
+                colorScheme.primary,
+                colorScheme,
               ),
             ],
           ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatItem(
+                Icons.download_rounded,
+                '下载速度',
+                _formatSpeed(downloadSpeedKB),
+                colorScheme.secondary,
+                colorScheme,
+              ),
+              const SizedBox(height: 10),
+              _buildStatItem(
+                Icons.arrow_downward_rounded,
+                '接收包',
+                '$receivedPackets',
+                colorScheme.secondary,
+                colorScheme,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper for individual stat items in the Network section
+  Widget _buildStatItem(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+    dynamic colorScheme,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min, // Prevent row from taking full width
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ), // Subdued label color
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -318,36 +455,6 @@ class _UserPageState extends State<UserPage> {
     } else {
       return '$speedInKB KB/s';
     }
-  }
-
-  // 更紧凑的网络数据项
-  Widget _buildNetworkDataItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 4),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 12)),
-            Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: color,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   // 构建信息行
@@ -560,37 +667,43 @@ Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
           children: [
             const Text('连接路径:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (int i = 0; i < hops.length; i++) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      hops[i].nodeName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onPrimaryContainer,
+            // Use SingleChildScrollView and Row for a single, scrollable line
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < hops.length; i++) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        hops[i].nodeName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ),
-                  ),
-                  if (i < hops.length - 1)
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 14,
-                      color: colorScheme.primary.withOpacity(0.7),
-                    ),
+                    // Add spacing between hop and arrow
+                    if (i < hops.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          size: 14,
+                          color: colorScheme.primary.withOpacity(0.7),
+                        ),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),
@@ -661,8 +774,8 @@ class _PlayerListItemState extends State<PlayerListItem> {
           onTap: () {
             // 如果需要 onTap 功能，在这里实现
           },
-          splashColor: colorScheme.primary.withValues(alpha: 0.3),
-          highlightColor: colorScheme.primary.withValues(alpha: 0.1),
+          splashColor: colorScheme.primary.withOpacity(0.3),
+          highlightColor: colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -730,8 +843,8 @@ class _PlayerListItemCardState extends State<PlayerListItemCard> {
         ),
         child: InkWell(
           onTap: () {},
-          splashColor: widget.colorScheme.primary.withValues(alpha: 0.3),
-          highlightColor: widget.colorScheme.primary.withValues(alpha: 0.1),
+          splashColor: widget.colorScheme.primary.withOpacity(0.3),
+          highlightColor: widget.colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: EdgeInsets.all(12),
