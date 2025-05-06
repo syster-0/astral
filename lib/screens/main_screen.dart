@@ -2,8 +2,8 @@
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/screens/home_page.dart';
 import 'package:astral/screens/room_page.dart';
+import 'package:astral/screens/server_page.dart';
 import 'package:astral/screens/settings_page.dart';
-import 'package:astral/screens/tool_page.dart';
 import 'package:astral/screens/user_page.dart';
 import 'package:astral/wid/bottom_nav.dart';
 import 'package:astral/wid/left_nav.dart';
@@ -71,12 +71,12 @@ class _MainScreenState extends State<MainScreen>
       page: const UserPage(), // 对应的页面
     ),
     NavigationItem(
-      icon: Icons.supervised_user_circle_outlined, // 未选中时的图标
-      activeIcon:
-          Icons.supervised_user_circle, // 选中时的图标Icon(Icons.room_preferences)
-      label: '工具', // 导航项标签
-      page: const ToolPage(), // 对应的页面
+      icon: Icons.dns_outlined, // 未选中时的图标
+      activeIcon: Icons.dns, // 选中时的图标Icon(Icons.room_preferences)
+      label: '服务器', // 导航项标签
+      page: const ServerPage(), // 对应的页面
     ),
+
     NavigationItem(
       icon: Icons.settings_outlined, // 未选中时的图标
       activeIcon: Icons.settings, // 选中时的图标

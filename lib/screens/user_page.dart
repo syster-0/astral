@@ -448,12 +448,12 @@ class _UserPageState extends State<UserPage> {
   String _formatSpeed(double speedInKB) {
     if (speedInKB >= 1048576) {
       // >= 1024 * 1024 KB (1 GB/s)
-      return '${(speedInKB / 1048576).toStringAsFixed(2)} GB/s';
+      return '${(speedInKB / 1048576).toStringAsFixed(2)} GB';
     } else if (speedInKB >= 1024) {
       // >= 1024 KB (1 MB/s)
-      return '${(speedInKB / 1024).toStringAsFixed(2)} MB/s';
+      return '${(speedInKB / 1024).toStringAsFixed(2)} MB';
     } else {
-      return '$speedInKB KB/s';
+      return '$speedInKB KB';
     }
   }
 

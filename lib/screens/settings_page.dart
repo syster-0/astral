@@ -15,13 +15,160 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.all(16.0),
       children: [
         Card(
-          child: Column(
+          child: ExpansionTile(
+            initiallyExpanded: false, // 默认折叠
+            leading: const Icon(Icons.list_alt),
+            title: const Text('监听列表'),
             children: [
-              const ListTile(
-                leading: Icon(Icons.settings),
-                title: Text('网络设置'),
+              Builder(
+                builder: (context) {
+                  final listenList = Aps().listenList.watch(context);
+                  return Column(
+                    children: [
+                      ...List.generate(listenList.length, (index) {
+                        final item = listenList[index];
+                        return ListTile(
+                          title: Text(item),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 20),
+                                tooltip: '编辑',
+                                onPressed: () async {
+                                  final controller = TextEditingController(
+                                    text: item,
+                                  );
+                                  final result = await showDialog<String>(
+                                    context: context,
+                                    builder:
+                                        (context) => AlertDialog(
+                                          title: const Text('编辑监听项'),
+                                          content: TextField(
+                                            controller: controller,
+                                            autofocus: true,
+                                            decoration: const InputDecoration(
+                                              labelText: '监听项',
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(context),
+                                              child: const Text('取消'),
+                                            ),
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    controller.text,
+                                                  ),
+                                              child: const Text('保存'),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+                                  if (result != null &&
+                                      result.trim().isNotEmpty &&
+                                      result != item) {
+                                    await Aps().updateListen(
+                                      index,
+                                      result.trim(),
+                                    );
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, size: 20),
+                                tooltip: '删除',
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder:
+                                        (context) => AlertDialog(
+                                          title: const Text('确认删除'),
+                                          content: Text('确定要删除监听项 "$item" 吗？'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    false,
+                                                  ),
+                                              child: const Text('取消'),
+                                            ),
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    true,
+                                                  ),
+                                              child: const Text('删除'),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+                                  if (confirm == true) {
+                                    await Aps().deleteListen(index);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      ListTile(
+                        leading: const Icon(Icons.add),
+                        title: const Text('新增监听项'),
+                        onTap: () async {
+                          final controller = TextEditingController();
+                          final result = await showDialog<String>(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Text('新增监听项'),
+                                  content: TextField(
+                                    controller: controller,
+                                    autofocus: true,
+                                    decoration: const InputDecoration(
+                                      labelText: '监听项',
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('取消'),
+                                    ),
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(
+                                            context,
+                                            controller.text,
+                                          ),
+                                      child: const Text('添加'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                          if (result != null && result.trim().isNotEmpty) {
+                            await Aps().addListen(result.trim());
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
               ),
+            ],
+          ),
+        ),
 
+        Card(
+          child: ExpansionTile(
+            initiallyExpanded: false, // 默认折叠
+            leading: const Icon(Icons.network_wifi),
+            title: const Text('网络设置'),
+            children: [
               // 压缩算法下拉单选
               ListTile(
                 title: const Text('P2P打洞'),
@@ -262,6 +409,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   Aps().updateDisableRelayKcp(value);
                 },
               ),
+            ],
+          ),
+        ),
+
+        Card(
+          child: Column(
+            children: [
+              const ListTile(leading: Icon(Icons.info), title: Text('关于')),
             ],
           ),
         ),

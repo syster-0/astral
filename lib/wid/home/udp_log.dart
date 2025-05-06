@@ -1,0 +1,136 @@
+import 'dart:io';
+import 'package:astral/wid/home_box.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
+
+class UdpLog extends StatefulWidget {
+  const UdpLog({super.key});
+
+  @override
+  State<UdpLog> createState() => _UdpLogState();
+}
+
+class _UdpLogState extends State<UdpLog> {
+  RawDatagramSocket? _socket;
+  final List<String> _logs = [];
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _startListening();
+  }
+
+  void _startListening() async {
+    _socket = await RawDatagramSocket.bind(InternetAddress.loopbackIPv4, 9999);
+    _socket?.listen((RawSocketEvent event) {
+      if (event == RawSocketEvent.read) {
+        final datagram = _socket?.receive();
+        if (datagram != null) {
+          String msg;
+          try {
+            msg = utf8.decode(datagram.data);
+          } catch (_) {
+            try {
+              // GBK 解码
+              msg = const Utf8Decoder(
+                allowMalformed: true,
+              ).convert(datagram.data);
+            } catch (_) {
+              try {
+                // Latin1 解码
+                msg = latin1.decode(datagram.data);
+              } catch (_) {
+                // 都失败则显示为十六进制
+                msg =
+                    '【编码解析错误】' +
+                    datagram.data
+                        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                        .join(' ');
+              }
+            }
+          }
+          setState(() {
+            _logs.add(msg);
+          });
+          // 自动滚动到底部
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.jumpTo(
+                _scrollController.position.maxScrollExtent,
+              );
+            }
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _socket?.close();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _copyLogs() {
+    final logsText = _logs.join('\n');
+    Clipboard.setData(ClipboardData(text: logsText));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('日志内容已复制')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HomeBox(
+      widthSpan: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'UDP 日志监听 (127.0.0.1:9999)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.copy),
+                tooltip: '复制全部日志',
+                onPressed: _logs.isEmpty ? null : _copyLogs,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 200, // Set a fixed height for the log output area
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Scrollbar(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _logs.length,
+                  itemBuilder: (context, index) {
+                    return SelectableText(
+                      _logs[index],
+                      style: const TextStyle(
+                        color: Colors.greenAccent,
+                        fontFamily: 'monospace',
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

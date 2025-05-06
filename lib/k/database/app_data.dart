@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:astral/k/models/all_settings.dart';
-import 'package:astral/k/models/kl.dart';
 import 'package:astral/k/models/net_config.dart';
 import 'package:astral/k/models/room.dart';
+import 'package:astral/k/models/rule_group.dart';
+import 'package:astral/k/models/server_mod.dart';
 import 'package:astral/k/models_mod/all_settings_cz.dart';
-import 'package:astral/k/models_mod/kl_cz.dart';
 import 'package:astral/k/models_mod/net_config_cz.dart';
 import 'package:astral/k/models_mod/room_cz.dart';
+import 'package:astral/k/models_mod/server_cz.dart';
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/theme_settings.dart';
 import 'package:astral/k/models_mod/theme_settings_cz.dart';
@@ -22,7 +23,7 @@ class AppDatabase {
   late final NetConfigRepository netConfigSetting;
   late final RoomCz RoomSetting;
   late final AllSettingsCz AllSettings;
-  late final KlCz KlSetting;
+  late final ServerCz ServerSetting;
 
   /// 初始化数据库
   Future<void> init([String? customDbDir]) async {
@@ -49,13 +50,12 @@ class AppDatabase {
       NetConfigSchema,
       RoomSchema,
       AllSettingsSchema,
-      RuleSchema,
-      KlSchema,
+      ServerModSchema,
     ], directory: dbDir);
     themeSettings = ThemeSettingsRepository(isar);
     netConfigSetting = NetConfigRepository(isar);
     RoomSetting = RoomCz(isar);
     AllSettings = AllSettingsCz(isar);
-    KlSetting = KlCz(isar);
+    ServerSetting = ServerCz(isar);
   }
 }

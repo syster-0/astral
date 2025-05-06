@@ -1,6 +1,7 @@
 import 'package:astral/fun/random_name.dart';
-import 'package:astral/k/models/kl.dart';
 import 'package:astral/k/models/room.dart';
+import 'package:astral/k/models/rule_group.dart';
+import 'package:astral/k/models/server_mod.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
@@ -23,7 +24,6 @@ class Aps {
     _initThemeSettings();
     updateNetConfig();
     initMisc();
-    initKl();
   }
 
   // 初始化主题设置
@@ -54,12 +54,53 @@ class Aps {
     selectroom.value = await AppDatabase().AllSettings.getRoom();
     // 更新玩家名称
     PlayerName.value = await AppDatabase().AllSettings.getPlayerName();
+
+    listenList.value = await AppDatabase().AllSettings.getListenList();
   }
 
   final Signal<KVNetworkStatus?> netStatus = signal(null); // 网络状态
 
   /// PLAYERname
   final Signal<String> PlayerName = signal(''); // 玩家名称
+
+  /// listenList
+  final Signal<List<String>> listenList = signal([]); // 房间列表
+
+  /// 获取监听列表
+  Future<void> updateListenListFromDb() async {
+    listenList.value = await AppDatabase().AllSettings.getListenList();
+  }
+
+  /// 设置监听列表
+  Future<void> setListenList(List<String> list) async {
+    listenList.value = list;
+    await AppDatabase().AllSettings.setListenList(list);
+  }
+
+  /// 添加监听项
+  Future<void> addListen(String listen) async {
+    // 先获取可变副本
+    final list = List<String>.from(listenList.value);
+    list.add(listen);
+    listenList.value = list;
+    await AppDatabase().AllSettings.setListenList(list);
+  }
+
+  /// 删除监听项
+  Future<void> deleteListen(int index) async {
+    // 先获取可变副本
+    final list = List<String>.from(listenList.value);
+    list.removeAt(index);
+    listenList.value = list;
+    await AppDatabase().AllSettings.setListenList(list);
+  }
+
+  /// 修改监听项
+  Future<void> updateListen(int index, String listen) async {
+    await AppDatabase().AllSettings.updateListenList(index, listen);
+    listenList.value = await AppDatabase().AllSettings.getListenList();
+  }
+
   /// 更新玩家名称
   Future<void> updatePlayerName(String name) async {
     PlayerName.value = name;
@@ -430,100 +471,49 @@ class Aps {
     selectroom.value = await AppDatabase().AllSettings.getRoom();
   }
 
-  final Signal<List<Kl>> kls = signal([]);
-  // 初始化Kl配置
-  Future<void> initKl() async {
-    kls.value = await AppDatabase().KlSetting.getAllKls();
+  /// 服务器列表
+  final Signal<List<ServerMod>> servers = signal([]);
+
+  /// 添加服务器
+  Future<void> addServer(ServerMod server) async {
+    await AppDatabase().ServerSetting.addServer(server);
+    servers.value = await AppDatabase().ServerSetting.getAllServers();
   }
 
-  // 添加Kl配置
-  Future<int> addKl(Kl kl) async {
-    final id = await AppDatabase().KlSetting.addKl(kl);
-    kls.value = await AppDatabase().KlSetting.getAllKls();
-    return id;
+  /// 删除服务器
+  Future<void> deleteServerid(int id) async {
+    await AppDatabase().ServerSetting.deleteServerid(id);
+    servers.value = await AppDatabase().ServerSetting.getAllServers();
   }
 
-  // 更新Kl配置
-  Future<int> updateKl(Kl kl) async {
-    final id = await AppDatabase().KlSetting.updateKl(kl);
-    kls.value = await AppDatabase().KlSetting.getAllKls();
-    return id;
+  /// 根据ID获取服务器
+  Future<ServerMod?> getServerById(int id) async {
+    return await AppDatabase().ServerSetting.getServerById(id);
   }
 
-  // 删除Kl配置
-  Future<bool> deleteKl(int id) async {
-    final result = await AppDatabase().KlSetting.deleteKl(id);
-    kls.value = await AppDatabase().KlSetting.getAllKls();
-    return result;
+  /// 获取所有服务器
+  Future<List<ServerMod>> getAllServers() async {
+    final serversList = await AppDatabase().ServerSetting.getAllServers();
+    servers.value = serversList; // 更新 Signal
+    return serversList;
   }
 
-  // 启用或禁用Kl配置
-  Future<int> toggleKlEnabled(Kl kl, bool enabled) async {
-    kl.enabled = enabled;
-    final id = await updateKl(kl);
-    return id;
+  /// 更新服务器
+  Future<int> updateServer(ServerMod server) async {
+    await AppDatabase().ServerSetting.updateServer(server);
+    servers.value = await AppDatabase().ServerSetting.getAllServers();
+    return server.id;
   }
 
-  // 根据ID获取Kl配置
-  Future<Kl?> getKlById(int id) async {
-    return await AppDatabase().KlSetting.getKlById(id);
+  /// 删除服务器
+  Future<void> deleteServer(ServerMod server) async {
+    await AppDatabase().ServerSetting.deleteServer(server);
+    servers.value = await AppDatabase().ServerSetting.getAllServers();
   }
 
-  // 获取所有Kl配置
-  Future<List<Kl>> getAllKls() async {
-    final klList = await AppDatabase().KlSetting.getAllKls();
-    kls.value = klList;
-    return klList;
-  }
-
-  // 根据名称查询Kl配置
-  Future<List<Kl>> getKlsByName(String name) async {
-    return await AppDatabase().KlSetting.getKlsByName(name);
-  }
-
-  // 根据启用状态查询Kl配置
-  Future<List<Kl>> getKlsByEnabled(bool enabled) async {
-    return await AppDatabase().KlSetting.getKlsByEnabled(enabled);
-  }
-
-  /// **********************************************************************************************************
-  /// 规则相关
-
-  // 添加规则
-  Future<int> addRule(Rule rule, int klId) async {
-    final id = await AppDatabase().KlSetting.addRule(rule, klId);
-    if (id != -1) {
-      kls.value = await AppDatabase().KlSetting.getAllKls();
-    }
-    return id;
-  }
-
-  // 获取规则
-  Future<Rule?> getRuleById(int id) async {
-    return await AppDatabase().KlSetting.getRuleById(id);
-  }
-
-  // 获取Kl下的所有规则
-  Future<List<Rule>> getRulesByKlId(int klId) async {
-    return await AppDatabase().KlSetting.getRulesByKlId(klId);
-  }
-
-  // 更新规则
-  Future<int> updateRule(Rule rule) async {
-    final id = await AppDatabase().KlSetting.updateRule(rule);
-    kls.value = await AppDatabase().KlSetting.getAllKls();
-    return id;
-  }
-
-  // 删除规则
-  Future<bool> deleteRule(int id) async {
-    final result = await AppDatabase().KlSetting.deleteRule(id);
-    kls.value = await AppDatabase().KlSetting.getAllKls();
-    return result;
-  }
-
-  // 根据操作类型查询规则
-  Future<List<Rule>> getRulesByOperationType(OperationType opType) async {
-    return await AppDatabase().KlSetting.getRulesByOperationType(opType);
+  /// 设置是否启用
+  Future<int> setServerEnable(ServerMod server, bool enable) async {
+    server.enable = enable;
+    return await AppDatabase().ServerSetting.updateServer(server);
   }
 }

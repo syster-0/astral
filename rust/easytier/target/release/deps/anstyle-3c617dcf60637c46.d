@@ -1,0 +1,12 @@
+F:\astral\rust\easytier\target\release\deps\libanstyle-3c617dcf60637c46.rmeta: C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\lib.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\macros.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\color.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\effect.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\reset.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\style.rs
+
+F:\astral\rust\easytier\target\release\deps\libanstyle-3c617dcf60637c46.rlib: C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\lib.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\macros.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\color.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\effect.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\reset.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\style.rs
+
+F:\astral\rust\easytier\target\release\deps\anstyle-3c617dcf60637c46.d: C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\lib.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\macros.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\color.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\effect.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\reset.rs C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\style.rs
+
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\lib.rs:
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\macros.rs:
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\color.rs:
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\effect.rs:
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\reset.rs:
+C:\Users\baika\.cargo\registry\src\index.crates.io-6f17d22bba15001f\anstyle-1.0.10\src\style.rs:

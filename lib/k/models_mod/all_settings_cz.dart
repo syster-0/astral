@@ -28,6 +28,71 @@ class AllSettingsCz {
         await _isar.allSettings.put(allSettings);
       });
     }
+
+    /// 检查 listenList 是否为空，如果为空则设置为默认值
+    if (allSettings != null &&
+        (allSettings.listenList == null || allSettings.listenList!.isEmpty)) {
+      await _isar.writeTxn(() async {
+        allSettings.listenList = [
+          "tcp://0.0.0.0:11010",
+          "udp://0.0.0.0:11010",
+          "tcp://[::]:11010",
+          "udp://[::]:11010",
+        ]; // 设置默认值
+        await _isar.allSettings.put(allSettings);
+      });
+    }
+  }
+
+  // getListenList
+  Future<List<String>> getListenList() async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config?.listenList == null) return [];
+    return config!.listenList!;
+  }
+
+  // 设置监听列表
+  Future<void> setListenList(List<String> listenList) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.listenList = listenList;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 删除监听列表
+  Future<void> deleteListenList(int index) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.listenList!.removeAt(index);
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 添加监听列表
+  Future<void> addListenList(String listen) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.listenList!.add(listen);
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 修改监听列表
+  Future<void> updateListenList(int index, String listen) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.listenList![index] = listen;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
   }
 
   // 设置房间

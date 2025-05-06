@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/material.dart';
+import 'package:vpn_service_plugin/vpn_service_plugin.dart';
 
 enum ConnectionState { idle, connecting, connected }
 
@@ -19,10 +21,30 @@ class _ConnectButtonState extends State<ConnectButton>
   ConnectionState _state = ConnectionState.idle;
   late AnimationController _animationController;
   double _progress = 0.0;
-
+  // 仅在安卓平台初始化VPN插件
+  final vpnPlugin = Platform.isAndroid ? VpnServicePlugin() : null;
   // 在类中添加这些变量
   Timer? _connectionTimer;
   int _connectionDuration = 0; // 连接持续时间（秒）
+
+  void _startVpn({
+    required String ipv4Addr,
+    int mtu = 1300,
+    List<String> disallowedApplications = const ['com.example.astral'],
+  }) {
+    if (ipv4Addr.isNotEmpty & (ipv4Addr != "")) {
+      // 确保IP地址格式为"IP/掩码"
+      if (!ipv4Addr.contains('/')) {
+        ipv4Addr = "$ipv4Addr/24";
+      }
+
+      vpnPlugin?.startVpn(
+        ipv4Addr: ipv4Addr,
+        mtu: mtu,
+        disallowedApplications: disallowedApplications,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -31,6 +53,19 @@ class _ConnectButtonState extends State<ConnectButton>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
+
+    if (Platform.isAndroid) {
+      // 监听VPN服务启动事件
+      vpnPlugin?.onVpnServiceStarted.listen((data) {
+        setTunFd(fd: data['fd']);
+        // 在这里处理VPN启动后的逻辑
+      });
+
+      // 监听VPN服务停止事件
+      vpnPlugin?.onVpnServiceStopped.listen((data) {
+        // 在这里处理VPN停止后的逻辑
+      });
+    }
   }
 
   @override
@@ -42,98 +77,178 @@ class _ConnectButtonState extends State<ConnectButton>
   /// 开始连接流程的方法
   /// 该方法负责将按钮状态从空闲(idle)切换到连接中(connecting)，
   /// 然后模拟一个10秒的网络连接过程，最后切换到已连接(connected)状态
-  void _startConnection() {
+  Future<void> _startConnection() async {
     // 如果当前状态不是空闲状态，则直接返回，防止重复触发连接操作
     if (_state != ConnectionState.idle) return;
+
     final rom = Aps().selectroom.value;
     if (rom == null) return;
-    // //利用 Serveripz 重组
-    //     List<String> ssServerip = [];
-    //     for (var item in Serveripz) {
-    //       if (item.tcp) {
-    //         ssServerip.add("tcp://" + item.url);
-    //       }
-    //       if (item.udp) {
-    //         ssServerip.add("udp://" + item.url);
-    //       }
-    //       if (item.ws) {
-    //         ssServerip.add("ws://" + item.url);
-    //       }
-    //       if (item.wss) {
-    //         ssServerip.add("wss://" + item.url);
-    //       }
-    //       if (item.quic) {
-    //         ssServerip.add("quic://" + item.url);
-    //       }
-    //     }
-    createServer(
-      username: Aps().PlayerName.value,
-      enableDhcp: Aps().dhcp.value,
-      specifiedIp: Aps().ipv4.value,
+
+    try {
+      // 初始化服务器
+      await _initializeServer(rom);
+
+      // 开始连接流程
+      await _beginConnectionProcess();
+    } catch (e) {
+      // 发生错误时重置状态
+      setState(() => _state = ConnectionState.idle);
+      rethrow;
+    }
+  }
+
+  Future<void> _initializeServer(dynamic rom) async {
+    final aps = Aps();
+    if (Platform.isAndroid) {
+      vpnPlugin?.prepareVpn();
+    }
+    await createServer(
+      username: aps.PlayerName.value,
+      enableDhcp: aps.dhcp.value,
+      specifiedIp: aps.ipv4.value,
       roomName: rom.roomName,
       roomPassword: rom.password,
-      severurl: ["tcp://124.71.134.95:11010", "udp://124.71.134.95:11010"],
-      onurl: ["tcp://0.0.0.0:11010", "udp://0.0.0.0:11010", "tcp://[::]:11010"],
-      flag: FlagsC(
-        defaultProtocol: Aps().defaultProtocol.value, // 默认协议
-        devName: Aps().devName.value, // 设备名称
-        enableEncryption: Aps().enableEncryption.value, // 启用加密
-        enableIpv6: Aps().enableIpv6.value, // 启用IPv6
-        mtu: Aps().mtu.value, // 最大传输单元
-        multiThread: Aps().multiThread.value, // 启用多线程
-        latencyFirst: Aps().latencyFirst.value, // 优先考虑延迟
-        enableExitNode: Aps().enableExitNode.value, // 启用出口节点
-        noTun: Aps().noTun.value, // 不使用TUN设备
-        useSmoltcp: Aps().useSmoltcp.value, // 使用Smoltcp
-        relayNetworkWhitelist: Aps().relayNetworkWhitelist.value, // 中继网络白名单
-        disableP2P: Aps().disableP2p.value, // 禁用P2P
-        relayAllPeerRpc: Aps().relayAllPeerRpc.value, // 中继所有对等RPC
-        disableUdpHolePunching: Aps().disableUdpHolePunching.value, // 禁用UDP打洞
-        dataCompressAlgo: Aps().dataCompressAlgo.value, // 数据压缩算法
-        bindDevice: Aps().bindDevice.value, // 绑定设备
-        enableKcpProxy: Aps().enableKcpProxy.value, // 启用KCP代理
-        disableKcpInput: Aps().disableKcpInput.value, // 禁用KCP输入
-        disableRelayKcp: Aps().disableRelayKcp.value, // 禁用中继KCP
-        proxyForwardBySystem: Aps().proxyForwardBySystem.value, // 通过系统代理转发
-      ),
+      severurl:
+          aps.servers.value.where((server) => server.enable).expand((server) {
+            final urls = <String>[];
+            if (server.tcp) urls.add('tcp://${server.url}');
+            if (server.udp) urls.add('udp://${server.url}');
+            if (server.ws) urls.add('ws://${server.url}');
+            if (server.wss) urls.add('wss://${server.url}');
+            if (server.quic) urls.add('quic://${server.url}');
+            if (server.wg) urls.add('wg://${server.url}');
+            if (server.txt) urls.add('txt://${server.url}');
+            if (server.srv) urls.add('srv://${server.url}');
+            if (server.http) urls.add('http://${server.url}');
+            if (server.https) urls.add('https://${server.url}');
+            return urls;
+          }).toList(),
+      onurl:
+          Aps().listenList.value.isEmpty
+              ? [
+                "tcp://0.0.0.0:11010",
+                "udp://0.0.0.0:11010",
+                "tcp://[::]:11010",
+                "udp://[::]:11010",
+              ]
+              : Aps().listenList.value,
+      flag: _buildFlags(aps),
     );
-    // 更新状态为连接中，并重置进度条进度为0
+  }
+
+  FlagsC _buildFlags(Aps aps) => FlagsC(
+    defaultProtocol: aps.defaultProtocol.value,
+    devName: aps.devName.value,
+    enableEncryption: aps.enableEncryption.value,
+    enableIpv6: aps.enableIpv6.value,
+    mtu: aps.mtu.value,
+    multiThread: aps.multiThread.value,
+    latencyFirst: aps.latencyFirst.value,
+    enableExitNode: aps.enableExitNode.value,
+    noTun: aps.noTun.value,
+    useSmoltcp: aps.useSmoltcp.value,
+    relayNetworkWhitelist: aps.relayNetworkWhitelist.value,
+    disableP2P: aps.disableP2p.value,
+    relayAllPeerRpc: aps.relayAllPeerRpc.value,
+    disableUdpHolePunching: aps.disableUdpHolePunching.value,
+    dataCompressAlgo: aps.dataCompressAlgo.value,
+    bindDevice: aps.bindDevice.value,
+    enableKcpProxy: aps.enableKcpProxy.value,
+    disableKcpInput: aps.disableKcpInput.value,
+    disableRelayKcp: aps.disableRelayKcp.value,
+    proxyForwardBySystem: aps.proxyForwardBySystem.value,
+  );
+
+  Future<void> _beginConnectionProcess() async {
     setState(() {
       _state = ConnectionState.connecting;
       _progress = 0.0;
     });
 
-    if (mounted) {
-      // 更新状态为已连接
-      setState(() {
-        _state = ConnectionState.connected;
-        _connectionDuration = 0; // 重置连接时间
-      });
+    // 设置连接超时
+    _setupConnectionTimeout();
 
-      // 创建一个每秒触发一次的计时器
-      _connectionTimer = Timer.periodic(const Duration(seconds: 1), (
-        timer,
-      ) async {
-        if (mounted) {
-          setState(() {
-            _connectionDuration++; // 每秒增加连接时间
-          });
+    // 启动连接状态检查
+    _startConnectionStatusCheck();
+  }
 
-          var a = await getRunningInfo();
-          var data = jsonDecode(a);
-          Aps().updateIpv4(
-            intToIp(
-              data['my_node_info']?['virtual_ipv4']?.isEmpty ?? true
-                  ? 0
-                  : data['my_node_info']?['virtual_ipv4']['address']['addr'] ??
-                      0,
-            ),
-          );
-          Aps().netStatus.value = await getNetworkStatus();
-        } else {
-          timer.cancel(); // 如果组件已卸载，取消计时器
-        }
-      });
+  void _setupConnectionTimeout() {
+    Timer(const Duration(seconds: 10), () {
+      if (_state == ConnectionState.connecting) {
+        _disconnect();
+      }
+    });
+  }
+
+  void _startConnectionStatusCheck() {
+    Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_state != ConnectionState.connecting) {
+        timer.cancel();
+        return;
+      }
+
+      final isConnected = await _checkAndUpdateConnectionStatus();
+      if (isConnected) {
+        timer.cancel();
+        await _handleSuccessfulConnection();
+      } else {
+        setState(() => _progress += 10);
+      }
+    });
+  }
+
+  Future<bool> _checkAndUpdateConnectionStatus() async {
+    final runningInfo = await getRunningInfo();
+    final data = jsonDecode(runningInfo);
+
+    final ipv4Address = _extractIpv4Address(data);
+    Aps().updateIpv4(ipv4Address);
+
+    return ipv4Address != "0.0.0.0";
+  }
+
+  String _extractIpv4Address(Map<String, dynamic> data) {
+    final virtualIpv4 = data['my_node_info']?['virtual_ipv4'];
+    final addr =
+        virtualIpv4?.isEmpty ?? true ? 0 : virtualIpv4['address']['addr'] ?? 0;
+    return intToIp(addr);
+  }
+
+  Future<void> _handleSuccessfulConnection() async {
+    setState(() {
+      _progress = 100;
+      _state = ConnectionState.connected;
+      _connectionDuration = 0;
+    });
+    _startVpn(ipv4Addr: Aps().ipv4.value, mtu: Aps().mtu.value);
+    _startNetworkMonitoring();
+  }
+
+  void _startNetworkMonitoring() {
+    _connectionTimer?.cancel();
+    _connectionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      _monitorNetworkStatus,
+    );
+  }
+
+  Future<void> _monitorNetworkStatus(Timer timer) async {
+    if (!mounted) {
+      timer.cancel();
+      return;
+    }
+
+    setState(() => _connectionDuration++);
+
+    try {
+      final runningInfo = await getRunningInfo();
+      final data = jsonDecode(runningInfo);
+
+      Aps().updateIpv4(_extractIpv4Address(data));
+      Aps().netStatus.value = await getNetworkStatus();
+    } catch (e) {
+      // 监控过程中出现错误时保持连接状态，但记录错误
+      debugPrint('Network monitoring error: $e');
     }
   }
 
@@ -141,6 +256,9 @@ class _ConnectButtonState extends State<ConnectButton>
   /// 该方法负责将按钮状态从已连接(connected)切换回空闲(idle)状态，
   /// 实现断开连接的功能
   void _disconnect() {
+    if (Platform.isAndroid) {
+      vpnPlugin?.stopVpn();
+    }
     // 取消计时器
     _connectionTimer?.cancel();
     _connectionTimer = null;

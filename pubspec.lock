@@ -564,6 +564,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.0"
+  petitparser:
+    dependency: transitive
+    description:
+      name: petitparser
+      sha256: "07c8f0b1913bcde1ff0d26e57ace2f3012ccbf2b204e070290dad3bb22797646"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "6.1.0"
   platform:
     dependency: transitive
     description:
@@ -864,6 +872,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.2"
+  toml:
+    dependency: "direct main"
+    description:
+      name: toml
+      sha256: d968d149c8bd06dc14e09ea3a140f90a3f2ba71949e7a91df4a46f3107400e71
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.16.0"
   typed_data:
     dependency: transitive
     description:
@@ -904,6 +920,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "14.3.1"
+  vpn_service_plugin:
+    dependency: "direct main"
+    description:
+      path: vpn_service_plugin
+      relative: true
+    source: path
+    version: "0.0.1"
   watcher:
     dependency: transitive
     description:

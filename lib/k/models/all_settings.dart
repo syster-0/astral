@@ -11,4 +11,7 @@ class AllSettings {
 
   /// 玩家名称
   String? playerName;
+
+  /// 监听列表
+  List<String>? listenList;
 }

@@ -1,3 +1,4 @@
+import 'package:astral/wid/home/servers_home.dart';
 import 'package:astral/wid/home/user_ip.dart';
 import 'package:astral/wid/home/virtual_ip.dart';
 import 'package:astral/wid/home/connect_button.dart';
@@ -38,7 +39,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisCount: columnCount,
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                children: [VirtualIpBox(), UserIpBox()],
+                children: [VirtualIpBox(), UserIpBox(), ServersHome()],
               ),
             ),
           ),
@@ -46,5 +47,5 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: const ConnectButton(),
     );
-  } 
+  }
 }
