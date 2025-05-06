@@ -30,8 +30,7 @@ class AllSettingsCz {
     }
 
     /// 检查 listenList 是否为空，如果为空则设置为默认值
-    if (allSettings != null &&
-        (allSettings.listenList == null || allSettings.listenList!.isEmpty)) {
+    if (allSettings != null && allSettings.listenList == null) {
       await _isar.writeTxn(() async {
         allSettings.listenList = [
           "tcp://0.0.0.0:11010",
