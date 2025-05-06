@@ -11,6 +11,7 @@ import 'package:astral/k/models_mod/server_cz.dart';
 import 'package:isar/isar.dart';
 import 'package:astral/k/models/theme_settings.dart';
 import 'package:astral/k/models_mod/theme_settings_cz.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
 class AppDatabase {
@@ -34,8 +35,9 @@ class AppDatabase {
       dbDir = customDbDir;
     } else if (Platform.isAndroid) {
       // Android平台使用应用专属目录
-      dbDir =
-          Directory(path.join(Directory.systemTemp.path, 'data', 'db')).path;
+
+      final appDocDir = await getApplicationDocumentsDirectory();
+      dbDir = dbDir = Directory(path.join(appDocDir.path, 'db')).path;
     } else {
       // 其他平台使用可执行文件所在目录
       final executablePath = Platform.resolvedExecutable;
