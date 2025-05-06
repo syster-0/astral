@@ -37,6 +37,7 @@ class AppDatabase {
       // Android平台使用应用专属目录
 
       final appDocDir = await getApplicationDocumentsDirectory();
+
       dbDir = dbDir = Directory(path.join(appDocDir.path, 'db')).path;
     } else {
       // 其他平台使用可执行文件所在目录
