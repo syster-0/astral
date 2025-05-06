@@ -1,0 +1,474 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'package:astral/k/app_s/aps.dart';
+import 'package:astral/src/rust/api/simple.dart';
+import 'package:flutter/material.dart';
+import 'package:vpn_service_plugin/vpn_service_plugin.dart';
+
+enum ConnectionState { idle, connecting, connected }
+
+class ConnectButton extends StatefulWidget {
+  const ConnectButton({super.key});
+
+  @override
+  State<ConnectButton> createState() => _ConnectButtonState();
+}
+
+class _ConnectButtonState extends State<ConnectButton>
+    with SingleTickerProviderStateMixin {
+  ConnectionState _state = ConnectionState.idle;
+  late AnimationController _animationController;
+  double _progress = 0.0;
+  // 仅在安卓平台初始化VPN插件
+  final vpnPlugin = Platform.isAndroid ? VpnServicePlugin() : null;
+  // 在类中添加这些变量
+  Timer? _connectionTimer;
+  int _connectionDuration = 0; // 连接持续时间（秒）
+
+  void _startVpn({
+    required String ipv4Addr,
+    int mtu = 1300,
+    List<String> disallowedApplications = const ['com.example.astral'],
+  }) {
+    if (ipv4Addr.isNotEmpty & (ipv4Addr != "")) {
+      // 确保IP地址格式为"IP/掩码"
+      if (!ipv4Addr.contains('/')) {
+        ipv4Addr = "$ipv4Addr/24";
+      }
+
+      vpnPlugin?.startVpn(
+        ipv4Addr: ipv4Addr,
+        mtu: mtu,
+        disallowedApplications: disallowedApplications,
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+
+    if (Platform.isAndroid) {
+      // 监听VPN服务启动事件
+      vpnPlugin?.onVpnServiceStarted.listen((data) {
+        setTunFd(fd: data['fd']);
+        // 在这里处理VPN启动后的逻辑
+      });
+
+      // 监听VPN服务停止事件
+      vpnPlugin?.onVpnServiceStopped.listen((data) {
+        // 在这里处理VPN停止后的逻辑
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  /// 开始连接流程的方法
+  /// 该方法负责将按钮状态从空闲(idle)切换到连接中(connecting)，
+  /// 然后模拟一个10秒的网络连接过程，最后切换到已连接(connected)状态
+  Future<void> _startConnection() async {
+    // 如果当前状态不是空闲状态，则直接返回，防止重复触发连接操作
+    if (_state != ConnectionState.idle) return;
+
+    final rom = Aps().selectroom.value;
+    if (rom == null) return;
+
+    try {
+      // 初始化服务器
+      await _initializeServer(rom);
+
+      // 开始连接流程
+      await _beginConnectionProcess();
+    } catch (e) {
+      // 发生错误时重置状态
+      setState(() => _state = ConnectionState.idle);
+      rethrow;
+    }
+  }
+
+  Future<void> _initializeServer(dynamic rom) async {
+    final aps = Aps();
+    if (Platform.isAndroid) {
+      vpnPlugin?.prepareVpn();
+    }
+    await createServer(
+      username: aps.PlayerName.value,
+      enableDhcp: aps.dhcp.value,
+      specifiedIp: aps.ipv4.value,
+      roomName: rom.roomName,
+      roomPassword: rom.password,
+      severurl:
+          aps.servers.value.where((server) => server.enable).expand((server) {
+            final urls = <String>[];
+            if (server.tcp) urls.add('tcp://${server.url}');
+            if (server.udp) urls.add('udp://${server.url}');
+            if (server.ws) urls.add('ws://${server.url}');
+            if (server.wss) urls.add('wss://${server.url}');
+            if (server.quic) urls.add('quic://${server.url}');
+            if (server.wg) urls.add('wg://${server.url}');
+            if (server.txt) urls.add('txt://${server.url}');
+            if (server.srv) urls.add('srv://${server.url}');
+            if (server.http) urls.add('http://${server.url}');
+            if (server.https) urls.add('https://${server.url}');
+            return urls;
+          }).toList(),
+      onurl:
+          Aps().listenList.value.isEmpty
+              ? [
+                "tcp://0.0.0.0:11010",
+                "udp://0.0.0.0:11010",
+                "tcp://[::]:11010",
+                "udp://[::]:11010",
+              ]
+              : Aps().listenList.value,
+      flag: _buildFlags(aps),
+    );
+  }
+
+  FlagsC _buildFlags(Aps aps) => FlagsC(
+    defaultProtocol: aps.defaultProtocol.value,
+    devName: aps.devName.value,
+    enableEncryption: aps.enableEncryption.value,
+    enableIpv6: aps.enableIpv6.value,
+    mtu: aps.mtu.value,
+    multiThread: aps.multiThread.value,
+    latencyFirst: aps.latencyFirst.value,
+    enableExitNode: aps.enableExitNode.value,
+    noTun: aps.noTun.value,
+    useSmoltcp: aps.useSmoltcp.value,
+    relayNetworkWhitelist: aps.relayNetworkWhitelist.value,
+    disableP2P: aps.disableP2p.value,
+    relayAllPeerRpc: aps.relayAllPeerRpc.value,
+    disableUdpHolePunching: aps.disableUdpHolePunching.value,
+    dataCompressAlgo: aps.dataCompressAlgo.value,
+    bindDevice: aps.bindDevice.value,
+    enableKcpProxy: aps.enableKcpProxy.value,
+    disableKcpInput: aps.disableKcpInput.value,
+    disableRelayKcp: aps.disableRelayKcp.value,
+    proxyForwardBySystem: aps.proxyForwardBySystem.value,
+  );
+
+  Future<void> _beginConnectionProcess() async {
+    setState(() {
+      _state = ConnectionState.connecting;
+      _progress = 0.0;
+    });
+
+    // 设置连接超时
+    _setupConnectionTimeout();
+
+    // 启动连接状态检查
+    _startConnectionStatusCheck();
+  }
+
+  void _setupConnectionTimeout() {
+    Timer(const Duration(seconds: 10), () {
+      if (_state == ConnectionState.connecting) {
+        _disconnect();
+      }
+    });
+  }
+
+  void _startConnectionStatusCheck() {
+    Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_state != ConnectionState.connecting) {
+        timer.cancel();
+        return;
+      }
+
+      final isConnected = await _checkAndUpdateConnectionStatus();
+      if (isConnected) {
+        timer.cancel();
+        await _handleSuccessfulConnection();
+      } else {
+        setState(() => _progress += 10);
+      }
+    });
+  }
+
+  Future<bool> _checkAndUpdateConnectionStatus() async {
+    final runningInfo = await getRunningInfo();
+    final data = jsonDecode(runningInfo);
+
+    final ipv4Address = _extractIpv4Address(data);
+    Aps().updateIpv4(ipv4Address);
+
+    return ipv4Address != "0.0.0.0";
+  }
+
+  String _extractIpv4Address(Map<String, dynamic> data) {
+    final virtualIpv4 = data['my_node_info']?['virtual_ipv4'];
+    final addr =
+        virtualIpv4?.isEmpty ?? true ? 0 : virtualIpv4['address']['addr'] ?? 0;
+    return intToIp(addr);
+  }
+
+  Future<void> _handleSuccessfulConnection() async {
+    setState(() {
+      _progress = 100;
+      _state = ConnectionState.connected;
+      _connectionDuration = 0;
+    });
+    _startVpn(ipv4Addr: Aps().ipv4.value, mtu: Aps().mtu.value);
+    _startNetworkMonitoring();
+  }
+
+  void _startNetworkMonitoring() {
+    _connectionTimer?.cancel();
+    _connectionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      _monitorNetworkStatus,
+    );
+  }
+
+  Future<void> _monitorNetworkStatus(Timer timer) async {
+    if (!mounted) {
+      timer.cancel();
+      return;
+    }
+
+    setState(() => _connectionDuration++);
+
+    try {
+      final runningInfo = await getRunningInfo();
+      final data = jsonDecode(runningInfo);
+
+      Aps().updateIpv4(_extractIpv4Address(data));
+      Aps().netStatus.value = await getNetworkStatus();
+    } catch (e) {
+      // 监控过程中出现错误时保持连接状态，但记录错误
+      debugPrint('Network monitoring error: $e');
+    }
+  }
+
+  /// 断开连接的方法
+  /// 该方法负责将按钮状态从已连接(connected)切换回空闲(idle)状态，
+  /// 实现断开连接的功能
+  void _disconnect() {
+    if (Platform.isAndroid) {
+      vpnPlugin?.stopVpn();
+    }
+    // 取消计时器
+    _connectionTimer?.cancel();
+    _connectionTimer = null;
+
+    closeServer();
+    setState(() {
+      _state = ConnectionState.idle;
+    });
+  }
+
+  /// 切换连接状态的方法
+  /// 根据当前的连接状态来决定是开始连接还是断开连接
+  void _toggleConnection() {
+    if (_state == ConnectionState.idle) {
+      // 如果当前是空闲状态，则开始连接
+      _startConnection();
+    } else if (_state == ConnectionState.connected) {
+      // 如果当前是已连接状态，则断开连接
+      _disconnect();
+    }
+  }
+
+  Widget _getButtonIcon(ConnectionState state) {
+    switch (state) {
+      case ConnectionState.idle:
+        return Icon(
+          Icons.power_settings_new_rounded,
+          key: const ValueKey('idle_icon'),
+        );
+      case ConnectionState.connecting:
+        return AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _animationController.value * 2 * pi,
+              child: const Icon(
+                Icons.sync_rounded,
+                key: ValueKey('connecting_icon'),
+              ),
+            );
+          },
+        );
+      case ConnectionState.connected:
+        return Icon(Icons.link_rounded, key: const ValueKey('connected_icon'));
+    }
+  }
+
+  Widget _getButtonLabel(ConnectionState state) {
+    final String text;
+    switch (state) {
+      case ConnectionState.idle:
+        text = '连接';
+      case ConnectionState.connecting:
+        text = '连接中...';
+      case ConnectionState.connected:
+        text = '已连接';
+    }
+
+    return Text(
+      text,
+      key: ValueKey('label_$state'),
+      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+    );
+  }
+
+  Color _getButtonColor(ConnectionState state, ColorScheme colorScheme) {
+    switch (state) {
+      case ConnectionState.idle:
+        return colorScheme.primary;
+      case ConnectionState.connecting:
+        return colorScheme.surfaceVariant;
+      case ConnectionState.connected:
+        return colorScheme.tertiary;
+    }
+  }
+
+  Color _getButtonForegroundColor(
+    ConnectionState state,
+    ColorScheme colorScheme,
+  ) {
+    switch (state) {
+      case ConnectionState.idle:
+        return colorScheme.onPrimary;
+      case ConnectionState.connecting:
+        return colorScheme.onSurfaceVariant;
+      case ConnectionState.connected:
+        return colorScheme.onTertiary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(
+            height: 14, // 固定高度，包含进度条高度(6px)和底部边距(8px)
+            width: 180, // 固定宽度与按钮一致
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 300),
+              offset:
+                  _state == ConnectionState.connecting
+                      ? Offset.zero
+                      : const Offset(0, 1.0),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: _state == ConnectionState.connecting ? 1.0 : 0.0,
+                child: Container(
+                  width: 180,
+                  height: 6,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey(
+                      'progress_${_state == ConnectionState.connecting}',
+                    ),
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(seconds: 10), // 10秒完成动画
+                    curve: Curves.easeInOut,
+                    builder: (context, value, _) {
+                      // 更新进度值
+                      _progress = value * 100;
+                      return FractionallySizedBox(
+                        widthFactor: value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                colorScheme.tertiary,
+                                colorScheme.primary,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // 按钮
+          Align(
+            alignment: Alignment.centerRight,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              width: _state != ConnectionState.idle ? 180 : 100,
+              height: 60,
+              child: FloatingActionButton.extended(
+                onPressed:
+                    _state == ConnectionState.connecting
+                        ? null
+                        : _toggleConnection,
+                extendedPadding: const EdgeInsets.symmetric(horizontal: 2),
+                splashColor:
+                    _state != ConnectionState.idle
+                        ? colorScheme.onTertiary.withAlpha(51)
+                        : colorScheme.onPrimary.withAlpha(51),
+                highlightElevation: 6,
+                elevation: 2,
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  transitionBuilder: (
+                    Widget child,
+                    Animation<double> animation,
+                  ) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, child: child),
+                    );
+                  },
+                  child: _getButtonIcon(_state),
+                ),
+                label: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeOutQuad,
+                  switchOutCurve: Curves.easeInQuad,
+                  child: _getButtonLabel(_state),
+                ),
+                backgroundColor: _getButtonColor(_state, colorScheme),
+                foregroundColor: _getButtonForegroundColor(_state, colorScheme),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 整数转为 IP 字符串
+String intToIp(int ipInt) {
+  return [
+    (ipInt >> 24) & 0xFF,
+    (ipInt >> 16) & 0xFF,
+    (ipInt >> 8) & 0xFF,
+    ipInt & 0xFF,
+  ].join('.');
+}

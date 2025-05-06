@@ -1,18 +1,15 @@
 pub use std::collections::BTreeMap;
-//use BTreeMap
-use dashmap::DashMap;
-pub use easytier::common::global_ctx::{EventBusSubscriber, GlobalCtxEvent};
-use easytier::common::{config::Flags, scoped_task::ScopedTask};
-pub use easytier::{
-    common::config::{ConfigLoader, TomlConfigLoader},
-    launcher::NetworkInstance,
-    proto,
-};
+use std::sync::Mutex;
+
+use easytier::common::scoped_task::ScopedTask;
 pub use easytier::{
     common::{
         self,
-        config::{NetworkIdentity, PeerConfig},
+        config::{NetworkIdentity, PeerConfig,ConfigLoader, TomlConfigLoader},
+        global_ctx::{EventBusSubscriber, GlobalCtxEvent},
     },
+    launcher::NetworkInstance,
+    proto,
     proto::{
         cli::{
             list_peer_route_pair, ConnectorManageRpc, ConnectorManageRpcClientFactory,
@@ -38,107 +35,235 @@ use serde_json::json;
 use tokio::runtime::Runtime;
 pub use tokio::task::JoinHandle;
 
+use std::env;
+use std::io::{self, Write};
+use std::path::Path;
+use std::process::Command;
+
+pub fn inject_dll_to_pid(pid: &str, dll_path: &str) {
+    let path = Path::new(dll_path);
+    if !path.exists() {
+        println!("错误: 找不到DLL文件: {:?}", dll_path);
+        return;
+    }
+
+    let status = Command::new("powershell")
+        .args([
+            "-Command",
+            &format!(
+                "Add-Type -TypeDefinition @\" 
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+public class Injector {{
+    [DllImport(\"kernel32.dll\")]
+    public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern IntPtr GetModuleHandle(string lpModuleName);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out UIntPtr lpNumberOfBytesWritten);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+    
+    [DllImport(\"kernel32.dll\")]
+    public static extern bool CloseHandle(IntPtr hObject);
+
+    public static void Inject(int pid, string dllPath) {{
+        IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+        if (hProcess == IntPtr.Zero) {{
+            Console.WriteLine(\"无法打开进程 (PID: {{0}})\", pid);
+            return;
+        }}
+        byte[] dllPathBytes = System.Text.Encoding.ASCII.GetBytes(dllPath + \"\\0\");
+        IntPtr allocMemAddress = VirtualAllocEx(hProcess, IntPtr.Zero, (uint)dllPathBytes.Length, 0x1000 | 0x2000, 0x40);
+        if (allocMemAddress == IntPtr.Zero) {{
+            Console.WriteLine(\"内存分配失败\");
+            CloseHandle(hProcess);
+            return;
+        }}
+        UIntPtr bytesWritten;
+        if (!WriteProcessMemory(hProcess, allocMemAddress, dllPathBytes, (uint)dllPathBytes.Length, out bytesWritten)) {{
+            Console.WriteLine(\"写入内存失败\");
+            CloseHandle(hProcess);
+            return;
+        }}
+        IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle(\"kernel32.dll\"), \"LoadLibraryA\");
+        if (loadLibraryAddr == IntPtr.Zero) {{
+            Console.WriteLine(\"无法获取LoadLibraryA地址\");
+            CloseHandle(hProcess);
+            return;
+        }}
+        IntPtr hThread = CreateRemoteThread(hProcess, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero);
+        if (hThread == IntPtr.Zero) {{
+            Console.WriteLine(\"创建远程线程失败\");
+            CloseHandle(hProcess);
+            return;
+        }}
+        Console.WriteLine(\"DLL成功注入到进程 {{0}}\", pid);
+        CloseHandle(hThread);
+        CloseHandle(hProcess);
+    }}
+}}
+\"@; [Injector]::Inject({}, \"{}\")",
+                pid,
+                dll_path.to_string().replace("\\", "\\\\")
+            )
+        ])
+        .status()
+        .expect("注入命令执行失败");
+
+    if status.success() {
+        println!("注入过程已完成");
+    } else {
+        println!("注入过程失败，退出代码: {:?}", status.code());
+    }
+}
 
 
-static INSTANCE_MAP: Lazy<DashMap<String, NetworkInstance>> = Lazy::new(DashMap::new);
+static INSTANCE: Mutex<Option<NetworkInstance>> = Mutex::new(None);
 // 创建一个 NetworkInstance 类型变量 储存当前服务器
 lazy_static! {
     static ref RT: Runtime = Runtime::new().expect("创建 Tokio 运行时失败");
 }
 
-fn create_config() -> TomlConfigLoader {
-    let mut cfg = TomlConfigLoader::default();
-    // 构造 PeerConfig 实例并设置 peers
-
-
-    // cfg.set_inst_name("default".to_string());
-    // cfg.set_inst_name(name);
-    cfg
+fn peer_conn_info_to_string(p: proto::cli::PeerConnInfo) -> String {
+    format!(
+        "my_peer_id: {}, dst_peer_id: {}, tunnel_info: {:?}",
+        p.my_peer_id, p.peer_id, p.tunnel
+    )
 }
 
+pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            match events.recv().await {
+                Ok(e) => {
+                    //  println!("Received event: {:?}", e);
+                    match e {
+                        GlobalCtxEvent::PeerAdded(p) => {
+                            println!("{}",format!("新节点已添加。节点ID: {}", p));
+                        }
 
+                        GlobalCtxEvent::PeerRemoved(p) => {
+                            println!("{}",format!("节点已移除。节点ID: {}", p));
+                        }
 
-// 添加一个函数来获取对等节点和路由信息
-pub fn get_peers_and_routes() -> Result<(Vec<PeerInfo>, Vec<Route>), String> {
-    if let Some(instance) = INSTANCE_MAP.iter().next() {
-        // 获取运行信息
-        if let Some(info) = instance.get_running_info() {
-            return Ok((info.peers, info.routes));
-        }
-        return Err("无法获取运行信息".to_string());
-    }
-    Err("没有运行中的网络实例".to_string())
-}
+                        GlobalCtxEvent::PeerConnAdded(p) => {
+                            println!("{}",format!(
+                                "新节点连接已添加。连接信息: {}",
+                                peer_conn_info_to_string(p)
+                            ));
+                        }
+                        GlobalCtxEvent::PeerConnRemoved(p) => {
+                            println!("{}",format!(
+                                "节点连接已移除。连接信息: {}",
+                                peer_conn_info_to_string(p)
+                            ));
+                        }
+                        GlobalCtxEvent::ListenerAddFailed(p, msg) => {
+                            println!("{}",format!(
+                                "监听器添加失败。监听器: {}, 消息: {}",
+                                p, msg
+                            ));
+                        }
+                        GlobalCtxEvent::ListenerAcceptFailed(p, msg) => {
+                            println!("{}",format!(
+                                "监听器接受失败。监听器: {}, 消息: {}",
+                                p, msg
+                            ));
+                        }
+                        GlobalCtxEvent::ListenerAdded(p) => {
+                            if p.scheme() == "ring" {
+                                continue;
+                            }
+                            println!("{}",format!("新监听器已添加。监听器: {}", p));
+                        }
+                        GlobalCtxEvent::ConnectionAccepted(local, remote) => {
+                            println!("{}",format!(
+                                "新连接已接受。本地: {}, 远程: {}",
+                                local, remote
+                            ));
+                        }
+                        GlobalCtxEvent::ConnectionError(local, remote, err) => {
+                            println!("{}",format!(
+                                "连接错误。本地: {}, 远程: {}, 错误: {}",
+                                local, remote, err
+                            ));
+                        }
+                        GlobalCtxEvent::TunDeviceReady(dev) => {
+                            println!("{}",format!("TUN 设备就绪。设备: {}", dev));
+                        }
+                        GlobalCtxEvent::TunDeviceError(err) => {
+                            println!("{}",format!("TUN 设备错误。错误: {}", err));
+                        }
+                        GlobalCtxEvent::Connecting(dst) => {
+                            println!("{}",format!("正在连接到节点。目标: {}", dst));
+                        }
+                        GlobalCtxEvent::ConnectError(dst, ip_version, err) => {
+                            println!("{}",format!(
+                                "连接到节点错误。目标: {}, IP版本: {}, 错误: {}",
+                                dst, ip_version, err
+                            ));
+                        }
+                        GlobalCtxEvent::VpnPortalClientConnected(portal, client_addr) => {
+                            println!("{}",format!(
+                                "VPN 门户客户端已连接。门户: {}, 客户端地址: {}",
+                                portal, client_addr
+                            ));
+                        }
+                        GlobalCtxEvent::VpnPortalClientDisconnected(portal, client_addr) => {
+                            println!("{}",format!(
+                                "VPN 门户客户端已断开连接。门户: {}, 客户端地址: {}",
+                                portal, client_addr
+                            ));
+                        }
+                        GlobalCtxEvent::DhcpIpv4Changed(old, new) => {
+                            println!("{}",format!("DHCP IP 已更改。旧: {:?}, 新: {:?}", old, new));
+                        }
+                        GlobalCtxEvent::DhcpIpv4Conflicted(ip) => {
+                            println!("{}",format!("DHCP IP 冲突。IP: {:?}", ip));
+                        }
+                        GlobalCtxEvent::PortForwardAdded(cfg) => {
+                            println!("{}",format!(
+                                "端口转发已添加。本地: {}, 远程: {}, 协议: {}",
+                                cfg.bind_addr.unwrap().to_string(),
+                                cfg.dst_addr.unwrap().to_string(),
+                                cfg.socket_type().as_str_name()
+                            ));
+                        }
 
-// 如果需要获取配对后的信息，可以使用这个函数
-pub fn get_peer_route_pairs() -> Result<Vec<PeerRoutePair>, String> {
-    if let Some(instance) = INSTANCE_MAP.iter().next() {
-        // 获取运行信息
-        if let Some(info) = instance.get_running_info() {
-            let mut pairs = info.peer_route_pairs;
-
-            // 如果存在本地节点信息，添加到结果中
-            if let Some(my_node_info) = &info.my_node_info {
-                // 获取本地节点ID
-                let my_peer_id = info
-                    .peers
-                    .iter()
-                    .find(|p| p.conns.iter().any(|c| c.is_client == false))
-                    .map(|p| p.peer_id)
-                    .unwrap_or(0);
-
-                // 创建一个表示本地节点的Route
-                let my_route = proto::cli::Route {
-                    peer_id: my_peer_id,
-                    ipv4_addr: my_node_info.virtual_ipv4.clone(),
-                    next_hop_peer_id: my_peer_id, // 指向自己
-                    cost: 0,                      // 到自己的成本为0
-                    path_latency: 0,              // 到自己的延迟为0
-                    proxy_cidrs: vec![],
-                    hostname: my_node_info.hostname.clone(),
-                    stun_info: my_node_info.stun_info.clone(),
-                    inst_id: "local".to_string(),
-                    version: my_node_info.version.clone(),
-                    feature_flag: None,
-                    next_hop_peer_id_latency_first: None,
-                    cost_latency_first: None,
-                    path_latency_latency_first: None,
-                };
-
-                // 创建一个表示本地节点的PeerInfo，包含网络统计信息
-                let my_peer_info = info.peers.iter().find(|p| p.peer_id == my_peer_id).cloned();
-
-                // 创建一个表示本地节点的PeerRoutePair
-                let my_pair = proto::cli::PeerRoutePair {
-                    route: Some(my_route),
-                    peer: my_peer_info, // 使用找到的PeerInfo或None
-                };
-
-                // 添加到结果中
-                pairs.push(my_pair);
+                    }
+                }
+                Err(err) => {
+                    eprintln!("接收事件错误: {:?}", err);
+                    // 根据错误类型决定是否中断循环
+                    match err {
+                        tokio::sync::broadcast::error::RecvError::Closed => {
+                            println!("事件通道已关闭，停止事件处理。");
+                            break; // Exit the loop if the channel is closed
+                        }
+                        tokio::sync::broadcast::error::RecvError::Lagged(n) => {
+                            eprintln!("事件处理滞后，丢失了 {} 个事件。", n);
+                            // Decide if lagging is critical enough to break or just log
+                        }
+                    }
+                    
+                }
             }
-
-            return Ok(pairs);
         }
-        return Err("无法获取运行信息".to_string());
-    }
-    Err("没有运行中的网络实例".to_string())
+    })
 }
 
-// 获取节点信息
-pub fn get_node_info() -> Result<MyNodeInfo, String> {
-    if let Some(instance) = INSTANCE_MAP.iter().next() {
-        // 获取运行信息
-        if let Some(info) = instance.get_running_info() {
-            if let Some(node_info) = info.my_node_info {
-                return Ok(node_info);
-            }
-            return Err("无法获取节点信息".to_string());
-        }
-        return Err("无法获取运行信息".to_string());
-    }
-    Err("没有运行中的网络实例".to_string())
-}
 
 async fn create_and_store_network_instance(cfg: TomlConfigLoader) -> Result<(), String> {
     println!("Starting easytier with config:");
@@ -148,13 +273,22 @@ async fn create_and_store_network_instance(cfg: TomlConfigLoader) -> Result<(), 
     // 在移动 cfg 之前先获取 ID
     let name = cfg.get_id().to_string();
     // 创建网络实例
-    let mut instance = NetworkInstance::new(cfg).set_fetch_node_info(true);
+    let mut network = NetworkInstance::new(cfg).set_fetch_node_info(true);
     // 启动网络实例，并处理可能的错误
-    instance.start().unwrap();
-    println!("instance {} started", name);
-    // 将实例存储到 INSTANCE_MAP 中
-    INSTANCE_MAP.insert(name, instance);
+    handle_event(network.start().unwrap());
 
+    println!("instance {} started", name);
+    // 将实例存储到 INSTANCE 中
+    let mut instance_guard = INSTANCE.lock().map_err(|e| format!("获取互斥锁失败: {}", e))?;
+    
+    if instance_guard.is_none() {
+        *instance_guard = Some(network);
+       println!("实例已成功储存");
+    } else {
+        println!("网络实例已存在");
+    }
+    print!("成功储存");
+    
     Ok(())
 }
 
@@ -165,11 +299,8 @@ pub fn easytier_version() -> Result<String, String> {
 
 // 是否在运行
 pub fn is_easytier_running() -> bool {
-    if let Some(instance) = INSTANCE_MAP.iter().next() {
-        instance.is_easytier_running()
-    } else {
-        false
-    }
+    let instance = INSTANCE.lock().unwrap();
+    instance.is_some()
 }
 // 定义节点跳跃统计信息结构体
 pub struct NodeHopStats {
@@ -207,12 +338,16 @@ pub struct KVNetworkStatus {
 }
 
 // 获取网络中所有节点的IP地址列表
-pub fn get_all_ips() -> Vec<String> {
+pub fn get_ips() -> Vec<String> {
     let mut result = Vec::new();
-    if let Some(instance) = INSTANCE_MAP.iter().next() {
+    
+    // Lock the mutex and access the instance if it exists
+    let instance = INSTANCE.lock().unwrap();
+    
+    if let Some(instance) = instance.as_ref() {
         if let Some(info) = instance.get_running_info() {
             
-            // 添加所有远程节点IP
+            // Add all remote node IPs
             for route in &info.routes {
                 if let Some(ipv4_addr) = &route.ipv4_addr {
                     if let Some(addr) = &ipv4_addr.address {
@@ -224,7 +359,7 @@ pub fn get_all_ips() -> Vec<String> {
                             addr.addr & 0xFF,
                             ipv4_addr.network_length
                         );
-                        // 避免重复添加
+                        // Avoid duplicates
                         if !result.contains(&ip) {
                             result.push(ip);
                         }
@@ -233,295 +368,26 @@ pub fn get_all_ips() -> Vec<String> {
             }
         }
     }
-    
     result
 }
 
 // 设置TUN设备的文件描述符
 pub fn set_tun_fd(fd: i32) -> Result<(), String> {
-    // 遍历所有实例并设置TUN文件描述符
-    for mut instance in INSTANCE_MAP.iter_mut() {
+    let mut instance = INSTANCE.lock().unwrap();
+    if let Some(instance) = instance.as_mut() {
         instance.set_tun_fd(fd);
-    }
-    Ok(())
-}
-
-// 获取网络状态信息
-pub fn get_network_status() -> KVNetworkStatus {
-    let pairs = get_peer_route_pairs().unwrap_or_default();
-    let mut nodes = Vec::new();
-
-    for pair in pairs.iter() {
-        if let Some(route) = &pair.route {
-            let cost = route.cost;
-            // 使用 get_running_info 中的逻辑来获取IPv4地址
-            let ipv4 = route
-                .ipv4_addr
-                .as_ref()
-                .and_then(|addr| addr.address.as_ref())
-                .map(|a| {
-                    format!(
-                        "{}.{}.{}.{}",
-                        (a.addr >> 24) & 0xFF,
-                        (a.addr >> 16) & 0xFF,
-                        (a.addr >> 8) & 0xFF,
-                        a.addr & 0xFF
-                    )
-                })
-                .unwrap_or_else(|| "0.0.0.0".to_string());
-
-            let mut node_info = KVNodeInfo {
-                hostname: route.hostname.clone(),
-                hops: {
-                    // 新建递归函数收集完整路径
-                    fn collect_hops(
-                        pairs: &[PeerRoutePair],
-                        current_peer_id: u32,
-                        mut path: Vec<NodeHopStats>,
-                        visited: &mut std::collections::HashSet<u32>,
-                    ) -> Vec<NodeHopStats> {
-                        if visited.contains(&current_peer_id) {
-                            return path;
-                        }
-                        visited.insert(current_peer_id);
-
-                        // 查找当前节点的信息
-                        if let Some(pair) = pairs.iter().find(|p| {
-                            p.route.as_ref().map_or(false, |r| r.peer_id == current_peer_id)
-                        }) {
-                            if let Some(route) = &pair.route {
-                                // 获取IP地址
-                                let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
-                                    .map(|a| format!("{}.{}.{}.{}", 
-                                        (a.addr >> 24) & 0xFF,
-                                        (a.addr >> 16) & 0xFF,
-                                        (a.addr >> 8) & 0xFF,
-                                        a.addr & 0xFF))
-                                    .unwrap_or_default();
-
-                                // 计算延迟和丢包率
-                                let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
-                                    let min_latency = p.conns.iter()
-                                        .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
-                                        .min()
-                                        .unwrap_or(0) as f64 / 1000.0;
-                                    
-                                    let avg_loss = p.conns.iter()
-                                        .map(|c| c.loss_rate)
-                                        .sum::<f32>() / p.conns.len().max(1) as f32;
-
-                                    (min_latency, avg_loss as f64)
-                                });
-
-                                // 添加当前节点到路径
-                                path.push(NodeHopStats {
-                                    target_ip: ip,
-                                    latency_ms: latency,
-                                    packet_loss: loss as f32,
-                                    node_name: route.hostname.clone(),
-                                });
-
-                                // 如果下一跳不是自己，继续递归
-                                if route.next_hop_peer_id != current_peer_id && route.next_hop_peer_id != 0 {
-                                    // 查找下一跳节点
-                                    return collect_hops(
-                                        pairs,
-                                        route.next_hop_peer_id,
-                                        path,
-                                        visited
-                                    );
-                                }
-                            }
-                        }
-                        path
-                    }
-
-                    // 使用路由表中的next_hop_peer_id构建完整路径
-                    let mut hops = Vec::new();
-                    if let Some(route) = &pair.route {
-                        let mut visited = std::collections::HashSet::new();
-                        
-                        // 从当前节点开始，收集到目标节点的完整路径
-                        // 先添加本地节点信息
-                        if let Some(instance) = INSTANCE_MAP.iter().next() {
-                            if let Some(info) = instance.get_running_info() {
-                                if let Some(local_node) = &info.my_node_info {
-                                    // 添加本地节点作为起点
-                                    hops.push(NodeHopStats {
-                                        target_ip: local_node.virtual_ipv4.as_ref()
-                                            .and_then(|addr| addr.address.as_ref())
-                                            .map(|a| format!("{}.{}.{}.{}", 
-                                                (a.addr >> 24) & 0xFF,
-                                                (a.addr >> 16) & 0xFF,
-                                                (a.addr >> 8) & 0xFF,
-                                                a.addr & 0xFF))
-                                            .unwrap_or_else(|| local_node.hostname.clone()),
-                                        latency_ms: 0.0,
-                                        packet_loss: 0.0,
-                                        node_name: local_node.hostname.clone(),
-                                    });
-                                    
-                                    // 查找从本地到目标节点的路由
-                                    if let Some(local_route) = info.routes.iter().find(|r| r.peer_id == route.peer_id) {
-                                        // 收集中间节点
-                                        let mut next_hops = collect_hops(
-                                            &pairs,
-                                            local_route.next_hop_peer_id,
-                                            Vec::new(),
-                                            &mut visited
-                                        );
-                                        hops.append(&mut next_hops);
-                                        
-                                        // 确保目标节点被添加到路径中
-                                        // 检查最后一个节点是否是目标节点
-                                        let last_node_is_target = hops.last().map_or(false, |last| {
-                                            last.node_name == route.hostname
-                                        });
-                                        
-                                        // 如果最后一个节点不是目标节点，则添加目标节点
-                                        if !last_node_is_target && !visited.contains(&route.peer_id) {
-                                            let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
-                                                .map(|a| format!("{}.{}.{}.{}", 
-                                                    (a.addr >> 24) & 0xFF,
-                                                    (a.addr >> 16) & 0xFF,
-                                                    (a.addr >> 8) & 0xFF,
-                                                    a.addr & 0xFF))
-                                                .unwrap_or_default();
-                                                
-                                            let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
-                                                let min_latency = p.conns.iter()
-                                                    .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
-                                                    .min()
-                                                    .unwrap_or(0) as f64 / 1000.0;
-                                                
-                                                let avg_loss = p.conns.iter()
-                                                    .map(|c| c.loss_rate)
-                                                    .sum::<f32>() / p.conns.len().max(1) as f32;
-
-                                                (min_latency, avg_loss as f64)
-                                            });
-                                            
-                                            hops.push(NodeHopStats {
-                                                target_ip: ip,
-                                                latency_ms: latency,
-                                                packet_loss: loss as f32,
-                                                node_name: route.hostname.clone(),
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 如果没有收集到任何跳点（可能是直连节点），则直接添加目标节点
-                        if hops.len() <= 1 {
-                            let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
-                                .map(|a| format!("{}.{}.{}.{}", 
-                                    (a.addr >> 24) & 0xFF,
-                                    (a.addr >> 16) & 0xFF,
-                                    (a.addr >> 8) & 0xFF,
-                                    a.addr & 0xFF))
-                                .unwrap_or_default();
-                                
-                            let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
-                                let min_latency = p.conns.iter()
-                                    .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
-                                    .min()
-                                    .unwrap_or(0) as f64 / 1000.0;
-                                
-                                let avg_loss = p.conns.iter()
-                                    .map(|c| c.loss_rate)
-                                    .sum::<f32>() / p.conns.len().max(1) as f32;
-
-                                (min_latency, avg_loss as f64)
-                            });
-                            
-                            hops.push(NodeHopStats {
-                                target_ip: ip,
-                                latency_ms: latency,
-                                packet_loss: loss as f32,
-                                node_name: route.hostname.clone(),
-                            });
-                        }
-                    }
-                    hops
-                },
-                ipv4: ipv4,
-                latency_ms: if let Some(peer) = &pair.peer {
-                    let mut min_latency = u64::MAX;
-                    for conn in &peer.conns {
-                        if let Some(stats) = &conn.stats {
-                            min_latency = min_latency.min(stats.latency_us);
-                        }
-                    }
-                    if min_latency == u64::MAX {
-                        // 如果没有找到有效的连接延迟，则使用路由路径延迟
-                        f64::from(route.path_latency.max(0)) / 1000.0
-                    } else {
-                        // 将微秒转换为毫秒
-                        f64::from(min_latency as u32) / 1000.0
-                    }
-                } else {
-                    // 如果没有peer信息，则使用路由路径延迟
-                    f64::from(route.path_latency.max(0)) / 1000.0
-                },
-                loss_rate: if let Some(peer) = &pair.peer {
-                    let mut total_loss_rate = 0.0;
-                    for conn in &peer.conns {
-                        total_loss_rate += conn.loss_rate;
-                    }
-                    total_loss_rate
-                } else {
-                    0.0 // 如果没有连接信息，默认为0
-                },
-                nat: route.stun_info.as_ref().map_or_else(
-                    || "Unknown".to_string(),
-                    |stun| {
-                        // 使用NatType枚举替代直接匹配数字
-                        let nat_type = NatType::try_from(stun.udp_nat_type).unwrap_or(NatType::Unknown);
-                        format!("{:?}", nat_type)
-                    }
-                ),
-                connections: Vec::new(),
-                version: route.version.clone(),
-                cost,
-            };
-
-            // 收集连接统计信息
-            if let Some(peer) = &pair.peer {
-                for conn in &peer.conns {
-                    if let Some(stats) = &conn.stats {
-                        let conn_type = if let Some(tunnel) = &conn.tunnel {
-                            tunnel.tunnel_type.clone()
-                        } else {
-                            "未知".to_string()
-                        };
-
-                        node_info.connections.push(KVNodeConnectionStats {
-                            conn_type,
-                            rx_bytes: stats.rx_bytes,
-                            tx_bytes: stats.tx_bytes,
-                            rx_packets: stats.rx_packets,
-                            tx_packets: stats.tx_packets,
-                        });
-                    }
-                }
-            }
-
-            nodes.push(node_info);
-        }
-    }
-
-    KVNetworkStatus {
-        total_nodes: nodes.len(),
-        nodes,
+        Ok(())
+    } else {
+        Err("No instance available".to_string())
     }
 }
+
 
 pub fn get_running_info() -> String {
-    INSTANCE_MAP
-        .iter()
-        .next()
+    INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
         .and_then(|instance| instance.get_running_info())
         .and_then(|info| {
             // 获取并打印节点路由对信息
@@ -697,7 +563,6 @@ pub struct FlagsC {
     pub disable_p2p: bool,
     pub relay_all_peer_rpc: bool,
     pub disable_udp_hole_punching: bool,
-    /// string ipv6_listener = 14; \[deprecated = true\]; use -l udp://\[::\]:12345 instead
     pub multi_thread: bool,
     pub data_compress_algo: i32,
     pub bind_device: bool,
@@ -716,19 +581,28 @@ pub fn create_server(
     room_password: String,
     severurl: Vec<String>,
     onurl: Vec<String>,
-    flag:FlagsC,
-) {
+    flag: FlagsC,
+) -> JoinHandle<Result<(), String>> {
+    print!("{}", format!("创建服务器: {}，启用DHCP: {}, 指定IP: {}, 房间名称: {}, 房间密码: {}, 服务器URL: {:?}, 监听器URL: {:?}", username, enable_dhcp, specified_ip, room_name, room_password, severurl, onurl));
     RT.spawn(async move {
-        // 创建一个示例配置
-        let cfg = create_config();
-        // 使用传入的onurl参数设置监听地址
+        // Create config with better error handling
+        let mut cfg = TomlConfigLoader::default();
+        
+        // Set listeners with proper error handling
         let mut listeners = Vec::new();
         for url in onurl {
-            listeners.push(url.parse().unwrap());
+            match url.parse() {
+                Ok(parsed) => listeners.push(parsed),
+                Err(e) => return Err(format!("Invalid listener URL: {}, error: {}", url, e))
+            }
         }
         cfg.set_listeners(listeners);
-        cfg.set_hostname(Option::from(username));
+        
+        // Set hostname and other settings
+        cfg.set_hostname(Some(username));
         cfg.set_dhcp(enable_dhcp);
+        
+        // Set flags more efficiently by directly mapping from input
         let mut flags = cfg.get_flags();
         flags.default_protocol = flag.default_protocol;
         flags.dev_name = "astral".to_string();
@@ -750,57 +624,54 @@ pub fn create_server(
         flags.disable_kcp_input = flag.disable_kcp_input;
         flags.disable_relay_kcp = flag.disable_relay_kcp;
         flags.proxy_forward_by_system = flag.proxy_forward_by_system;
-        // flags.dev_name = "astral".to_string();
         cfg.set_flags(flags);
-        // 创建TCP和UDP连接配置列表
+        
+        // Configure peer connections with proper error handling
         let mut peer_configs = Vec::new();
-        // 为每个服务器URL创建TCP和UDP配置
         for url in severurl {
-            peer_configs.push(PeerConfig {
-                uri: format!("{}", url).parse().unwrap(),
-            });
+            match url.parse() {
+                Ok(uri) => peer_configs.push(PeerConfig { uri }),
+                Err(e) => return Err(format!("Invalid server URL: {}, error: {}", url, e))
+            }
+        }
+        cfg.set_peers(peer_configs);
+        
+        // Set IP if DHCP is disabled
+        if !enable_dhcp && !specified_ip.is_empty() {
+            let ip_str = format!("{}/24", specified_ip);
+            match ip_str.parse() {
+                Ok(ip) => cfg.set_ipv4(Some(ip)),
+                Err(e) => return Err(format!("Invalid IP address: {}, error: {}", specified_ip, e))
+            }
         }
         
-        cfg.set_peers(peer_configs);
-        if enable_dhcp == false {
-            // 使用完整路径引用 cidr 模块的 Ipv4Inet
-            // 解析IP地址和子网掩码
-            let ip = format!("{}/24", specified_ip).parse().unwrap();
-            cfg.set_ipv4(Some(ip));
-        }
-        cfg.set_network_identity(NetworkIdentity::new(
-            room_name.to_string(),
-            room_password.to_string(),
-        ));
+        // Set network identity
+        cfg.set_network_identity(NetworkIdentity::new(room_name, room_password));
 
-        // 并行启动网络实例
-        let handle1 = tokio::spawn(async move {
-            if let Err(e) = create_and_store_network_instance(cfg).await {
-                eprintln!("创建网络实例失败: {}", e);
-            }
-        });
-
-        // 等待所有任务完成
-        let _ = tokio::join!(handle1);
-    });
+        // Start network instance directly without nesting spawns
+        create_and_store_network_instance(cfg).await
+    })
 }
 
-// 获取INSTANCE_MAP所有的服务器然后关闭
-pub fn close_all_server() {
+// 关闭服务器实例
+pub fn close_server() {
     RT.spawn(async {
-        println!("关闭前实例数: {}", INSTANCE_MAP.len()); // 添加关闭前日志
-        let keys: Vec<_> = INSTANCE_MAP.iter().map(|e| e.key().clone()).collect();
-        println!("待关闭实例键: {:?}", keys); // 增加键列表输出
-
-        for key in keys {
-            if let Some((_, mut instance)) = INSTANCE_MAP.remove(&key) {
-                //丢弃 instance
-                drop(instance);
-            } else {
-                println!("未找到实例: {}", key); // 增加错误处理
-            }
+        // 获取mutex锁
+        let mut locked_instance = INSTANCE.lock().unwrap();
+        
+        println!("关闭前实例状态: {}", if locked_instance.is_some() { "存在" } else { "不存在" }); // 添加关闭前日志
+        
+        // 如果实例存在，则丢弃它
+        if let Some(instance) = locked_instance.take() {
+            println!("正在关闭实例");
+            // 丢弃实例
+            drop(instance);
+            println!("实例已成功关闭");
+        } else {
+            println!("没有找到需要关闭的实例");
         }
-        println!("关闭后剩余实例数: {}", INSTANCE_MAP.len()); // 添加关闭后日志
+        
+        println!("关闭后实例状态: {}", if locked_instance.is_some() { "存在" } else { "不存在" }); // 添加关闭后日志
     });
 }
 
@@ -896,10 +767,346 @@ pub fn get_network_interface_hops() -> NetworkInterfaceHops {
     NetworkInterfaceHops { hops }
 }
 
+// 如果需要获取配对后的信息，可以使用这个函数
+pub fn get_peer_route_pairs() -> Result<Vec<PeerRoutePair>, String> {
+    let instance_guard = INSTANCE.lock().map_err(|e| format!("获取互斥锁失败: {}", e))?;
+    if let Some(instance) = instance_guard.as_ref() {
+        // 获取运行信息
+        if let Some(info) = instance.get_running_info() {
+            let mut pairs = info.peer_route_pairs;
 
-//给INSTANCE_MAP所有的网卡设置跃点
+            // 如果存在本地节点信息，添加到结果中
+            if let Some(my_node_info) = &info.my_node_info {
+                // 获取本地节点ID
+                // 注意：这里的逻辑可能需要根据单例模式调整，假设本地节点信息可以直接从 info 中获取
+                // 使用原始逻辑查找本地 peer_id
+                let my_peer_id = info
+                    .peers
+                    .iter()
+                    .find(|p| p.conns.iter().any(|c| !c.is_client))
+                    .map(|p| p.peer_id)
+                    .unwrap_or(0);
+
+                // 创建一个表示本地节点的Route
+                let my_route = proto::cli::Route {
+                    peer_id: my_peer_id,
+                    ipv4_addr: my_node_info.virtual_ipv4.clone(),
+                    next_hop_peer_id: my_peer_id, // 指向自己
+                    cost: 0,                      // 到自己的成本为0
+                    path_latency: 0,              // 到自己的延迟为0
+                    proxy_cidrs: vec![],
+                    hostname: my_node_info.hostname.clone(),
+                    stun_info: my_node_info.stun_info.clone(),
+                    inst_id: "local".to_string(), // 标记为本地实例
+                    version: my_node_info.version.clone(),
+                    feature_flag: None, // 本地节点通常没有特性标志
+                    next_hop_peer_id_latency_first: None,
+                    cost_latency_first: None,
+                    path_latency_latency_first: None,
+                };
+
+                // 创建一个表示本地节点的PeerInfo，包含网络统计信息
+                // 注意：本地节点的PeerInfo可能需要特殊处理或从其他地方获取
+                let my_peer_info = info.peers.iter().find(|p| p.peer_id == my_peer_id).cloned();
+
+
+                // 创建一个表示本地节点的PeerRoutePair
+                let my_pair = proto::cli::PeerRoutePair {
+                    route: Some(my_route),
+                    peer: my_peer_info, // 使用找到的PeerInfo或None
+                };
+
+                // 添加到结果中
+                pairs.push(my_pair);
+            }
+
+            return Ok(pairs);
+        }
+        return Err("无法获取运行信息".to_string());
+    }
+    Err("没有运行中的网络实例".to_string())
+}
+// 获取网络状态信息
+pub fn get_network_status() -> KVNetworkStatus {
+    let pairs = get_peer_route_pairs().unwrap_or_default();
+    let mut nodes = Vec::new();
+
+    for pair in pairs.iter() {
+        if let Some(route) = &pair.route {
+            let cost = route.cost;
+            // 使用 get_running_info 中的逻辑来获取IPv4地址
+            let ipv4 = route
+                .ipv4_addr
+                .as_ref()
+                .and_then(|addr| addr.address.as_ref())
+                .map(|a| {
+                    format!(
+                        "{}.{}.{}.{}",
+                        (a.addr >> 24) & 0xFF,
+                        (a.addr >> 16) & 0xFF,
+                        (a.addr >> 8) & 0xFF,
+                        a.addr & 0xFF
+                    )
+                })
+                .unwrap_or_else(|| "0.0.0.0".to_string());
+
+            let mut node_info = KVNodeInfo {
+                hostname: route.hostname.clone(),
+                hops: {
+                    // 新建递归函数收集完整路径
+                    fn collect_hops(
+                        pairs: &[PeerRoutePair],
+                        current_peer_id: u32,
+                        mut path: Vec<NodeHopStats>,
+                        visited: &mut std::collections::HashSet<u32>,
+                    ) -> Vec<NodeHopStats> {
+                        if visited.contains(&current_peer_id) {
+                            return path;
+                        }
+                        visited.insert(current_peer_id);
+
+                        // 查找当前节点的信息
+                        if let Some(pair) = pairs.iter().find(|p| {
+                            p.route.as_ref().map_or(false, |r| r.peer_id == current_peer_id)
+                        }) {
+                            if let Some(route) = &pair.route {
+                                // 获取IP地址
+                                let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
+                                    .map(|a| format!("{}.{}.{}.{}", 
+                                        (a.addr >> 24) & 0xFF,
+                                        (a.addr >> 16) & 0xFF,
+                                        (a.addr >> 8) & 0xFF,
+                                        a.addr & 0xFF))
+                                    .unwrap_or_default();
+
+                                // 计算延迟和丢包率
+                                let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
+                                    let min_latency = p.conns.iter()
+                                        .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
+                                        .min()
+                                        .unwrap_or(0) as f64 / 1000.0;
+                                    
+                                    let avg_loss = p.conns.iter()
+                                        .map(|c| c.loss_rate)
+                                        .sum::<f32>() / p.conns.len().max(1) as f32;
+
+                                    (min_latency, avg_loss as f64)
+                                });
+
+                                // 添加当前节点到路径
+                                path.push(NodeHopStats {
+                                    target_ip: ip,
+                                    latency_ms: latency,
+                                    packet_loss: loss as f32,
+                                    node_name: route.hostname.clone(),
+                                });
+
+                                // 如果下一跳不是自己，继续递归
+                                if route.next_hop_peer_id != current_peer_id && route.next_hop_peer_id != 0 {
+                                    // 查找下一跳节点
+                                    return collect_hops(
+                                        pairs,
+                                        route.next_hop_peer_id,
+                                        path,
+                                        visited
+                                    );
+                                }
+                            }
+                        }
+                        path
+                    }
+
+                    // 使用路由表中的next_hop_peer_id构建完整路径
+                    let mut hops = Vec::new();
+                    if let Some(route) = &pair.route {
+                        let mut visited = std::collections::HashSet::new();
+                        
+                        // 从当前节点开始，收集到目标节点的完整路径
+                        // 先添加本地节点信息
+                        let instance_guard = INSTANCE.lock().unwrap(); // 使用单例 INSTANCE
+                        if let Some(instance) = instance_guard.as_ref() {
+                            if let Some(info) = instance.get_running_info() {
+                                if let Some(local_node) = &info.my_node_info {
+                                    // 添加本地节点作为起点
+                                    hops.push(NodeHopStats {
+                                        target_ip: local_node.virtual_ipv4.as_ref()
+                                            .and_then(|addr| addr.address.as_ref())
+                                            .map(|a| format!("{}.{}.{}.{}",
+                                                (a.addr >> 24) & 0xFF,
+                                                (a.addr >> 16) & 0xFF,
+                                                (a.addr >> 8) & 0xFF,
+                                                a.addr & 0xFF))
+                                            .unwrap_or_else(|| local_node.hostname.clone()),
+                                        latency_ms: 0.0,
+                                        packet_loss: 0.0,
+                                        node_name: local_node.hostname.clone(),
+                                    });
+
+                                    // 查找从本地到目标节点的路由
+                                    if let Some(local_route) = info.routes.iter().find(|r| r.peer_id == route.peer_id) {
+                                        // 收集中间节点
+                                        let mut next_hops = collect_hops(
+                                            &pairs,
+                                            local_route.next_hop_peer_id,
+                                            Vec::new(),
+                                            &mut visited
+                                        );
+                                        hops.append(&mut next_hops);
+
+                                        // 确保目标节点被添加到路径中
+                                        // 检查最后一个节点是否是目标节点
+                                        let last_node_is_target = hops.last().map_or(false, |last| {
+                                            // 比较 hostname
+                                            last.node_name == route.hostname
+                                        });
+
+
+                                        // 如果最后一个节点不是目标节点，则添加目标节点
+                                        if !last_node_is_target && !visited.contains(&route.peer_id) {
+                                            let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
+                                                .map(|a| format!("{}.{}.{}.{}",
+                                                    (a.addr >> 24) & 0xFF,
+                                                    (a.addr >> 16) & 0xFF,
+                                                    (a.addr >> 8) & 0xFF,
+                                                    a.addr & 0xFF))
+                                                .unwrap_or_default();
+
+                                            let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
+                                                let min_latency = p.conns.iter()
+                                                    .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
+                                                    .min()
+                                                    .unwrap_or(0) as f64 / 1000.0;
+
+                                                let avg_loss = p.conns.iter()
+                                                    .map(|c| c.loss_rate)
+                                                    .sum::<f32>() / p.conns.len().max(1) as f32;
+
+                                                (min_latency, avg_loss as f64)
+                                            });
+
+                                            hops.push(NodeHopStats {
+                                                target_ip: ip,
+                                                latency_ms: latency,
+                                                packet_loss: loss as f32,
+                                                node_name: route.hostname.clone(),
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // 如果没有收集到任何跳点（可能是直连节点），则直接添加目标节点
+                        // 检查 hops 是否只包含本地节点
+                        if hops.len() <= 1 {
+                             // 确保目标节点不在hops中（避免重复添加）
+                            if !hops.iter().any(|h| h.node_name == route.hostname) {
+                                let ip = route.ipv4_addr.as_ref().and_then(|addr| addr.address.as_ref())
+                                    .map(|a| format!("{}.{}.{}.{}",
+                                        (a.addr >> 24) & 0xFF,
+                                        (a.addr >> 16) & 0xFF,
+                                        (a.addr >> 8) & 0xFF,
+                                        a.addr & 0xFF))
+                                    .unwrap_or_default();
+
+                                let (latency, loss) = pair.peer.as_ref().map_or((0.0, 0.0), |p| {
+                                    let min_latency = p.conns.iter()
+                                        .filter_map(|c| c.stats.as_ref().map(|s| s.latency_us))
+                                        .min()
+                                        .unwrap_or(0) as f64 / 1000.0;
+
+                                    let avg_loss = p.conns.iter()
+                                        .map(|c| c.loss_rate)
+                                        .sum::<f32>() / p.conns.len().max(1) as f32;
+
+                                    (min_latency, avg_loss as f64)
+                                });
+
+                                hops.push(NodeHopStats {
+                                    target_ip: ip,
+                                    latency_ms: latency,
+                                    packet_loss: loss as f32,
+                                    node_name: route.hostname.clone(),
+                                });
+                            }
+                        }
+                    }
+                    hops
+                },
+                ipv4: ipv4,
+                latency_ms: if let Some(peer) = &pair.peer {
+                    let mut min_latency = u64::MAX;
+                    for conn in &peer.conns {
+                        if let Some(stats) = &conn.stats {
+                            min_latency = min_latency.min(stats.latency_us);
+                        }
+                    }
+                    if min_latency == u64::MAX {
+                        // 如果没有找到有效的连接延迟，则使用路由路径延迟
+                        f64::from(route.path_latency.max(0)) / 1000.0
+                    } else {
+                        // 将微秒转换为毫秒
+                        f64::from(min_latency as u32) / 1000.0
+                    }
+                } else {
+                    // 如果没有peer信息，则使用路由路径延迟
+                    f64::from(route.path_latency.max(0)) / 1000.0
+                },
+                loss_rate: if let Some(peer) = &pair.peer {
+                    let mut total_loss_rate = 0.0;
+                    for conn in &peer.conns {
+                        total_loss_rate += conn.loss_rate;
+                    }
+                    total_loss_rate
+                } else {
+                    0.0 // 如果没有连接信息，默认为0
+                },
+                nat: route.stun_info.as_ref().map_or_else(
+                    || "Unknown".to_string(),
+                    |stun| {
+                        // 使用NatType枚举替代直接匹配数字
+                        let nat_type = NatType::try_from(stun.udp_nat_type).unwrap_or(NatType::Unknown);
+                        format!("{:?}", nat_type)
+                    }
+                ),
+                connections: Vec::new(),
+                version: route.version.clone(),
+                cost,
+            };
+
+            // 收集连接统计信息
+            if let Some(peer) = &pair.peer {
+                for conn in &peer.conns {
+                    if let Some(stats) = &conn.stats {
+                        let conn_type = if let Some(tunnel) = &conn.tunnel {
+                            tunnel.tunnel_type.clone()
+                        } else {
+                            "未知".to_string()
+                        };
+
+                        node_info.connections.push(KVNodeConnectionStats {
+                            conn_type,
+                            rx_bytes: stats.rx_bytes,
+                            tx_bytes: stats.tx_bytes,
+                            rx_packets: stats.rx_packets,
+                            tx_packets: stats.tx_packets,
+                        });
+                    }
+                }
+            }
+
+            nodes.push(node_info);
+        }
+    }
+
+    KVNetworkStatus {
+        total_nodes: nodes.len(),
+        nodes,
+    }
+}
+//给INSTANCE网卡设置跃点
 pub fn set_network_interface_hops(hop: i32) -> bool {
-    // 遍历所有实例
+    // 获取实例
     #[cfg(target_os = "windows")]
     {
         use std::process::Command;
@@ -909,8 +1116,10 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
         
         let mut success = true;
         
-        // 从INSTANCE_MAP获取所有实例
-        for instance in INSTANCE_MAP.iter() {
+        // 从INSTANCE获取实例
+        let instance = INSTANCE.lock().unwrap();
+        
+        if let Some(instance) = instance.as_ref() {
             // 获取实例的运行信息
             if let Some(info) = instance.get_running_info() {
                 // 获取设备名称
@@ -954,11 +1163,8 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
                 println!("无法获取实例的运行信息");
                 success = false;
             }
-        }
-        
-        // 如果INSTANCE_MAP为空，则返回失败
-        if INSTANCE_MAP.is_empty() {
-            println!("没有找到任何EasyTier网络实例");
+        } else {
+            println!("没有找到EasyTier网络实例");
             success = false;
         }
         

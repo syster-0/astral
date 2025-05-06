@@ -6,18 +6,18 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `create_and_store_network_instance`, `create_config`
+// These functions are ignored because they are not marked as `pub`: `create_and_store_network_instance`, `peer_conn_info_to_string`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `RT`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `initialize`
 
-Future<(List<PeerInfo>, List<Route>)> getPeersAndRoutes() =>
-    RustLib.instance.api.crateApiSimpleGetPeersAndRoutes();
+Future<void> injectDllToPid({required String pid, required String dllPath}) =>
+    RustLib.instance.api.crateApiSimpleInjectDllToPid(
+      pid: pid,
+      dllPath: dllPath,
+    );
 
-Future<List<PeerRoutePair>> getPeerRoutePairs() =>
-    RustLib.instance.api.crateApiSimpleGetPeerRoutePairs();
-
-Future<MyNodeInfo> getNodeInfo() =>
-    RustLib.instance.api.crateApiSimpleGetNodeInfo();
+Future<JoinHandle> handleEvent({required EventBusSubscriber events}) =>
+    RustLib.instance.api.crateApiSimpleHandleEvent(events: events);
 
 Future<String> easytierVersion() =>
     RustLib.instance.api.crateApiSimpleEasytierVersion();
@@ -25,59 +25,61 @@ Future<String> easytierVersion() =>
 Future<bool> isEasytierRunning() =>
     RustLib.instance.api.crateApiSimpleIsEasytierRunning();
 
-Future<List<String>> getAllIps() =>
-    RustLib.instance.api.crateApiSimpleGetAllIps();
+Future<List<String>> getIps() => RustLib.instance.api.crateApiSimpleGetIps();
 
 Future<void> setTunFd({required int fd}) =>
     RustLib.instance.api.crateApiSimpleSetTunFd(fd: fd);
 
-Future<KVNetworkStatus> getNetworkStatus() =>
-    RustLib.instance.api.crateApiSimpleGetNetworkStatus();
-
 Future<String> getRunningInfo() =>
     RustLib.instance.api.crateApiSimpleGetRunningInfo();
 
-Future<void> createServer(
-        {required String username,
-        required bool enableDhcp,
-        required String specifiedIp,
-        required String roomName,
-        required String roomPassword,
-        required List<String> severurl,
-        required List<String> onurl,
-        required FlagsC flag}) =>
-    RustLib.instance.api.crateApiSimpleCreateServer(
-        username: username,
-        enableDhcp: enableDhcp,
-        specifiedIp: specifiedIp,
-        roomName: roomName,
-        roomPassword: roomPassword,
-        severurl: severurl,
-        onurl: onurl,
-        flag: flag);
+Future<JoinHandleResultString> createServer({
+  required String username,
+  required bool enableDhcp,
+  required String specifiedIp,
+  required String roomName,
+  required String roomPassword,
+  required List<String> severurl,
+  required List<String> onurl,
+  required FlagsC flag,
+}) => RustLib.instance.api.crateApiSimpleCreateServer(
+  username: username,
+  enableDhcp: enableDhcp,
+  specifiedIp: specifiedIp,
+  roomName: roomName,
+  roomPassword: roomPassword,
+  severurl: severurl,
+  onurl: onurl,
+  flag: flag,
+);
 
-Future<void> closeAllServer() =>
-    RustLib.instance.api.crateApiSimpleCloseAllServer();
+Future<void> closeServer() => RustLib.instance.api.crateApiSimpleCloseServer();
 
 Future<NetworkInterfaceHops> getNetworkInterfaceHops() =>
     RustLib.instance.api.crateApiSimpleGetNetworkInterfaceHops();
+
+Future<List<PeerRoutePair>> getPeerRoutePairs() =>
+    RustLib.instance.api.crateApiSimpleGetPeerRoutePairs();
+
+Future<KVNetworkStatus> getNetworkStatus() =>
+    RustLib.instance.api.crateApiSimpleGetNetworkStatus();
 
 Future<bool> setNetworkInterfaceHops({required int hop}) =>
     RustLib.instance.api.crateApiSimpleSetNetworkInterfaceHops(hop: hop);
 
 Future<void> initApp() => RustLib.instance.api.crateApiSimpleInitApp();
 
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<MyNodeInfo>>
-abstract class MyNodeInfo implements RustOpaqueInterface {}
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EventBusSubscriber>>
+abstract class EventBusSubscriber implements RustOpaqueInterface {}
 
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PeerInfo>>
-abstract class PeerInfo implements RustOpaqueInterface {}
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< JoinHandle < () >>>
+abstract class JoinHandle implements RustOpaqueInterface {}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<JoinHandle < Result < () , String > >>>
+abstract class JoinHandleResultString implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PeerRoutePair>>
 abstract class PeerRoutePair implements RustOpaqueInterface {}
-
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Route>>
-abstract class Route implements RustOpaqueInterface {}
 
 class FlagsC {
   final String defaultProtocol;
@@ -93,8 +95,6 @@ class FlagsC {
   final bool disableP2P;
   final bool relayAllPeerRpc;
   final bool disableUdpHolePunching;
-
-  /// string ipv6_listener = 14; \[deprecated = true\]; use -l udp://\[::\]:12345 instead
   final bool multiThread;
   final int dataCompressAlgo;
   final bool bindDevice;
@@ -180,10 +180,7 @@ class KVNetworkStatus {
   final BigInt totalNodes;
   final List<KVNodeInfo> nodes;
 
-  const KVNetworkStatus({
-    required this.totalNodes,
-    required this.nodes,
-  });
+  const KVNetworkStatus({required this.totalNodes, required this.nodes});
 
   @override
   int get hashCode => totalNodes.hashCode ^ nodes.hashCode;
@@ -307,9 +304,7 @@ class NetworkInterfaceHop {
 class NetworkInterfaceHops {
   final List<NetworkInterfaceHop> hops;
 
-  const NetworkInterfaceHops({
-    required this.hops,
-  });
+  const NetworkInterfaceHops({required this.hops});
 
   @override
   int get hashCode => hops.hashCode;

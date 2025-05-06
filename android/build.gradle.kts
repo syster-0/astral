@@ -12,7 +12,6 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-// 确保所有子项目在 app 模块之后进行评估
 subprojects {
     project.evaluationDependsOn(":app")
 }
