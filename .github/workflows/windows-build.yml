@@ -46,7 +46,7 @@ jobs:
       - name: 📂 复制 DLL 文件到 Release 目录
         run: |
           echo "正在复制 DLL 文件到 Release 目录..."
-          $dllSourceDir = "$env:GITHUB_WORKSPACE\assets\dlls"
+          $dllSourceDir = "$env:GITHUB_WORKSPACE\dlls"
           $releaseDir = "$env:GITHUB_WORKSPACE\build\windows\x64\runner\Release"
           Copy-Item -Path "$dllSourceDir\*" -Destination $releaseDir -Recurse -Force
           echo "DLL 文件已复制到 $releaseDir！"
