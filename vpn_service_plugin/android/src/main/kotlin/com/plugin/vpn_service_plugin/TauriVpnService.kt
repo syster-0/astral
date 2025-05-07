@@ -87,6 +87,7 @@ class TauriVpnService : VpnService() {
         var ipv4Addr = args?.getString(IPV4_ADDR) ?: "10.126.126.1/24"
         var dns = args?.getString(DNS) ?: "114.114.114.114"
         
+        
         // 从ipv4Addr中计算网段地址
         val ipAddrParts = ipv4Addr.split("/")
         if (ipAddrParts.size != 2) throw IllegalArgumentException("Invalid IP addr string")
@@ -104,6 +105,10 @@ class TauriVpnService : VpnService() {
             "224.0.0.0/4",  // 组播地址范围
             "255.255.255.255/32"  // 广播地址
         )
+        if (args?.getStringArray(ROUTES)!= null) {
+               // 追加routes
+               routes = routes + args?.getStringArray(ROUTES)!!     
+        }
         // 添加组播和广播地址到路由routes中
 
         var disallowedApplications = args?.getStringArray(DISALLOWED_APPLICATIONS) ?: emptyArray()

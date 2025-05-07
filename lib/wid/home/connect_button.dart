@@ -55,6 +55,7 @@ class _ConnectButtonState extends State<ConnectButton>
       vpnPlugin?.startVpn(
         ipv4Addr: ipv4Addr,
         mtu: mtu,
+        routes: Aps().cidrproxy.value,
         disallowedApplications: disallowedApplications,
       );
     }
