@@ -121,7 +121,11 @@ class _AllUserCardState extends State<AllUserCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined, size: 18, color: latencyColor),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 18,
+                          color: latencyColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${player.latencyMs.toStringAsFixed(0)} ms', // No decimal for ms
@@ -343,15 +347,18 @@ class _AllUserCardState extends State<AllUserCard> {
   }
 
   // 添加一个速度单位转换的辅助方法
-  String _formatSpeed(double speedInKB) {
+  String _formatSpeed(double speedInB) {
+    // Convert bytes to kilobytes first
+    double speedInKB = speedInB / 1024;
+
     if (speedInKB >= 1048576) {
       // >= 1024 * 1024 KB (1 GB/s)
-      return '${(speedInKB / 1048576).toStringAsFixed(2)} GB';
+      return '${(speedInKB / 1048576).toStringAsFixed(2)} GB/s';
     } else if (speedInKB >= 1024) {
       // >= 1024 KB (1 MB/s)
-      return '${(speedInKB / 1024).toStringAsFixed(2)} MB';
+      return '${(speedInKB / 1024).toStringAsFixed(2)} MB/s';
     } else {
-      return '$speedInKB KB';
+      return '${speedInKB.toStringAsFixed(2)} KB/s';
     }
   }
 
