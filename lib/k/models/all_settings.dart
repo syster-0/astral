@@ -14,4 +14,10 @@ class AllSettings {
 
   /// 监听列表
   List<String>? listenList;
+
+  ///用户列表简约模式
+  bool userListSimple = false;
+
+  /// 关闭最小化到托盘
+  bool closeMinimize = true;
 }

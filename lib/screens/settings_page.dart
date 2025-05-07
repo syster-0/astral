@@ -15,6 +15,30 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.all(16.0),
       children: [
         Card(
+          child: Column(
+            children: [
+              const ListTile(leading: Icon(Icons.info), title: Text('软件设置')),
+              SwitchListTile(
+                title: const Text('最小化'),
+                subtitle: const Text('是否点击关闭按钮最小化到托盘'),
+                value: Aps().closeMinimize.watch(context),
+                onChanged: (value) {
+                  Aps().updateCloseMinimize(value);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('玩家列表卡片'),
+                subtitle: const Text('是否简约显示'),
+                value: Aps().userListSimple.watch(context),
+                onChanged: (value) {
+                  Aps().setUserListSimple(value);
+                },
+              ),
+            ],
+          ),
+        ),
+
+        Card(
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
             leading: const Icon(Icons.list_alt),

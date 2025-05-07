@@ -27,6 +27,23 @@ class _ConnectButtonState extends State<ConnectButton>
   Timer? _connectionTimer;
   int _connectionDuration = 0; // 连接持续时间（秒）
 
+  // 辅助方法：验证IPv4地址格式
+  bool _isValidIpAddress(String ip) {
+    if (ip.isEmpty) return false;
+    // 更严格的IPv4正则表达式，检查每个部分的范围0-255
+    final RegExp ipRegex = RegExp(
+      r"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+    );
+    if (!ipRegex.hasMatch(ip)) {
+      return false;
+    }
+    // 避免一些明显无效的IP，例如全0或全255（尽管 "0.0.0.0" 已单独检查）
+    if (ip == "0.0.0.0" || ip == "255.255.255.255") {
+      return false; // "0.0.0.0" 通常表示未指定或无效
+    }
+    return true;
+  }
+
   void _startVpn({
     required String ipv4Addr,
     int mtu = 1300,
@@ -102,10 +119,24 @@ class _ConnectButtonState extends State<ConnectButton>
     if (Platform.isAndroid) {
       vpnPlugin?.prepareVpn();
     }
+
+    String currentIp = aps.ipv4.value;
+    bool forceDhcp = false;
+    String ipForServer = ""; // 默认为空，如果强制DHCP
+
+    if (currentIp.isEmpty ||
+        currentIp == "0.0.0.0" ||
+        !_isValidIpAddress(currentIp)) {
+      forceDhcp = true;
+    } else {
+      // IP有效且不是 "0.0.0.0"
+      ipForServer = currentIp;
+    }
+
     await createServer(
       username: aps.PlayerName.value,
-      enableDhcp: aps.dhcp.value,
-      specifiedIp: aps.ipv4.value,
+      enableDhcp: forceDhcp ? true : aps.dhcp.value,
+      specifiedIp: forceDhcp ? "" : ipForServer, // 如果强制DHCP，则指定IP为空
       roomName: rom.roomName,
       roomPassword: rom.password,
       severurl:
@@ -220,6 +251,13 @@ class _ConnectButtonState extends State<ConnectButton>
       _state = ConnectionState.connected;
       _connectionDuration = 0;
     });
+    Aps().isConnecting.value = true;
+    // 确保传递给 _startVpn 的 ipv4Addr 是有效的
+    // 如果之前是DHCP获取的，Aps().ipv4.value 应该已经被更新
+    // 如果是静态IP，Aps().ipv4.value 就是那个静态IP
+    // 如果因为无效IP而强制DHCP，此时 Aps().ipv4.value 可能是 "0.0.0.0" 或旧的无效值
+    // 需要确保在 _startVpn 之前 Aps().ipv4.value 已经被正确更新为DHCP分配的IP
+    // 这一步通常在 _checkAndUpdateConnectionStatus 中完成
     _startVpn(ipv4Addr: Aps().ipv4.value, mtu: Aps().mtu.value);
     _startNetworkMonitoring();
   }
@@ -256,6 +294,7 @@ class _ConnectButtonState extends State<ConnectButton>
   /// 该方法负责将按钮状态从已连接(connected)切换回空闲(idle)状态，
   /// 实现断开连接的功能
   void _disconnect() {
+    Aps().isConnecting.value = false;
     if (Platform.isAndroid) {
       vpnPlugin?.stopVpn();
     }

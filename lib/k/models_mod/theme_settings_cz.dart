@@ -42,7 +42,7 @@ class ThemeSettingsRepository {
   /// @return 返回当前的主题颜色值，如果未设置则返回0
   Future<int> getThemeColor() async {
     ThemeSettings? settings = await _isar.themeSettings.get(1);
-    return settings?.colorValue ?? 0;
+    return settings?.colorValue ?? 0xFFFF5722;
   }
 
   /// 更新主题模式

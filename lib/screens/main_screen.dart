@@ -80,7 +80,7 @@ class _MainScreenState extends State<MainScreen>
       icon: Icons.supervised_user_circle_outlined, // 未选中时的图标
       activeIcon:
           Icons.supervised_user_circle, // 选中时的图标Icon(Icons.room_preferences)
-      label: '用户', // 导航项标签
+      label: '玩家', // 导航项标签
       page: const UserPage(), // 对应的页面
     ),
     NavigationItem(

@@ -58,11 +58,57 @@ class AllSettingsCz {
     }
   }
 
+  /// 设置用户简约模式
+  /// @param isMinimal 是否启用简约模式
+  /// 将新的简约模式设置保存到数据库中
+  Future<void> setUserMinimal(bool isMinimal) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.userListSimple = isMinimal;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取用户简约模式
+  /// @return 是否启用简约模式
+  Future<bool> getUserMinimal() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      return settings.userListSimple;
+    }
+    return false;
+  }
+
   // getListenList
   Future<List<String>> getListenList() async {
     AllSettings? config = await _isar.allSettings.get(1);
     if (config?.listenList == null) return [];
     return config!.listenList!;
+  }
+
+  ///closeMinimize
+  /// @param isClose 是否关闭最小化到托盘
+  /// 将新的最小化到托盘设置保存到数据库中
+  Future<void> closeMinimize(bool isClose) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.closeMinimize = isClose;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  ///getCloseMinimize
+  /// @return 是否关闭最小化到托盘
+  Future<bool> getCloseMinimize() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      return settings.closeMinimize;
+    }
+    return false;
   }
 
   // 设置监听列表

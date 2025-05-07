@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:astral/fun/up.dart';
 import 'package:astral/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+// 仅在桌面平台导入系统托盘
+import 'package:system_tray/system_tray.dart' if (dart.library.html) '';
+import 'package:window_manager/window_manager.dart';
 
 class KevinApp extends StatefulWidget {
   const KevinApp({super.key});
@@ -16,6 +21,11 @@ class _KevinAppState extends State<KevinApp> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override

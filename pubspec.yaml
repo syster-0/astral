@@ -25,7 +25,7 @@ dependencies:
   window_manager: ^0.4.3
   flutter_colorpicker: ^1.1.0
   flutter_staggered_grid_view: ^0.7.0
-  uuid: ^4.5.1
+  uuid: ^3.0.7
   jwt_decoder: ^2.0.1
   dart_jsonwebtoken: ^3.2.0
   flutter_localization: ^0.3.2
@@ -40,6 +40,7 @@ dependencies:
   package_info_plus: ^8.3.0
   url_launcher: ^6.3.1
   path_provider: ^2.1.5
+  system_tray: ^2.0.3
 
 dev_dependencies:
   flutter_test:
@@ -54,7 +55,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  assets:
+    # - assets/dlls/
+    - assets/icon.ico
   
   fonts:
     - family: MiSans
@@ -62,4 +65,3 @@ flutter:
           - asset: fonts/MiSans-Demibold.ttf
           - asset: fonts/MiSans-Regular.ttf
             weight: 800
-

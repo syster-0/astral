@@ -53,6 +53,8 @@ class _ServerDialogState extends State<ServerDialog> {
   bool _wg = false;
   bool _txt = false;
   bool _srv = false;
+  bool _http = false; // <-- 新增 HTTP 状态
+  bool _https = false; // <-- 新增 HTTPS 状态
 
   @override
   void initState() {
@@ -71,6 +73,8 @@ class _ServerDialogState extends State<ServerDialog> {
       _wg = widget.server!.wg;
       _txt = widget.server!.txt;
       _srv = widget.server!.srv;
+      _http = widget.server!.http;
+      _https = widget.server!.https;
     }
   }
 
@@ -95,6 +99,8 @@ class _ServerDialogState extends State<ServerDialog> {
         wg: _wg,
         txt: _txt,
         srv: _srv,
+        http: _http, // <-- 保存 HTTP 状态
+        https: _https, // <-- 保存 HTTPS 状态
       );
 
       if (widget.server == null) {
@@ -104,7 +110,6 @@ class _ServerDialogState extends State<ServerDialog> {
         // 更新现有服务器
         Aps().updateServer(server);
       }
-
       Navigator.of(context).pop();
     }
   }
@@ -204,6 +209,18 @@ class _ServerDialogState extends State<ServerDialog> {
                     'SRV',
                     _srv,
                     (value) => setState(() => _srv = value!),
+                  ),
+                  _buildProtocolSwitch(
+                    // <-- 新增 HTTP 开关
+                    'HTTP',
+                    _http,
+                    (value) => setState(() => _http = value!),
+                  ),
+                  _buildProtocolSwitch(
+                    // <-- 新增 HTTPS 开关
+                    'HTTPS',
+                    _https,
+                    (value) => setState(() => _https = value!),
                   ),
                 ],
               ),

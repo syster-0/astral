@@ -68,12 +68,13 @@ ThemeSettings _themeSettingsDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = ThemeSettings();
-  object.colorValue = reader.readLong(offsets[0]);
+  final object = ThemeSettings(
+    colorValue: reader.readLongOrNull(offsets[0]) ?? 0xFFFF5722,
+    themeModeValue: _ThemeSettingsthemeModeValueValueEnumMap[
+            reader.readByteOrNull(offsets[1])] ??
+        ThemeMode.system,
+  );
   object.id = id;
-  object.themeModeValue = _ThemeSettingsthemeModeValueValueEnumMap[
-          reader.readByteOrNull(offsets[1])] ??
-      ThemeMode.system;
   return object;
 }
 
@@ -85,7 +86,7 @@ P _themeSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0xFFFF5722) as P;
     case 1:
       return (_ThemeSettingsthemeModeValueValueEnumMap[
               reader.readByteOrNull(offset)] ??

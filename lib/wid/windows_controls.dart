@@ -1,4 +1,6 @@
+import 'package:astral/k/app_s/Aps.dart';
 import 'package:flutter/material.dart';
+import 'package:system_tray/system_tray.dart';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
 
@@ -11,12 +13,53 @@ class WindowControls extends StatefulWidget {
 
 class _WindowControlsState extends State<WindowControls> with WindowListener {
   bool _isMaximized = false;
+  final SystemTray _systemTray = SystemTray();
 
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
     _updateMaximizedStatus();
+    // 桌面平台代码
+    _initTray();
+  }
+
+  Future<void> _initTray() async {
+    String path = 'assets/icon.ico';
+    final Menu menu = Menu();
+    await menu.buildFrom([
+      MenuItemLabel(
+        label: '显示主界面',
+        onClicked: (menuItem) {
+          // 添加窗口显示逻辑
+          windowManager.show();
+        },
+      ),
+      MenuItemLabel(
+        label: '退出',
+        onClicked: (menuItem) {
+          _systemTray.destroy();
+          windowManager.close();
+        },
+      ),
+    ]);
+
+    // 添加异常处理
+    try {
+      await _systemTray.initSystemTray(title: "Astral", iconPath: path);
+      await _systemTray.setContextMenu(menu);
+    } catch (e) {
+      print('托盘初始化失败: $e');
+    }
+
+    // 注册右键事件处理
+    _systemTray.registerSystemTrayEventHandler((eventName) {
+      if (eventName == kSystemTrayEventRightClick) {
+        _systemTray.popUpContextMenu(); // 显式弹出上下文菜单
+      } else if (eventName == kSystemTrayEventClick) {
+        windowManager.show();
+      }
+    });
   }
 
   @override
@@ -71,7 +114,11 @@ class _WindowControlsState extends State<WindowControls> with WindowListener {
         IconButton(
           icon: const Icon(Icons.close),
           onPressed: () async {
-            await windowManager.close();
+            if (Aps().closeMinimize.value) {
+              await windowManager.hide();
+            } else {
+              await windowManager.close();
+            }
           },
           tooltip: '关闭',
           iconSize: 20,

@@ -17,20 +17,30 @@ const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
   properties: {
-    r'listenList': PropertySchema(
+    r'closeMinimize': PropertySchema(
       id: 0,
+      name: r'closeMinimize',
+      type: IsarType.bool,
+    ),
+    r'listenList': PropertySchema(
+      id: 1,
       name: r'listenList',
       type: IsarType.stringList,
     ),
     r'playerName': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'playerName',
       type: IsarType.string,
     ),
     r'room': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'room',
       type: IsarType.long,
+    ),
+    r'userListSimple': PropertySchema(
+      id: 4,
+      name: r'userListSimple',
+      type: IsarType.bool,
     )
   },
   estimateSize: _allSettingsEstimateSize,
@@ -80,9 +90,11 @@ void _allSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeStringList(offsets[0], object.listenList);
-  writer.writeString(offsets[1], object.playerName);
-  writer.writeLong(offsets[2], object.room);
+  writer.writeBool(offsets[0], object.closeMinimize);
+  writer.writeStringList(offsets[1], object.listenList);
+  writer.writeString(offsets[2], object.playerName);
+  writer.writeLong(offsets[3], object.room);
+  writer.writeBool(offsets[4], object.userListSimple);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -92,10 +104,12 @@ AllSettings _allSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AllSettings();
+  object.closeMinimize = reader.readBool(offsets[0]);
   object.id = id;
-  object.listenList = reader.readStringList(offsets[0]);
-  object.playerName = reader.readStringOrNull(offsets[1]);
-  object.room = reader.readLongOrNull(offsets[2]);
+  object.listenList = reader.readStringList(offsets[1]);
+  object.playerName = reader.readStringOrNull(offsets[2]);
+  object.room = reader.readLongOrNull(offsets[3]);
+  object.userListSimple = reader.readBool(offsets[4]);
   return object;
 }
 
@@ -107,11 +121,15 @@ P _allSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 2:
+      return (reader.readStringOrNull(offset)) as P;
+    case 3:
       return (reader.readLongOrNull(offset)) as P;
+    case 4:
+      return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -210,6 +228,16 @@ extension AllSettingsQueryWhere
 
 extension AllSettingsQueryFilter
     on QueryBuilder<AllSettings, AllSettings, QFilterCondition> {
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      closeMinimizeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'closeMinimize',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -729,6 +757,16 @@ extension AllSettingsQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      userListSimpleEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userListSimple',
+        value: value,
+      ));
+    });
+  }
 }
 
 extension AllSettingsQueryObject
@@ -739,6 +777,19 @@ extension AllSettingsQueryLinks
 
 extension AllSettingsQuerySortBy
     on QueryBuilder<AllSettings, AllSettings, QSortBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByCloseMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'closeMinimize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByCloseMinimizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'closeMinimize', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByPlayerName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'playerName', Sort.asc);
@@ -762,10 +813,36 @@ extension AllSettingsQuerySortBy
       return query.addSortBy(r'room', Sort.desc);
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByUserListSimple() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userListSimple', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByUserListSimpleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userListSimple', Sort.desc);
+    });
+  }
 }
 
 extension AllSettingsQuerySortThenBy
     on QueryBuilder<AllSettings, AllSettings, QSortThenBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByCloseMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'closeMinimize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByCloseMinimizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'closeMinimize', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -801,10 +878,29 @@ extension AllSettingsQuerySortThenBy
       return query.addSortBy(r'room', Sort.desc);
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByUserListSimple() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userListSimple', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByUserListSimpleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userListSimple', Sort.desc);
+    });
+  }
 }
 
 extension AllSettingsQueryWhereDistinct
     on QueryBuilder<AllSettings, AllSettings, QDistinct> {
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByCloseMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'closeMinimize');
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByListenList() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'listenList');
@@ -823,6 +919,12 @@ extension AllSettingsQueryWhereDistinct
       return query.addDistinctBy(r'room');
     });
   }
+
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByUserListSimple() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userListSimple');
+    });
+  }
 }
 
 extension AllSettingsQueryProperty
@@ -830,6 +932,12 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> closeMinimizeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'closeMinimize');
     });
   }
 
@@ -849,6 +957,12 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, int?, QQueryOperations> roomProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'room');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> userListSimpleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userListSimple');
     });
   }
 }

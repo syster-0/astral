@@ -54,6 +54,8 @@ class Aps {
     PlayerName.value = await AppDatabase().AllSettings.getPlayerName();
     listenList.value = await AppDatabase().AllSettings.getListenList();
     servers.value = await AppDatabase().ServerSetting.getAllServers();
+    userListSimple.value = await AppDatabase().AllSettings.getUserMinimal();
+    closeMinimize.value = await AppDatabase().AllSettings.getCloseMinimize();
   }
 
   final Signal<KVNetworkStatus?> netStatus = signal(null); // 网络状态
@@ -63,6 +65,15 @@ class Aps {
 
   /// listenList
   final Signal<List<String>> listenList = signal([]); // 房间列表
+
+  /// userListSimple
+  final Signal<bool> userListSimple = signal(false); // 玩家列表
+
+  /// 设置userListSimple
+  Future<void> setUserListSimple(bool value) async {
+    userListSimple.value = value;
+    await AppDatabase().AllSettings.setUserMinimal(value);
+  }
 
   /// 获取监听列表
   Future<void> updateListenListFromDb() async {
@@ -518,5 +529,17 @@ class Aps {
     await AppDatabase().ServerSetting.updateServer(server);
     servers.value = await AppDatabase().ServerSetting.getAllServers();
     return AppDatabase().ServerSetting.getAllServers();
+  }
+
+  /// 是否处于连接中
+  final Signal<bool> isConnecting = signal(false);
+
+  /// 是否关闭最小化到托盘
+  final Signal<bool> closeMinimize = signal(true);
+
+  /// 更新是否关闭最小化到托盘
+  Future<void> updateCloseMinimize(bool value) async {
+    closeMinimize.value = value;
+    await AppDatabase().AllSettings.closeMinimize(value);
   }
 }
