@@ -22,23 +22,28 @@ const AllSettingsSchema = CollectionSchema(
       name: r'closeMinimize',
       type: IsarType.bool,
     ),
-    r'listenList': PropertySchema(
+    r'customVpn': PropertySchema(
       id: 1,
+      name: r'customVpn',
+      type: IsarType.stringList,
+    ),
+    r'listenList': PropertySchema(
+      id: 2,
       name: r'listenList',
       type: IsarType.stringList,
     ),
     r'playerName': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'playerName',
       type: IsarType.string,
     ),
     r'room': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'room',
       type: IsarType.long,
     ),
     r'userListSimple': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'userListSimple',
       type: IsarType.bool,
     )
@@ -63,6 +68,13 @@ int _allSettingsEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.customVpn.length * 3;
+  {
+    for (var i = 0; i < object.customVpn.length; i++) {
+      final value = object.customVpn[i];
+      bytesCount += value.length * 3;
+    }
+  }
   {
     final list = object.listenList;
     if (list != null) {
@@ -91,10 +103,11 @@ void _allSettingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.closeMinimize);
-  writer.writeStringList(offsets[1], object.listenList);
-  writer.writeString(offsets[2], object.playerName);
-  writer.writeLong(offsets[3], object.room);
-  writer.writeBool(offsets[4], object.userListSimple);
+  writer.writeStringList(offsets[1], object.customVpn);
+  writer.writeStringList(offsets[2], object.listenList);
+  writer.writeString(offsets[3], object.playerName);
+  writer.writeLong(offsets[4], object.room);
+  writer.writeBool(offsets[5], object.userListSimple);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -105,11 +118,12 @@ AllSettings _allSettingsDeserialize(
 ) {
   final object = AllSettings();
   object.closeMinimize = reader.readBool(offsets[0]);
+  object.customVpn = reader.readStringList(offsets[1]) ?? [];
   object.id = id;
-  object.listenList = reader.readStringList(offsets[1]);
-  object.playerName = reader.readStringOrNull(offsets[2]);
-  object.room = reader.readLongOrNull(offsets[3]);
-  object.userListSimple = reader.readBool(offsets[4]);
+  object.listenList = reader.readStringList(offsets[2]);
+  object.playerName = reader.readStringOrNull(offsets[3]);
+  object.room = reader.readLongOrNull(offsets[4]);
+  object.userListSimple = reader.readBool(offsets[5]);
   return object;
 }
 
@@ -123,12 +137,14 @@ P _allSettingsDeserializeProp<P>(
     case 0:
       return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 3:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
+      return (reader.readLongOrNull(offset)) as P;
+    case 5:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -235,6 +251,231 @@ extension AllSettingsQueryFilter
         property: r'closeMinimize',
         value: value,
       ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customVpn',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customVpn',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customVpn',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customVpn',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customVpn',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      customVpnLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'customVpn',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -901,6 +1142,12 @@ extension AllSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByCustomVpn() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customVpn');
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByListenList() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'listenList');
@@ -938,6 +1185,13 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, bool, QQueryOperations> closeMinimizeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'closeMinimize');
+    });
+  }
+
+  QueryBuilder<AllSettings, List<String>, QQueryOperations>
+      customVpnProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customVpn');
     });
   }
 

@@ -59,6 +59,7 @@ class Aps {
     servers.value = await AppDatabase().ServerSetting.getAllServers();
     userListSimple.value = await AppDatabase().AllSettings.getUserMinimal();
     closeMinimize.value = await AppDatabase().AllSettings.getCloseMinimize();
+    customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
   }
   // 开机自启动
 
@@ -581,5 +582,30 @@ class Aps {
   Future<void> updateCloseMinimize(bool value) async {
     closeMinimize.value = value;
     await AppDatabase().AllSettings.closeMinimize(value);
+  }
+
+  /// 自定义vpn网段
+  final Signal<List<String>> customVpn = signal([]);
+
+  /// 添加自定义vpn网段
+  Future<void> addCustomVpn(String value) async {
+    final list = List<String>.from(customVpn.value);
+    list.add(value);
+    customVpn.value = list;
+    await AppDatabase().AllSettings.setCustomVpn(list);
+  }
+
+  /// 删除自定义vpn网段
+  Future<void> deleteCustomVpn(int index) async {
+    final list = List<String>.from(customVpn.value);
+    list.removeAt(index);
+    customVpn.value = list;
+    await AppDatabase().AllSettings.setCustomVpn(list);
+  }
+
+  /// 更新自定义vpn网段
+  Future<void> updateCustomVpn(int index, String value) async {
+    await AppDatabase().AllSettings.updateCustomVpn(index, value);
+    customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
   }
 }

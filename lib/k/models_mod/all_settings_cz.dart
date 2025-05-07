@@ -199,6 +199,56 @@ class AllSettingsCz {
     }
     return config!.playerName!;
   }
+
+  // 设置自定义VPN网段
+  Future<void> setCustomVpn(List<String> customVpn) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.customVpn = customVpn;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 删除自定义VPN网段
+  Future<void> deleteCustomVpn(int index) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.customVpn.removeAt(index);
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 添加自定义VPN网段
+  Future<void> addCustomVpn(String vpn) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.customVpn.add(vpn);
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 修改自定义VPN网段
+  Future<void> updateCustomVpn(int index, String vpn) async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    if (config != null) {
+      config.customVpn[index] = vpn;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(config);
+      });
+    }
+  }
+
+  // 获取自定义VPN网段
+  Future<List<String>> getCustomVpn() async {
+    AllSettings? config = await _isar.allSettings.get(1);
+    return config?.customVpn ?? [];
+  }
 }
 
 // 在同一个文件中添加这个方法

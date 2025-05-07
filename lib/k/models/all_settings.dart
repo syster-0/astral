@@ -15,6 +15,9 @@ class AllSettings {
   /// 监听列表
   List<String>? listenList;
 
+  /// 自定义vpn网段
+  List<String> customVpn = [];
+
   ///用户列表简约模式
   bool userListSimple = false;
 
