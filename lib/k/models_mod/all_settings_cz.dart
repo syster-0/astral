@@ -13,32 +13,47 @@ class AllSettingsCz {
   }
 
   Future<void> init() async {
-    // 初始化时检查是否存在AllSettings实例，如果不存在则创建一个新的实例
-    final allSettings = await _isar.allSettings.get(1);
-    if (allSettings == null) {
-      await _isar.writeTxn(() async {
-        await _isar.allSettings.put(AllSettings());
-      });
-    }
-    // 检查 playerName 是否为空，如果为空则设置为主机名
-    if (allSettings != null && allSettings.playerName == null) {
-      String deviceName = await _getDeviceName(); // 获取设备名称
-      await _isar.writeTxn(() async {
-        allSettings.playerName = deviceName; // 设置默认名称
-        await _isar.allSettings.put(allSettings);
-      });
-    }
+    AllSettings? settings = await _isar.allSettings.get(
+      1,
+    ); // 1. 使用可变变量 settings
+    bool needsSave = false; // 2. 标记是否需要保存
 
-    /// 检查 listenList 是否为空，如果为空则设置为默认值
-    if (allSettings != null && allSettings.listenList == null) {
-      await _isar.writeTxn(() async {
-        allSettings.listenList = [
+    if (settings == null) {
+      // 3. 如果是首次运行 (settings 为 null)
+      settings = AllSettings(); // 创建新实例
+
+      // 直接在新实例上设置所有默认值
+      settings.playerName = await _getDeviceName(); // 设置默认 playerName
+      settings.listenList = [
+        // 设置默认 listenList
+        "tcp://0.0.0.0:11010",
+        "udp://0.0.0.0:11010",
+        "tcp://[::]:11010",
+        "udp://[::]:11010",
+      ];
+      needsSave = true; // 标记这个新创建并完全初始化的对象需要保存
+    } else {
+      // 4. 如果 settings 已存在，检查各个字段是否需要设置默认值
+      if (settings.playerName == null) {
+        settings.playerName = await _getDeviceName();
+        needsSave = true;
+      }
+      if (settings.listenList == null || settings.listenList!.isEmpty) {
+        settings.listenList = [
           "tcp://0.0.0.0:11010",
           "udp://0.0.0.0:11010",
           "tcp://[::]:11010",
           "udp://[::]:11010",
-        ]; // 设置默认值
-        await _isar.allSettings.put(allSettings);
+        ];
+        needsSave = true;
+      }
+    }
+
+    // 5. 如果有任何更改或这是新对象，则保存到数据库
+    if (needsSave) {
+      await _isar.writeTxn(() async {
+        // 此处的 settings! 是安全的，因为如果它开始时为 null，则已被赋值
+        await _isar.allSettings.put(settings!);
       });
     }
   }

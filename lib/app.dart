@@ -31,7 +31,6 @@ class _KevinAppState extends State<KevinApp> {
       supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
       theme: ThemeData(
         useMaterial3: true,
-
         colorSchemeSeed: _aps.themeColor.watch(context), // 设置当前主题颜色,
         brightness: Brightness.light,
       ).copyWith(

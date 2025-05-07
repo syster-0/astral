@@ -14,4 +14,10 @@ class ThemeSettings {
   /// 主题模式枚举值，默认跟随系统
   @enumerated
   ThemeMode themeModeValue = ThemeMode.system;
+
+  /// 构造函数，用于初始化主题设置
+  ThemeSettings({
+    this.colorValue = 0xFFFF5722,
+    this.themeModeValue = ThemeMode.system,
+  });
 }
