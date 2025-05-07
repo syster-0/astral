@@ -105,9 +105,9 @@ class TauriVpnService : VpnService() {
             "224.0.0.0/4",  // 组播地址范围
             "255.255.255.255/32"  // 广播地址
         )
-        if (args?.getStringArray(ROUTES)!= null) {
-               // 追加routes
-               routes = routes + args?.getStringArray(ROUTES)!!     
+        val additionalRoutes = args?.getStringArray(ROUTES)
+        if (additionalRoutes != null && additionalRoutes.isNotEmpty()) {
+            routes = routes.toMutableList().apply { addAll(additionalRoutes) }.toTypedArray()
         }
         // 添加组播和广播地址到路由routes中
 
