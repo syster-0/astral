@@ -42,7 +42,7 @@ jobs:
           flutter build windows --release `
             --obfuscate `
             --split-debug-info=build/symbols `
-            --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            --dart-define=SENTRY_DSN=${{ secrets.SENTRY }}
           echo "Flutter Windows Release 编译完成！"
 
       # 复制 DLL 文件到输出目录
