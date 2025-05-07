@@ -348,18 +348,23 @@ class _AllUserCardState extends State<AllUserCard> {
 
   // 添加一个速度单位转换的辅助方法
   String _formatSpeed(double speedInB) {
-    // Convert bytes to kilobytes first
-    double speedInKB = speedInB / 1024;
+    final units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    double value = speedInB;
+    int unitIndex = 0;
 
-    if (speedInKB >= 1048576) {
-      // >= 1024 * 1024 KB (1 GB/s)
-      return '${(speedInKB / 1048576).toStringAsFixed(2)} GB/s';
-    } else if (speedInKB >= 1024) {
-      // >= 1024 KB (1 MB/s)
-      return '${(speedInKB / 1024).toStringAsFixed(2)} MB/s';
-    } else {
-      return '${speedInKB.toStringAsFixed(2)} KB/s';
+    // 循环处理单位转换
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
     }
+
+    // 格式化数值显示（整数部分不带小数，小数部分保留两位）
+    final formattedValue =
+        value % 1 == 0
+            ? value.toInt().toString()
+            : value.toStringAsFixed(2).replaceFirst(RegExp(r'.0+$'), '');
+
+    return '$formattedValue${units[unitIndex]}';
   }
 
   // 构建信息行
