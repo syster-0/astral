@@ -1,5 +1,7 @@
+import 'package:astral/fun/up.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -328,7 +330,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        // ... existing code ...
         Card(
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
@@ -583,6 +584,31 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('关于')),
+              ListTile(
+                leading: const Icon(Icons.group),
+                title: const Text('官方QQ群 1030199465'),
+                subtitle: const Text('点击复制群号'),
+                onTap: () async {
+                  const qqGroup = '1030199465'; // 替换为实际QQ群号
+                  await Clipboard.setData(const ClipboardData(text: qqGroup));
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('群号已复制到剪贴板')));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.update),
+                title: const Text('检查更新'),
+                onTap: () {
+                  final updateChecker = UpdateChecker(
+                    owner: 'ldoubil',
+                    repo: 'astral',
+                  );
+                  if (mounted) {
+                    updateChecker.checkForUpdates(context);
+                  }
+                },
+              ),
             ],
           ),
         ),
