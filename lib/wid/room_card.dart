@@ -168,7 +168,7 @@ class _RoomCardState extends State<RoomCard> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '类型: ${room.encrypted ? "加密" : "不加密"}', // 使用 room.isEncrypted
+                  '类型: ${room.encrypted ? "保护" : "不保护"}', // 使用 room.isEncrypted
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ],

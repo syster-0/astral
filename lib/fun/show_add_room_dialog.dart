@@ -26,7 +26,8 @@ Future<void> showAddRoomDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 8),
                 SwitchListTile(
-                  title: const Text('是否加密'),
+                  title: const Text('是否保护'),
+                  subtitle: const Text('开启后将自动生成房间信息，只能通过分享加入。'),
                   value: isEncrypted,
                   onChanged: (value) {
                     setState(() {
@@ -34,6 +35,7 @@ Future<void> showAddRoomDialog(BuildContext context) async {
                     });
                   },
                 ),
+
                 if (!isEncrypted) ...[
                   TextField(
                     decoration: const InputDecoration(labelText: '房间号'),
