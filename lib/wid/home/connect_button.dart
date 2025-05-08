@@ -55,7 +55,10 @@ class _ConnectButtonState extends State<ConnectButton>
       vpnPlugin?.startVpn(
         ipv4Addr: ipv4Addr,
         mtu: mtu,
-        routes: Aps().cidrproxy.value,
+        routes:
+            Aps().customVpn.value
+                .where((route) => _isValidCIDR(route))
+                .toList(),
         disallowedApplications: disallowedApplications,
       );
     }
@@ -137,7 +140,7 @@ class _ConnectButtonState extends State<ConnectButton>
       specifiedIp: forceDhcp ? "" : ipForServer, // 如果强制DHCP，则指定IP为空
       roomName: rom.roomName,
       roomPassword: rom.password,
-      cidrs: aps.customVpn.value,
+      cidrs: aps.cidrproxy.value,
       severurl:
           aps.servers.value.where((server) => server.enable).expand((server) {
             final urls = <String>[];
@@ -515,4 +518,41 @@ String intToIp(int ipInt) {
     (ipInt >> 8) & 0xFF,
     ipInt & 0xFF,
   ].join('.');
+}
+
+// 新增CIDR验证方法
+bool _isValidCIDR(String cidr) {
+  final cidrPattern = RegExp(
+    r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(3[0-2]|[12]?[0-9])$',
+  );
+
+  if (!cidrPattern.hasMatch(cidr)) {
+    debugPrint('⚠️ 无效路由条目已过滤: $cidr');
+    return false;
+  }
+
+  // 额外验证网络地址有效性
+  final parts = cidr.split('/');
+  final ip = parts[0];
+  final mask = int.parse(parts[1]);
+
+  return _isValidIpAddress(ip) && mask >= 0 && mask <= 32;
+}
+
+bool _isValidIpAddress(String ip) {
+  if (ip.isEmpty) return false;
+
+  // 严格的正则表达式验证（每个数字段 0-255）
+  final RegExp ipRegex = RegExp(
+    r"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+  );
+
+  // 排除特殊保留地址（可扩展）
+  if (!ipRegex.hasMatch(ip) ||
+      ip == "0.0.0.0" ||
+      ip == "255.255.255.255" ||
+      ip.startsWith("127.")) {
+    return false;
+  }
+  return true;
 }
