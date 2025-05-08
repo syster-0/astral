@@ -1,9 +1,4 @@
-import 'dart:async';
-
-import 'package:app_links/app_links.dart';
-import 'package:astral/fun/reg.dart';
 import 'package:astral/screens/main_screen.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,41 +12,14 @@ class KevinApp extends StatefulWidget {
 
 class _KevinAppState extends State<KevinApp> {
   final _aps = Aps();
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
-    _initDeepLinks();
-  }
-
-  Future<void> _initDeepLinks() async {
-    if (!kIsWeb) {
-      registerUriProtocol();
-    }
-    _appLinks = AppLinks();
-
-    // 处理初始链接
-    final initialUri = await _appLinks.getInitialLink();
-    if (initialUri != null) {
-      _handleDeepLink(initialUri);
-    }
-
-    // 监听后续链接
-    _linkSubscription = _appLinks.uriLinkStream.listen(_handleDeepLink);
-  }
-
-  void _handleDeepLink(Uri uri) {
-    if (uri.scheme == 'astral') {
-      print('Received astral link: ${uri.toString()}');
-      // 在这里添加业务逻辑处理
-    }
   }
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
     super.dispose();
   }
 
