@@ -28,8 +28,6 @@ class AllSettingsCz {
         // 设置默认 listenList
         "tcp://0.0.0.0:11010",
         "udp://0.0.0.0:11010",
-        "tcp://[::]:11010",
-        "udp://[::]:11010",
       ];
       needsSave = true; // 标记这个新创建并完全初始化的对象需要保存
     } else {
@@ -39,12 +37,7 @@ class AllSettingsCz {
         needsSave = true;
       }
       if (settings.listenList == null || settings.listenList!.isEmpty) {
-        settings.listenList = [
-          "tcp://0.0.0.0:11010",
-          "udp://0.0.0.0:11010",
-          "tcp://[::]:11010",
-          "udp://[::]:11010",
-        ];
+        settings.listenList = ["tcp://0.0.0.0:11010", "udp://0.0.0.0:11010"];
         needsSave = true;
       }
     }

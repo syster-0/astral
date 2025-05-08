@@ -88,8 +88,7 @@ jobs:
             --target-platform android-x64 \
             --split-per-abi \
             --obfuscate \
-            --split-debug-info=build/symbols \
-            --dart-define=SENTRY_DSN=${{ secrets.SENTRY }}
+            --split-debug-info=build/symbols 
 
       - name: 📤 上传 x86_64 架构 APK 到 Artifacts
         uses: actions/upload-artifact@v4

@@ -191,289 +191,302 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        Card(
-          child: ExpansionTile(
-            initiallyExpanded: false,
-            leading: const Icon(Icons.route),
-            title: const Text('子网代理 (CIDR)'),
-            children: [
-              Builder(
-                builder: (context) {
-                  final cidrList = Aps().cidrproxy.watch(context);
-                  return Column(
-                    children: [
-                      ...List.generate(cidrList.length, (index) {
-                        final cidr = cidrList[index];
-                        return ListTile(
-                          title: Text(cidr),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () async {
-                                  final controller = TextEditingController(
-                                    text: cidr,
-                                  );
-                                  final result = await showDialog<String>(
-                                    context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('编辑CIDR'),
-                                          content: TextField(
-                                            controller: controller,
-                                            decoration: const InputDecoration(
-                                              labelText:
-                                                  'CIDR格式 (例: 192.168.1.0/24)',
+        if (!Platform.isAndroid)
+          Card(
+            child: ExpansionTile(
+              initiallyExpanded: false,
+              leading: const Icon(Icons.route),
+              title: const Text('子网代理 (CIDR)'),
+              children: [
+                Builder(
+                  builder: (context) {
+                    final cidrList = Aps().cidrproxy.watch(context);
+                    return Column(
+                      children: [
+                        ...List.generate(cidrList.length, (index) {
+                          final cidr = cidrList[index];
+                          return ListTile(
+                            title: Text(cidr),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  onPressed: () async {
+                                    final controller = TextEditingController(
+                                      text: cidr,
+                                    );
+                                    final result = await showDialog<String>(
+                                      context: context,
+                                      builder:
+                                          (context) => AlertDialog(
+                                            title: const Text('编辑CIDR'),
+                                            content: TextField(
+                                              controller: controller,
+                                              decoration: const InputDecoration(
+                                                labelText:
+                                                    'CIDR格式 (例: 192.168.1.0/24)',
+                                              ),
                                             ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: const Text('取消'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      controller.text,
+                                                    ),
+                                                child: const Text('保存'),
+                                              ),
+                                            ],
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(context),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    controller.text,
-                                                  ),
-                                              child: const Text('保存'),
-                                            ),
-                                          ],
-                                        ),
-                                  );
-                                  if (result != null && result.isNotEmpty) {
-                                    await Aps().updateCidrproxy(index, result);
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, size: 20),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('确认删除'),
-                                          content: Text('确定要删除CIDR "$cidr" 吗？'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    false,
-                                                  ),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    true,
-                                                  ),
-                                              child: const Text('删除'),
-                                            ),
-                                          ],
-                                        ),
-                                  );
-                                  if (confirm == true) {
-                                    await Aps().deleteCidrproxy(index);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      ListTile(
-                        leading: const Icon(Icons.add),
-                        title: const Text('添加CIDR代理'),
-                        onTap: () async {
-                          final controller = TextEditingController();
-                          final result = await showDialog<String>(
-                            context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: const Text('添加CIDR代理'),
-                                  content: TextField(
-                                    controller: controller,
-                                    decoration: const InputDecoration(
-                                      labelText: 'CIDR格式 (例: 192.168.1.0/24)',
-                                      hintText: '请输入CIDR网段',
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('取消'),
-                                    ),
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(
-                                            context,
-                                            controller.text,
-                                          ),
-                                      child: const Text('添加'),
-                                    ),
-                                  ],
+                                    );
+                                    if (result != null && result.isNotEmpty) {
+                                      await Aps().updateCidrproxy(
+                                        index,
+                                        result,
+                                      );
+                                    }
+                                  },
                                 ),
-                          );
-                          if (result != null && result.isNotEmpty) {
-                            await Aps().addCidrproxy(result);
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        // if (Platform.isAndroid)
-        Card(
-          child: ExpansionTile(
-            initiallyExpanded: false,
-            leading: const Icon(Icons.vpn_lock),
-            title: const Text('自定义VPN网段'),
-            children: [
-              Builder(
-                builder: (context) {
-                  final vpnList = Aps().customVpn.watch(context);
-                  return Column(
-                    children: [
-                      ...List.generate(vpnList.length, (index) {
-                        final vpn = vpnList[index];
-                        return ListTile(
-                          title: Text(vpn),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () async {
-                                  final controller = TextEditingController(
-                                    text: vpn,
-                                  );
-                                  final result = await showDialog<String>(
-                                    context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('编辑VPN网段'),
-                                          content: TextField(
-                                            controller: controller,
-                                            decoration: const InputDecoration(
-                                              labelText:
-                                                  'VPN网段格式 (例: 10.0.0.0/8)',
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 20),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder:
+                                          (context) => AlertDialog(
+                                            title: const Text('确认删除'),
+                                            content: Text(
+                                              '确定要删除CIDR "$cidr" 吗？',
                                             ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      false,
+                                                    ),
+                                                child: const Text('取消'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      true,
+                                                    ),
+                                                child: const Text('删除'),
+                                              ),
+                                            ],
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(context),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    controller.text,
-                                                  ),
-                                              child: const Text('保存'),
-                                            ),
-                                          ],
-                                        ),
-                                  );
-                                  if (result != null && result.isNotEmpty) {
-                                    await Aps().updateCustomVpn(index, result);
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, size: 20),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('确认删除'),
-                                          content: Text('确定要删除VPN网段 "$vpn" 吗？'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    false,
-                                                  ),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    true,
-                                                  ),
-                                              child: const Text('删除'),
-                                            ),
-                                          ],
-                                        ),
-                                  );
-                                  if (confirm == true) {
-                                    await Aps().deleteCustomVpn(index);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      ListTile(
-                        leading: const Icon(Icons.add),
-                        title: const Text('添加VPN网段'),
-                        onTap: () async {
-                          final controller = TextEditingController();
-                          final result = await showDialog<String>(
-                            context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: const Text('添加VPN网段'),
-                                  content: TextField(
-                                    controller: controller,
-                                    decoration: const InputDecoration(
-                                      labelText: 'VPN网段格式 (例: 10.0.0.0/8)',
-                                      hintText: '请输入VPN网段',
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('取消'),
-                                    ),
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(
-                                            context,
-                                            controller.text,
-                                          ),
-                                      child: const Text('添加'),
-                                    ),
-                                  ],
+                                    );
+                                    if (confirm == true) {
+                                      await Aps().deleteCidrproxy(index);
+                                    }
+                                  },
                                 ),
+                              ],
+                            ),
                           );
-                          if (result != null && result.isNotEmpty) {
-                            await Aps().addCustomVpn(result);
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                        }),
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: const Text('添加CIDR代理'),
+                          onTap: () async {
+                            final controller = TextEditingController();
+                            final result = await showDialog<String>(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text('添加CIDR代理'),
+                                    content: TextField(
+                                      controller: controller,
+                                      decoration: const InputDecoration(
+                                        labelText: 'CIDR格式 (例: 192.168.1.0/24)',
+                                        hintText: '请输入CIDR网段',
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(
+                                              context,
+                                              controller.text,
+                                            ),
+                                        child: const Text('添加'),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            if (result != null && result.isNotEmpty) {
+                              await Aps().addCidrproxy(result);
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
+        if (Platform.isAndroid)
+          Card(
+            child: ExpansionTile(
+              initiallyExpanded: false,
+              leading: const Icon(Icons.vpn_lock),
+              title: const Text('自定义VPN网段'),
+              children: [
+                Builder(
+                  builder: (context) {
+                    final vpnList = Aps().customVpn.watch(context);
+                    return Column(
+                      children: [
+                        ...List.generate(vpnList.length, (index) {
+                          final vpn = vpnList[index];
+                          return ListTile(
+                            title: Text(vpn),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  onPressed: () async {
+                                    final controller = TextEditingController(
+                                      text: vpn,
+                                    );
+                                    final result = await showDialog<String>(
+                                      context: context,
+                                      builder:
+                                          (context) => AlertDialog(
+                                            title: const Text('编辑VPN网段'),
+                                            content: TextField(
+                                              controller: controller,
+                                              decoration: const InputDecoration(
+                                                labelText:
+                                                    'VPN网段格式 (例: 10.0.0.0/8)',
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: const Text('取消'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      controller.text,
+                                                    ),
+                                                child: const Text('保存'),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                    if (result != null && result.isNotEmpty) {
+                                      await Aps().updateCustomVpn(
+                                        index,
+                                        result,
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 20),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder:
+                                          (context) => AlertDialog(
+                                            title: const Text('确认删除'),
+                                            content: Text(
+                                              '确定要删除VPN网段 "$vpn" 吗？',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      false,
+                                                    ),
+                                                child: const Text('取消'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      true,
+                                                    ),
+                                                child: const Text('删除'),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                    if (confirm == true) {
+                                      await Aps().deleteCustomVpn(index);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: const Text('添加VPN网段'),
+                          onTap: () async {
+                            final controller = TextEditingController();
+                            final result = await showDialog<String>(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text('添加VPN网段'),
+                                    content: TextField(
+                                      controller: controller,
+                                      decoration: const InputDecoration(
+                                        labelText: 'VPN网段格式 (例: 10.0.0.0/8)',
+                                        hintText: '请输入VPN网段',
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('取消'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(
+                                              context,
+                                              controller.text,
+                                            ),
+                                        child: const Text('添加'),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            if (result != null && result.isNotEmpty) {
+                              await Aps().addCustomVpn(result);
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         Card(
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠

@@ -87,8 +87,7 @@ jobs:
             --target-platform android-arm64 \
             --split-per-abi \
             --obfuscate \
-            --split-debug-info=build/symbols \
-            --dart-define=SENTRY_DSN=${{ secrets.SENTRY }}
+            --split-debug-info=build/symbols 
 
       - name: 📤 上传 arm64-v8a 架构 APK 到 Artifacts
         uses: actions/upload-artifact@v4
