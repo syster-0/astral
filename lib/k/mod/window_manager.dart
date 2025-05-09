@@ -35,12 +35,14 @@ class WindowManagerUtils {
 
       // 等待窗口准备就绪并显示
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
-        // 显示窗口
-        await windowManager.show();
-        // 使窗口获得焦点
-        await windowManager.focus();
+        // 如果 startupMinimize 为 true，则最小化窗口
+        if (Aps().startupMinimize.value) {
+          await windowManager.hide();
+        } else {
+          await windowManager.show();
+          await windowManager.focus();
+        }
       });
-
 
       if (Aps().startup.value) {
         handleStartupSetting(true);

@@ -23,10 +23,6 @@ class _WindowControlsState extends State<WindowControls> with WindowListener {
     // 桌面平台代码
     _initTray();
 
-    // 如果 startupMinimized 为 true，则最小化窗口
-    if (Aps().startupMinimize.value) {
-      windowManager.hide();
-    }
   }
 
   Future<void> _initTray() async {
