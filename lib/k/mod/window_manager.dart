@@ -41,11 +41,7 @@ class WindowManagerUtils {
         await windowManager.focus();
       });
 
-      // 如果 startupMinimized 为 true，则最小化窗口
-      if (Aps().startupMinimize.value) {
-        await windowManager.minimize();
-        handleStartupSetting(true);
-      }
+
       if (Aps().startup.value) {
         handleStartupSetting(true);
       }
