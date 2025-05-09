@@ -19,7 +19,7 @@ class AllSettings {
   List<String> customVpn = [];
 
   ///用户列表简约模式
-  bool userListSimple = false;
+  bool userListSimple = true;
 
   /// 关闭最小化到托盘
   bool closeMinimize = true;

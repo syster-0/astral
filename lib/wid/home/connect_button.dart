@@ -235,8 +235,9 @@ class _ConnectButtonState extends State<ConnectButton>
     final data = jsonDecode(runningInfo);
 
     final ipv4Address = _extractIpv4Address(data);
-    Aps().updateIpv4(ipv4Address);
-
+    if (ipv4Address != "0.0.0.0" && Aps().ipv4.value != ipv4Address) {
+      Aps().updateIpv4(ipv4Address);
+    }
     return ipv4Address != "0.0.0.0";
   }
 

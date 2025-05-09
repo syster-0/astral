@@ -1040,6 +1040,7 @@ dependencies = [
  "tabled",
  "tachyonix",
  "thiserror 1.0.69",
+ "thunk-rs",
  "time",
  "timedmap",
  "tokio",
@@ -4065,6 +4066,11 @@ dependencies = [
  "cfg-if",
  "once_cell",
 ]
+
+[[package]]
+name = "thunk-rs"
+version = "0.3.3"
+source = "git+https://github.com/easytier/thunk.git#5e8371a3100dbc18dda952a2036c6bd6fb0504db"
 
 [[package]]
 name = "time"

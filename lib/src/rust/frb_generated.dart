@@ -62,7 +62,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.9.0';
 
   @override
-  int get rustContentHash => 359645397;
+  int get rustContentHash => 1691766409;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -111,6 +111,8 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<bool> crateApiSimpleIsEasytierRunning();
+
+  Future<void> crateApiSimpleSendUdpToLocalhost({required String message});
 
   Future<bool> crateApiSimpleSetNetworkInterfaceHops({required int hop});
 
@@ -546,6 +548,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "is_easytier_running", argNames: []);
 
   @override
+  Future<void> crateApiSimpleSendUdpToLocalhost({required String message}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(message, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSimpleSendUdpToLocalhostConstMeta,
+        argValues: [message],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSimpleSendUdpToLocalhostConstMeta =>
+      const TaskConstMeta(
+        debugName: "send_udp_to_localhost",
+        argNames: ["message"],
+      );
+
+  @override
   Future<bool> crateApiSimpleSetNetworkInterfaceHops({required int hop}) {
     return handler.executeNormal(
       NormalTask(
@@ -555,7 +588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 14,
             port: port_,
           );
         },
@@ -586,7 +619,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -809,8 +842,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   KVNodeInfo dco_decode_kv_node_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return KVNodeInfo(
       hostname: dco_decode_String(arr[0]),
       ipv4: dco_decode_String(arr[1]),
@@ -819,8 +852,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       hops: dco_decode_list_node_hop_stats(arr[4]),
       lossRate: dco_decode_f_32(arr[5]),
       connections: dco_decode_list_kv_node_connection_stats(arr[6]),
-      version: dco_decode_String(arr[7]),
-      cost: dco_decode_i_32(arr[8]),
+      tunnelProto: dco_decode_String(arr[7]),
+      connType: dco_decode_String(arr[8]),
+      rxBytes: dco_decode_u_64(arr[9]),
+      txBytes: dco_decode_u_64(arr[10]),
+      version: dco_decode_String(arr[11]),
+      cost: dco_decode_i_32(arr[12]),
     );
   }
 
@@ -1165,6 +1202,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_connections = sse_decode_list_kv_node_connection_stats(
       deserializer,
     );
+    var var_tunnelProto = sse_decode_String(deserializer);
+    var var_connType = sse_decode_String(deserializer);
+    var var_rxBytes = sse_decode_u_64(deserializer);
+    var var_txBytes = sse_decode_u_64(deserializer);
     var var_version = sse_decode_String(deserializer);
     var var_cost = sse_decode_i_32(deserializer);
     return KVNodeInfo(
@@ -1175,6 +1216,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       hops: var_hops,
       lossRate: var_lossRate,
       connections: var_connections,
+      tunnelProto: var_tunnelProto,
+      connType: var_connType,
+      rxBytes: var_rxBytes,
+      txBytes: var_txBytes,
       version: var_version,
       cost: var_cost,
     );
@@ -1536,6 +1581,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_node_hop_stats(self.hops, serializer);
     sse_encode_f_32(self.lossRate, serializer);
     sse_encode_list_kv_node_connection_stats(self.connections, serializer);
+    sse_encode_String(self.tunnelProto, serializer);
+    sse_encode_String(self.connType, serializer);
+    sse_encode_u_64(self.rxBytes, serializer);
+    sse_encode_u_64(self.txBytes, serializer);
     sse_encode_String(self.version, serializer);
     sse_encode_i_32(self.cost, serializer);
   }

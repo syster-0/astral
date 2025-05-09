@@ -141,23 +141,34 @@ class _MiniUserCardState extends State<MiniUserCard> {
                 // 第二行：IP地址 ET版本 NAT类型
                 Row(
                   children: [
-                    Icon(
-                      Icons.lan_outlined,
-                      size: 16,
-                      color: colorScheme.primary,
-                    ),
+                    // --- Other Details Section ---
+                    // ... existing code ...
+                    // --- Other Details Section ---
+                    if (player.ipv4 != '' && player.ipv4 != "0.0.0.0")
+                      Icon(
+                        Icons.lan_outlined,
+                        size: 16,
+                        color: colorScheme.primary,
+                      ),
                     const SizedBox(width: 4),
+
                     Expanded(
-                      child: Text(
-                        player.ipv4,
-                        style: TextStyle(
-                          color: colorScheme.secondary,
-                          fontSize: 13,
+                      child: Tooltip(
+                        message: player.ipv4,
+                        child: Text(
+                          (player.ipv4 != '' && player.ipv4 != "0.0.0.0")
+                              ? player.ipv4
+                              : "",
+                          style: TextStyle(
+                            color: colorScheme.secondary,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 10),
+
                     Icon(
                       Icons.memory_outlined,
                       size: 16,
@@ -180,6 +191,17 @@ class _MiniUserCardState extends State<MiniUserCard> {
                       natTypeString,
                       style: TextStyle(color: natTypeColor, fontSize: 13),
                     ),
+                    if (player.tunnelProto != '') ...[
+                      const SizedBox(width: 10),
+                      Icon(Icons.router, size: 16, color: colorScheme.primary),
+                      Text(
+                        player.tunnelProto,
+                        style: TextStyle(
+                          color: colorScheme.secondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

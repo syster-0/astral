@@ -17,6 +17,7 @@ chrono = "0.4.38"
 humansize = "1.1.1"
 tokio = "1.39.2"
 anyhow = "1.0.95"
+surge-ping = "0.8"
 easytier = { path = "./easytier" }
 winapi = { version = "0.3", features = ["iphlpapi", "iptypes", "netioapi", "winerror", "ws2def"] }
 

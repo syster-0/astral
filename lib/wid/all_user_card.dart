@@ -2,7 +2,6 @@ import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 // 将列表项卡片抽取为独立的StatefulWidget
 class AllUserCard extends StatefulWidget {
@@ -213,13 +212,14 @@ class _AllUserCardState extends State<AllUserCard> {
         const SizedBox(height: 8),
 
         // --- Other Details Section ---
-        _buildInfoRow(
-          Icons.lan_outlined,
-          'IP地址',
-          player.ipv4,
-          colorScheme,
-          showCopyButton: true,
-        ),
+        if (player.ipv4 != '' && player.ipv4 != "0.0.0.0")
+          _buildInfoRow(
+            Icons.lan_outlined,
+            'IP地址',
+            player.ipv4,
+            colorScheme,
+            showCopyButton: true,
+          ),
         const SizedBox(height: 8),
 
         _buildInfoRow(
@@ -237,6 +237,10 @@ class _AllUserCardState extends State<AllUserCard> {
           colorScheme,
           valueColor: natTypeColor,
         ),
+        if (player.tunnelProto != '') ...[
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.router, '隧道类型', player.tunnelProto, colorScheme),
+        ],
 
         // Connection Path / Hops
         if (player.hops.isNotEmpty) ...[
@@ -628,43 +632,34 @@ Widget _buildHopsInfo(List<NodeHopStats> hops, ColorScheme colorScheme) {
           children: [
             const Text('连接路径:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            // Use SingleChildScrollView and Row for a single, scrollable line
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  for (int i = 0; i < hops.length; i++) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        hops[i].nodeName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
+            // 改为每行显示一个跃点
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < hops.length; i++) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '${hops[i].nodeName} '
+                      '(${hops[i].latencyMs.toStringAsFixed(0)}ms, '
+                      '${hops[i].packetLoss.toStringAsFixed(1)}%)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onPrimaryContainer,
                       ),
                     ),
-                    // Add spacing between hop and arrow
-                    if (i < hops.length - 1)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: Icon(
-                          Icons.arrow_forward,
-                          size: 14,
-                          color: colorScheme.primary.withOpacity(0.7),
-                        ),
-                      ),
-                  ],
+                  ),
+                  // 在跃点之间添加间距
+                  if (i < hops.length - 1) const SizedBox(height: 4),
                 ],
-              ),
+              ],
             ),
           ],
         ),

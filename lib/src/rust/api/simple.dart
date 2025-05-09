@@ -16,6 +16,9 @@ Future<void> injectDllToPid({required String pid, required String dllPath}) =>
       dllPath: dllPath,
     );
 
+Future<void> sendUdpToLocalhost({required String message}) =>
+    RustLib.instance.api.crateApiSimpleSendUdpToLocalhost(message: message);
+
 Future<JoinHandle> handleEvent({required EventBusSubscriber events}) =>
     RustLib.instance.api.crateApiSimpleHandleEvent(events: events);
 
@@ -239,6 +242,10 @@ class KVNodeInfo {
   final List<NodeHopStats> hops;
   final double lossRate;
   final List<KVNodeConnectionStats> connections;
+  final String tunnelProto;
+  final String connType;
+  final BigInt rxBytes;
+  final BigInt txBytes;
   final String version;
   final int cost;
 
@@ -250,6 +257,10 @@ class KVNodeInfo {
     required this.hops,
     required this.lossRate,
     required this.connections,
+    required this.tunnelProto,
+    required this.connType,
+    required this.rxBytes,
+    required this.txBytes,
     required this.version,
     required this.cost,
   });
@@ -263,6 +274,10 @@ class KVNodeInfo {
       hops.hashCode ^
       lossRate.hashCode ^
       connections.hashCode ^
+      tunnelProto.hashCode ^
+      connType.hashCode ^
+      rxBytes.hashCode ^
+      txBytes.hashCode ^
       version.hashCode ^
       cost.hashCode;
 
@@ -278,6 +293,10 @@ class KVNodeInfo {
           hops == other.hops &&
           lossRate == other.lossRate &&
           connections == other.connections &&
+          tunnelProto == other.tunnelProto &&
+          connType == other.connType &&
+          rxBytes == other.rxBytes &&
+          txBytes == other.txBytes &&
           version == other.version &&
           cost == other.cost;
 }

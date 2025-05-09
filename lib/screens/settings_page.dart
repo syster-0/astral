@@ -46,13 +46,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         if (!Platform.isAndroid)
           Card(
-            child: Column(
+            child: ExpansionTile(
+              initiallyExpanded: false, // 默认折叠
+              leading: const Icon(Icons.launch),
+              title: const Text('自启动相关'),
               children: [
-                const ListTile(
-                  leading: Icon(Icons.launch),
-                  title: Text('自启动相关'),
-                ),
-
                 SwitchListTile(
                   title: const Text('开机自启动'),
                   subtitle: const Text('将程序添加到系统启动项，开机时自动运行'),
