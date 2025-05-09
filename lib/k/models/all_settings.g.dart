@@ -42,8 +42,23 @@ const AllSettingsSchema = CollectionSchema(
       name: r'room',
       type: IsarType.long,
     ),
-    r'userListSimple': PropertySchema(
+    r'startup': PropertySchema(
       id: 5,
+      name: r'startup',
+      type: IsarType.bool,
+    ),
+    r'startupAutoConnect': PropertySchema(
+      id: 6,
+      name: r'startupAutoConnect',
+      type: IsarType.bool,
+    ),
+    r'startupMinimize': PropertySchema(
+      id: 7,
+      name: r'startupMinimize',
+      type: IsarType.bool,
+    ),
+    r'userListSimple': PropertySchema(
+      id: 8,
       name: r'userListSimple',
       type: IsarType.bool,
     )
@@ -107,7 +122,10 @@ void _allSettingsSerialize(
   writer.writeStringList(offsets[2], object.listenList);
   writer.writeString(offsets[3], object.playerName);
   writer.writeLong(offsets[4], object.room);
-  writer.writeBool(offsets[5], object.userListSimple);
+  writer.writeBool(offsets[5], object.startup);
+  writer.writeBool(offsets[6], object.startupAutoConnect);
+  writer.writeBool(offsets[7], object.startupMinimize);
+  writer.writeBool(offsets[8], object.userListSimple);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -123,7 +141,10 @@ AllSettings _allSettingsDeserialize(
   object.listenList = reader.readStringList(offsets[2]);
   object.playerName = reader.readStringOrNull(offsets[3]);
   object.room = reader.readLongOrNull(offsets[4]);
-  object.userListSimple = reader.readBool(offsets[5]);
+  object.startup = reader.readBool(offsets[5]);
+  object.startupAutoConnect = reader.readBool(offsets[6]);
+  object.startupMinimize = reader.readBool(offsets[7]);
+  object.userListSimple = reader.readBool(offsets[8]);
   return object;
 }
 
@@ -145,6 +166,12 @@ P _allSettingsDeserializeProp<P>(
     case 4:
       return (reader.readLongOrNull(offset)) as P;
     case 5:
+      return (reader.readBool(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -999,6 +1026,36 @@ extension AllSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> startupEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'startup',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      startupAutoConnectEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'startupAutoConnect',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      startupMinimizeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'startupMinimize',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
       userListSimpleEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -1052,6 +1109,45 @@ extension AllSettingsQuerySortBy
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByRoomDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'room', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByStartup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startup', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByStartupDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startup', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByStartupAutoConnect() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupAutoConnect', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByStartupAutoConnectDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupAutoConnect', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByStartupMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupMinimize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByStartupMinimizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupMinimize', Sort.desc);
     });
   }
 
@@ -1120,6 +1216,45 @@ extension AllSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByStartup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startup', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByStartupDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startup', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByStartupAutoConnect() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupAutoConnect', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByStartupAutoConnectDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupAutoConnect', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByStartupMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupMinimize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByStartupMinimizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startupMinimize', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByUserListSimple() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'userListSimple', Sort.asc);
@@ -1167,6 +1302,26 @@ extension AllSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByStartup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'startup');
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QDistinct>
+      distinctByStartupAutoConnect() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'startupAutoConnect');
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QDistinct>
+      distinctByStartupMinimize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'startupMinimize');
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByUserListSimple() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'userListSimple');
@@ -1211,6 +1366,25 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, int?, QQueryOperations> roomProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'room');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> startupProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'startup');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations>
+      startupAutoConnectProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'startupAutoConnect');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> startupMinimizeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'startupMinimize');
     });
   }
 

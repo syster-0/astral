@@ -29,6 +29,7 @@ void main() async {
       }
 
       await SentryFlutter.init((options) {
+        // 公开DSN 如果滥用我会重置
         options.dsn =
             'https://8ddef9dc25ba468431473fc15187df30@o4509285217402880.ingest.de.sentry.io/4509285224087632';
       });

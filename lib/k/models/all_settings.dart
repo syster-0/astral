@@ -23,4 +23,13 @@ class AllSettings {
 
   /// 关闭最小化到托盘
   bool closeMinimize = true;
+
+  /// 开机自启
+  bool startup = false;
+
+  /// 启动后最小化
+  bool startupMinimize = false;
+
+  /// 启动后自动连接
+  bool startupAutoConnect = false;
 }

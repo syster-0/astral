@@ -143,6 +143,21 @@ fn peer_conn_info_to_string(p: proto::cli::PeerConnInfo) -> String {
     )
 }
 
+pub fn send_udp_to_localhost(message: &str) -> Result<(), String> {
+    use std::net::UdpSocket;
+    
+    let socket = match UdpSocket::bind("0.0.0.0:0") {
+        Ok(s) => s,
+        Err(e) => return Err(format!("绑定UDP套接字失败: {}", e)),
+    };
+    
+    match socket.send_to(message.as_bytes(), "127.0.0.1:9999") {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("发送UDP数据失败: {}", e)),
+    }
+}
+
+
 pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         loop {
@@ -152,94 +167,118 @@ pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<(
                     match e {
                         GlobalCtxEvent::PeerAdded(p) => {
                             println!("{}",format!("新节点已添加。节点ID: {}", p));
+                            let _ = send_udp_to_localhost(&format!("新节点已添加。节点ID: {}", p));
                         }
 
                         GlobalCtxEvent::PeerRemoved(p) => {
                             println!("{}",format!("节点已移除。节点ID: {}", p));
+                            let _ = send_udp_to_localhost(&format!("节点已移除。节点ID: {}", p));
                         }
 
                         GlobalCtxEvent::PeerConnAdded(p) => {
-                            println!("{}",format!(
-                                "新节点连接已添加。连接信息: {}",
-                                peer_conn_info_to_string(p)
-                            ));
+                            let conn_info = peer_conn_info_to_string(p);
+                            let msg = format!("新节点连接已添加。连接信息: {}", conn_info);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::PeerConnRemoved(p) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "节点连接已移除。连接信息: {}",
                                 peer_conn_info_to_string(p)
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
+                            
                         }
                         GlobalCtxEvent::ListenerAddFailed(p, msg) => {
-                            println!("{}",format!(
-                                "监听器添加失败。监听器: {}, 消息: {}",
-                                p, msg
-                            ));
+                            let msg = format!("监听器添加失败。监听器: {}, 消息: {}", p, msg);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::ListenerAcceptFailed(p, msg) => {
-                            println!("{}",format!(
-                                "监听器接受失败。监听器: {}, 消息: {}",
-                                p, msg
-                            ));
+                            let msg = format!("监听器接受失败。监听器: {}, 消息: {}", p, msg);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::ListenerAdded(p) => {
                             if p.scheme() == "ring" {
                                 continue;
                             }
-                            println!("{}",format!("新监听器已添加。监听器: {}", p));
+                            let msg = format!("新监听器已添加。监听器: {}", p);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::ConnectionAccepted(local, remote) => {
-                            println!("{}",format!(
-                                "新连接已接受。本地: {}, 远程: {}",
-                                local, remote
-                            ));
+                            let msg = format!("新连接已接受。本地: {}, 远程: {}", local, remote);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::ConnectionError(local, remote, err) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "连接错误。本地: {}, 远程: {}, 错误: {}",
                                 local, remote, err
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::TunDeviceReady(dev) => {
-                            println!("{}",format!("TUN 设备就绪。设备: {}", dev));
+                            let msg = format!("TUN 设备就绪。设备: {}", dev);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::TunDeviceError(err) => {
-                            println!("{}",format!("TUN 设备错误。错误: {}", err));
+                            let msg = format!("TUN 设备错误。错误: {}", err);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::Connecting(dst) => {
-                            println!("{}",format!("正在连接到节点。目标: {}", dst));
+let msg = format!("正在连接到节点。目标: {}", dst);
+println!("{}", msg);
+let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::ConnectError(dst, ip_version, err) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "连接到节点错误。目标: {}, IP版本: {}, 错误: {}",
                                 dst, ip_version, err
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::VpnPortalClientConnected(portal, client_addr) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "VPN 门户客户端已连接。门户: {}, 客户端地址: {}",
                                 portal, client_addr
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::VpnPortalClientDisconnected(portal, client_addr) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "VPN 门户客户端已断开连接。门户: {}, 客户端地址: {}",
                                 portal, client_addr
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::DhcpIpv4Changed(old, new) => {
-                            println!("{}",format!("DHCP IP 已更改。旧: {:?}, 新: {:?}", old, new));
+                            let msg = format!("DHCP IP 已更改。旧: {:?}, 新: {:?}", old, new);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::DhcpIpv4Conflicted(ip) => {
-                            println!("{}",format!("DHCP IP 冲突。IP: {:?}", ip));
+                            let msg = format!("DHCP IP 冲突。IP: {:?}", ip);
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
                         GlobalCtxEvent::PortForwardAdded(cfg) => {
-                            println!("{}",format!(
+                            let msg = format!(
                                 "端口转发已添加。本地: {}, 远程: {}, 协议: {}",
                                 cfg.bind_addr.unwrap().to_string(),
                                 cfg.dst_addr.unwrap().to_string(),
                                 cfg.socket_type().as_str_name()
-                            ));
+                            );
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                         }
 
                     }
@@ -249,15 +288,18 @@ pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<(
                     // 根据错误类型决定是否中断循环
                     match err {
                         tokio::sync::broadcast::error::RecvError::Closed => {
-                            println!("事件通道已关闭，停止事件处理。");
+                            let msg = "事件通道已关闭，停止事件处理。";
+                            println!("{}", msg);
+                            let _ = send_udp_to_localhost(msg);
                             break; // Exit the loop if the channel is closed
                         }
                         tokio::sync::broadcast::error::RecvError::Lagged(n) => {
-                            eprintln!("事件处理滞后，丢失了 {} 个事件。", n);
+                            let msg = format!("事件处理滞后，丢失了 {} 个事件。", n);
+                            eprintln!("{}", msg);
+                            let _ = send_udp_to_localhost(&msg);
                             // Decide if lagging is critical enough to break or just log
                         }
                     }
-                    
                 }
             }
         }

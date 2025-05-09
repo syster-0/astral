@@ -25,6 +25,7 @@ class Aps {
     _initThemeSettings();
     updateNetConfig();
     initMisc();
+    loadStartupSettings();
   }
 
   // 初始化主题设置
@@ -606,5 +607,41 @@ class Aps {
   Future<void> updateCustomVpn(int index, String value) async {
     await AppDatabase().AllSettings.updateCustomVpn(index, value);
     customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
+  }
+
+  /// 开机自启
+  final Signal<bool> startup = signal(false);
+
+  /// 启动后最小化
+  final Signal<bool> startupMinimize = signal(false);
+
+  /// 启动后自动连接
+  final Signal<bool> startupAutoConnect = signal(false);
+
+  /// 设置开机自启
+  Future<void> setStartup(bool value) async {
+    startup.value = value;
+    await AppDatabase().AllSettings.setStartup(value);
+  }
+
+  /// 设置启动后最小化
+  Future<void> setStartupMinimize(bool value) async {
+    startupMinimize.value = value;
+    await AppDatabase().AllSettings.setStartupMinimize(value);
+  }
+
+  /// 设置启动后自动连接
+  Future<void> setStartupAutoConnect(bool value) async {
+    startupAutoConnect.value = value;
+    await AppDatabase().AllSettings.setStartupAutoConnect(value);
+  }
+
+  /// 从数据库加载启动相关设置
+  Future<void> loadStartupSettings() async {
+    startup.value = await AppDatabase().AllSettings.getStartup();
+    startupMinimize.value =
+        await AppDatabase().AllSettings.getStartupMinimize();
+    startupAutoConnect.value =
+        await AppDatabase().AllSettings.getStartupAutoConnect();
   }
 }

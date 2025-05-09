@@ -1,3 +1,4 @@
+import 'package:astral/fun/reg.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -39,6 +40,15 @@ class WindowManagerUtils {
         // 使窗口获得焦点
         await windowManager.focus();
       });
+
+      // 如果 startupMinimized 为 true，则最小化窗口
+      if (Aps().startupMinimize.value) {
+        await windowManager.minimize();
+        handleStartupSetting(true);
+      }
+      if (Aps().startup.value) {
+        handleStartupSetting(true);
+      }
     }
   }
 }

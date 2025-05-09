@@ -84,6 +84,13 @@ class _ConnectButtonState extends State<ConnectButton>
         // 在这里处理VPN停止后的逻辑
       });
     }
+
+    // 添加自动连接逻辑
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Aps().startupAutoConnect.watch(context)) {
+        _startConnection();
+      }
+    });
   }
 
   @override

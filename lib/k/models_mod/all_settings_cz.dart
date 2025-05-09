@@ -242,6 +242,66 @@ class AllSettingsCz {
     AllSettings? config = await _isar.allSettings.get(1);
     return config?.customVpn ?? [];
   }
+
+  /// 设置开机自启
+  Future<void> setStartup(bool isStartup) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.startup = isStartup;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取开机自启状态
+  Future<bool> getStartup() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      return settings.startup;
+    }
+    return false;
+  }
+
+  /// 设置启动后最小化
+  Future<void> setStartupMinimize(bool isMinimize) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.startupMinimize = isMinimize;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取启动后最小化状态
+  Future<bool> getStartupMinimize() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      return settings.startupMinimize;
+    }
+    return false;
+  }
+
+  /// 设置启动后自动连接
+  Future<void> setStartupAutoConnect(bool isAutoConnect) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.startupAutoConnect = isAutoConnect;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取启动后自动连接状态
+  Future<bool> getStartupAutoConnect() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      return settings.startupAutoConnect;
+    }
+    return false;
+  }
 }
 
 // 在同一个文件中添加这个方法

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:astral/fun/reg.dart';
 import 'package:astral/fun/up.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -42,6 +44,43 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
+        if (!Platform.isAndroid)
+          Card(
+            child: Column(
+              children: [
+                const ListTile(
+                  leading: Icon(Icons.launch),
+                  title: Text('自启动相关'),
+                ),
+
+                SwitchListTile(
+                  title: const Text('开机自启动'),
+                  subtitle: const Text('将程序添加到系统启动项，开机时自动运行'),
+                  value: Aps().startup.watch(context),
+                  onChanged: (value) {
+                    Aps().setStartup(value);
+                    handleStartupSetting(value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('启动后最小化'),
+                  subtitle: const Text('程序启动后自动最小化到系统托盘'),
+                  value: Aps().startupMinimize.watch(context),
+                  onChanged: (value) {
+                    Aps().setStartupMinimize(value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('启动后自动连接'),
+                  subtitle: const Text('程序启动后自动连接到上次使用的服务器'),
+                  value: Aps().startupAutoConnect.watch(context),
+                  onChanged: (value) {
+                    Aps().setStartupAutoConnect(value);
+                  },
+                ),
+              ],
+            ),
+          ),
 
         Card(
           child: ExpansionTile(
@@ -754,6 +793,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.feedback),
+                title: const Text('用户反馈'),
+                onTap: _sendFeedback,
+              ),
+              ListTile(
                 leading: const Icon(Icons.update),
                 title: const Text('检查更新'),
                 onTap: () {
@@ -771,5 +815,79 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ],
     );
+  }
+
+  void _sendFeedback() async {
+    final feedbackController = TextEditingController();
+    final emailController = TextEditingController();
+    final nameController = TextEditingController();
+
+    final feedback = await showDialog<Map<String, String>>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('用户反馈'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: '姓名',
+                    hintText: '请输入您的姓名',
+                  ),
+                ),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(
+                    labelText: '邮箱',
+                    hintText: '请输入您的邮箱',
+                  ),
+                ),
+                TextField(
+                  controller: feedbackController,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: '反馈内容',
+                    hintText: '请输入您的反馈意见',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed:
+                    () => Navigator.pop(context, {
+                      'name': nameController.text,
+                      'email': emailController.text,
+                      'feedback': feedbackController.text,
+                    }),
+                child: const Text('提交'),
+              ),
+            ],
+          ),
+    );
+
+    if (feedback != null &&
+        feedback['feedback']?.trim().isNotEmpty == true &&
+        feedback['email']?.trim().isNotEmpty == true &&
+        feedback['name']?.trim().isNotEmpty == true) {
+      final sentryId = Sentry.captureMessage(
+        "User Feedback from Settings Page",
+      );
+
+      final userFeedback = SentryUserFeedback(
+        eventId: await sentryId,
+        comments: feedback['feedback']!,
+        email: feedback['email']!,
+        name: feedback['name']!,
+      );
+
+      await Sentry.captureUserFeedback(userFeedback);
+    }
   }
 }
