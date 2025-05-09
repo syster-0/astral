@@ -1092,13 +1092,14 @@ pub fn get_network_status() -> KVNetworkStatus {
                     }
                     hops
                 },
-                ipv4: ipv4,
                 latency_ms: if route.cost == 1 {
                     pair.get_latency_ms().unwrap_or(0.0)
                 } else {
                     println!("{}", route.path_latency_latency_first().to_string());
                     get_latency(&ipv4).unwrap_or_default() as f64
                 },
+                ipv4: ipv4,
+
                 loss_rate: if let Some(peer) = &pair.peer {
                     let mut total_loss_rate = 0.0;
                     for conn in &peer.conns {
