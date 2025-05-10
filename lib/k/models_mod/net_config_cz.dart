@@ -450,7 +450,7 @@ class NetConfigRepository {
   // 获取数据压缩算法
   Future<int> getDataCompressAlgo() async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    return config?.data_compress_algo ?? 0;
+    return config?.data_compress_algo ?? 1;
   }
 
   // 更新设备绑定设置
@@ -484,7 +484,7 @@ class NetConfigRepository {
   // 获取KCP代理启用设置
   Future<bool> getEnableKcpProxy() async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    return config?.enable_kcp_proxy ?? false;
+    return config?.enable_kcp_proxy ?? true;
   }
 
   // 更新KCP输入禁用设置
@@ -518,7 +518,7 @@ class NetConfigRepository {
   // 获取中继KCP禁用设置
   Future<bool> getDisableRelayKcp() async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    return config?.disable_relay_kcp ?? false;
+    return config?.disable_relay_kcp ?? true;
   }
 
   // 更新系统代理转发设置

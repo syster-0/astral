@@ -83,9 +83,7 @@ jobs:
 
       - name: 🛠️ 构建全架构 APK (ALL)
         run: |
-          flutter build apk --release \
-            --obfuscate \
-            --split-debug-info=build/symbols 
+          flutter build apk --release
 
       - name: 📤 上传全架构 APK 到 Artifacts
         uses: actions/upload-artifact@v4

@@ -137,9 +137,7 @@ lazy_static! {
     static ref RT: Runtime = Runtime::new().expect("创建 Tokio 运行时失败");
 }
 
-lazy_static! {
-    static ref LATENCY_TABLE: Mutex<HashMap<String, i32>> = Mutex::new(HashMap::new());
-}
+
 
 
 
@@ -1095,8 +1093,7 @@ pub fn get_network_status() -> KVNetworkStatus {
                 latency_ms: if route.cost == 1 {
                     pair.get_latency_ms().unwrap_or(0.0)
                 } else {
-                    println!("{}", route.path_latency_latency_first().to_string());
-                    get_latency(&ipv4).unwrap_or_default() as f64
+                    route.path_latency_latency_first() as f64
                 },
                 ipv4: ipv4,
 
@@ -1230,49 +1227,7 @@ pub fn set_network_interface_hops(hop: i32) -> bool {
     }
 }
 
-async fn ping_virtual_ip(virtual_ip: &str) -> i32 {
-    use std::time::{Duration, Instant};
-    use tokio::net::TcpStream;
-    
-    let timeout_sec = 2;
-    
-    // 将虚拟IP转换为SocketAddr
-    let addr = match virtual_ip.parse::<std::net::SocketAddr>() {
-        Ok(a) => a,
-        Err(_) => return -1, // 无效地址返回-1
-    };
-    
-    let start = Instant::now();
-    match tokio::time::timeout(
-        Duration::from_secs(timeout_sec),
-        TcpStream::connect(&addr)
-    ).await {
-        Ok(Ok(_)) => {
-            let latency = start.elapsed().as_millis() as i32;
-            latency.max(1) // 确保最小延迟为1ms
-        }
-        _ => -2, // 连接失败返回-2
-    }
-}
-// 新增延迟表访问函数
-pub fn get_latency(virtual_ip: &str) -> Option<i32> {
-    let table = LATENCY_TABLE.lock().unwrap();
-    table.get(virtual_ip).copied()
-}
+
 pub fn init_app() {
     lazy_static::initialize(&RT);
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
-        loop {
-            interval.tick().await;
-    
-            // 获取所有虚拟IP并测试延迟
-            let ips = get_ips();
-            for ip in ips {
-                let latency_value = ping_virtual_ip(&ip).await;
-                let mut table = LATENCY_TABLE.lock().unwrap();
-                table.insert(ip.clone(), latency_value);
-            }
-        }
-    });
 }

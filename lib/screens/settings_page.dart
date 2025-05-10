@@ -24,15 +24,15 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('软件设置')),
-
-              SwitchListTile(
-                title: const Text('最小化'),
-                subtitle: const Text('是否点击关闭按钮最小化到托盘'),
-                value: Aps().closeMinimize.watch(context),
-                onChanged: (value) {
-                  Aps().updateCloseMinimize(value);
-                },
-              ),
+              if (!Platform.isAndroid)
+                SwitchListTile(
+                  title: const Text('最小化'),
+                  subtitle: const Text('是否点击关闭按钮最小化到托盘'),
+                  value: Aps().closeMinimize.watch(context),
+                  onChanged: (value) {
+                    Aps().updateCloseMinimize(value);
+                  },
+                ),
               SwitchListTile(
                 title: const Text('玩家列表卡片'),
                 subtitle: const Text('是否简约显示'),
@@ -706,10 +706,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: DropdownButton<int>(
                         value: Aps().dataCompressAlgo.watch(context),
                         items: const [
-                          DropdownMenuItem(
-                            value: 0,
-                            child: Text('默认', style: TextStyle(fontSize: 14)),
-                          ),
                           DropdownMenuItem(
                             value: 1,
                             child: Text('不压缩', style: TextStyle(fontSize: 14)),

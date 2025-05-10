@@ -83,14 +83,10 @@ jobs:
 
       - name: 🛠️ 构建 arm64-v8a 架构 APK
         run: |
-          flutter build apk --release \
-            --target-platform android-arm64 \
-            --split-per-abi \
-            --obfuscate \
-            --split-debug-info=build/symbols 
+          flutter build apk --release --target-platform android-arm64
 
       - name: 📤 上传 arm64-v8a 架构 APK 到 Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-release-arm64-v8a
-          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk

@@ -265,7 +265,6 @@ class Aps {
         await database.netConfigSetting.getEnableKcpProxy(); // 启用KCP代理
     disableKcpInput.value =
         await database.netConfigSetting.getDisableKcpInput(); // 禁用KCP输入
-
     disableRelayKcp.value =
         await database.netConfigSetting.getDisableRelayKcp(); // 禁用中继KCP
     proxyForwardBySystem.value =
