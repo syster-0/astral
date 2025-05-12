@@ -35,22 +35,28 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: StaggeredGrid.count(
-                crossAxisCount: columnCount,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                children: [
-                  VirtualIpBox(),
-                  UserIpBox(),
-                  ServersHome(),
-                  UdpLog(),
-                  AboutHome(),
-                ],
+          Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: StaggeredGrid.count(
+                      crossAxisCount: columnCount,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      children: [
+                        VirtualIpBox(),
+                        UserIpBox(),
+                        ServersHome(),
+                        UdpLog(),
+                        AboutHome(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

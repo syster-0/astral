@@ -2,11 +2,11 @@ import 'package:astral/fun/e_d_room.dart';
 import 'package:astral/fun/random_name.dart';
 import 'package:astral/fun/show_add_room_dialog.dart';
 import 'package:astral/fun/show_edit_room_dialog.dart';
+import 'package:astral/screens/user_page.dart';
 import 'package:astral/wid/room_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-// 导入 Aps 和相关模型
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:uuid/uuid.dart';
@@ -21,11 +21,6 @@ class RoomPage extends StatefulWidget {
 class _RoomPageState extends State<RoomPage> {
   // 使用 Aps 实例
   final _aps = Aps();
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   // 根据宽度计算列数
   int _getColumnCount(double width) {
@@ -94,83 +89,128 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
+  // 构建房间列表视图
+  Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {
+    final columnCount = _getColumnCount(constraints.maxWidth);
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(12.0),
+          sliver: SliverMasonryGrid.count(
+            crossAxisCount: columnCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            // 使用过滤后的房间列表长度
+            childCount:
+                _aps.rooms.watch(context).where((room) {
+                  return true;
+                }).length,
+            itemBuilder: (context, index) {
+              // 获取过滤后的房间列表
+              final filteredRooms =
+                  _aps.rooms.watch(context).where((room) {
+                    return true;
+                  }).toList();
+              final room = filteredRooms[index];
+              return RoomCard(
+                // 传递 Room 对象和标签名称列表
+                room: room,
+                onEdit: () {
+                  showEditRoomDialog(context, room: room);
+                },
+                onDelete: () {
+                  _aps.deleteRoom(room.id);
+                },
+                onShare: () {
+                  var a = encryptRoomWithJWT(room);
+                  // 复制房间信息到剪贴板
+                  Clipboard.setData(ClipboardData(text: a));
+                  // 显示 SnackBar 提示
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('房间信息已复制到剪贴板')));
+                },
+              );
+            },
+          ),
+        ),
+        // 添加底部安全区域，防止内容被遮挡
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height:
+                MediaQuery.of(context).padding.bottom + 20, // 底部安全区高度 + 额外间距
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 新增：CoState 枚举转中文
+  String _coStateToText(CoState state) {
+    switch (state) {
+      case CoState.idle:
+        return '未连接';
+      case CoState.connecting:
+        return '连接中';
+      case CoState.connected:
+        return '已连接';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 监听连接状态
+    final isConnected = _aps.Connec_state.watch(context);
+
+    // 获取当前选中房间（如无此逻辑请替换为你的实际选中房间变量）
+    final selectedRoom = _aps.selectroom.watch(context); // 假设有 selectedRoom 字段
+
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final columnCount = _getColumnCount(constraints.maxWidth);
-          return CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.all(12.0),
-                sliver: SliverMasonryGrid.count(
-                  crossAxisCount: columnCount,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  // 使用过滤后的房间列表长度
-                  childCount:
-                      _aps.rooms.watch(context).where((room) {
-                        return true;
-                      }).length,
-                  itemBuilder: (context, index) {
-                    // 获取过滤后的房间列表
-                    final filteredRooms =
-                        _aps.rooms.watch(context).where((room) {
-                          return true;
-                        }).toList();
-                    final room = filteredRooms[index];
-                    return RoomCard(
-                      // 传递 Room 对象和标签名称列表
-                      room: room,
-                      onEdit: () {
-                        showEditRoomDialog(context, room: room);
-                      },
-                      onDelete: () {
-                        _aps.deleteRoom(room.id);
-                      },
-                      onShare: () {
-                        var a = encryptRoomWithJWT(room);
-                        // 复制房间信息到剪贴板
-                        Clipboard.setData(ClipboardData(text: a));
-                        // 显示 SnackBar 提示
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('房间信息已复制到剪贴板')),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              // 添加底部安全区域，防止内容被遮挡
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height:
-                      MediaQuery.of(context).padding.bottom +
-                      20, // 底部安全区高度 + 额外间距
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      body: Column(
         children: [
-          FloatingActionButton(
-            heroTag: 'paste',
-            onPressed: _showPasteDialog,
-            child: const Icon(Icons.paste),
-          ),
-          const SizedBox(width: 16),
-          FloatingActionButton(
-            heroTag: 'add',
-            onPressed: () => showAddRoomDialog(context),
-            child: const Icon(Icons.add),
+          // 顶部显示当前选中房间信息
+          if (selectedRoom != null)
+            Card(
+              margin: const EdgeInsets.all(16),
+              child: ListTile(
+                title: Text('当前房间: ${selectedRoom.name}'),
+                subtitle: Text('连接状态: ${_coStateToText(isConnected)}'),
+              ),
+            ),
+          Expanded(
+            child:
+                isConnected == CoState.connected
+                    // 已连接：显示用户列表
+                    ? const UserPage()
+                    // 未连接：显示房间列表
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        return _buildRoomsView(context, constraints);
+                      },
+                    ),
           ),
         ],
       ),
+      floatingActionButton:
+          isConnected == CoState.connected
+              ? null // 已连接时不显示按钮
+              : Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'paste',
+                    onPressed: _showPasteDialog,
+                    child: const Icon(Icons.paste),
+                  ),
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'add',
+                    onPressed: () => showAddRoomDialog(context),
+                    child: const Icon(Icons.add),
+                  ),
+                ],
+              ),
     );
   }
 }

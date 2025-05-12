@@ -2,8 +2,6 @@ import 'package:astral/wid/home_box.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/app_s/aps.dart';
 
-enum ConnectionState { notStarted, connecting, connected }
-
 class UserIpBox extends StatefulWidget {
   const UserIpBox({super.key});
 
@@ -19,8 +17,6 @@ class _UserIpBoxState extends State<UserIpBox> {
   final FocusNode _virtualIPFocusNode = FocusNode();
 
   final Aps _aps = Aps();
-
-  final ConnectionState _connectionState = ConnectionState.notStarted;
 
   @override
   void initState() {
@@ -83,20 +79,20 @@ class _UserIpBoxState extends State<UserIpBox> {
               ),
               const Spacer(),
               // 添加状态指示器
-              if (_connectionState == ConnectionState.connected)
+              if (Aps().Connec_state.watch(context) == CoState.connected)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '已锁定',
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: colorScheme.onSecondaryContainer,
                       fontSize: 12,
                       fontWeight: FontWeight.w300,
                     ),
@@ -110,7 +106,10 @@ class _UserIpBoxState extends State<UserIpBox> {
           TextField(
             controller: _usernameController,
             focusNode: _usernameControllerFocusNode,
-            enabled: _connectionState != ConnectionState.connected,
+            enabled:
+                (Aps().Connec_state.watch(context) == CoState.connected)
+                    ? false
+                    : true,
             onChanged: (value) {
               _aps.updatePlayerName(value);
             },
@@ -132,7 +131,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                   focusNode: _virtualIPFocusNode,
                   enabled:
                       !_aps.dhcp.watch(context) &&
-                      _connectionState != ConnectionState.connected,
+                      (Aps().Connec_state.watch(context) != CoState.connected),
                   onChanged: (value) {
                     if (!_aps.dhcp.watch(context)) {
                       setState(() {
@@ -160,7 +159,9 @@ class _UserIpBoxState extends State<UserIpBox> {
                   Switch(
                     value: _aps.dhcp.watch(context),
                     onChanged: (value) {
-                      _aps.updateDhcp(value);
+                      if (Aps().Connec_state.watch(context) == CoState.idle) {
+                        _aps.updateDhcp(value);
+                      }
                     },
                   ),
                   Text(

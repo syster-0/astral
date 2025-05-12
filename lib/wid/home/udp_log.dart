@@ -15,6 +15,7 @@ class _UdpLogState extends State<UdpLog> {
   RawDatagramSocket? _socket;
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
+  bool _expanded = false; // 新增：控制折叠状态
 
   @override
   void initState() {
@@ -100,6 +101,15 @@ class _UdpLogState extends State<UdpLog> {
               ),
               const Spacer(),
               IconButton(
+                icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+                tooltip: _expanded ? '折叠日志' : '展开日志',
+                onPressed: () {
+                  setState(() {
+                    _expanded = !_expanded;
+                  });
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.copy),
                 tooltip: '复制全部日志',
                 onPressed: _logs.isEmpty ? null : _copyLogs,
@@ -107,34 +117,39 @@ class _UdpLogState extends State<UdpLog> {
             ],
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 200, // Set a fixed height for the log output area
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black87 : Colors.white, // 根据主题切换背景色
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: Scrollbar(
-                controller: _scrollController,
-                child: ListView.builder(
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState:
+                _expanded
+                    ? CrossFadeState.showFirst
+                    : CrossFadeState.showSecond,
+            firstChild: SizedBox(
+              height: 200,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.black87 : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Scrollbar(
                   controller: _scrollController,
-                  itemCount: _logs.length,
-                  itemBuilder: (context, index) {
-                    return SelectableText(
-                      _logs[index],
-                      style: TextStyle(
-                        color:
-                            isDarkMode
-                                ? Colors.greenAccent
-                                : Colors.black, // 根据主题切换字体颜色
-                        fontFamily: 'monospace',
-                      ),
-                    );
-                  },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _logs.length,
+                    itemBuilder: (context, index) {
+                      return SelectableText(
+                        _logs[index],
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.greenAccent : Colors.black,
+                          fontFamily: 'monospace',
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
+            secondChild: const SizedBox.shrink(),
           ),
         ],
       ),

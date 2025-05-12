@@ -16,7 +16,7 @@ class NetConfig {
 
   String ipv4 = ''; // IPv4地址
 
-  bool dhcp = false; // 是否使用DHCP
+  bool dhcp = true; // 是否使用DHCP
   String network_name = ''; // 网络名称
   String network_secret = ''; // 网络密钥
 

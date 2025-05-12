@@ -2,6 +2,7 @@ import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:astral/k/models/server_mod.dart';
 import 'package:astral/src/rust/api/simple.dart';
+import 'package:astral/wid/home/connect_button.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:astral/k/database/app_data.dart';
@@ -539,6 +540,8 @@ class Aps {
     await AppDatabase().AllSettings.updateRoom(room);
     selectroom.value = await AppDatabase().AllSettings.getRoom();
   }
+
+
 
   /// 服务器列表
   final Signal<List<ServerMod>> servers = signal([]);
