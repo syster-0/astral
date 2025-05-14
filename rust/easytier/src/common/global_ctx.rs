@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::proto::cli::PeerConnInfo;
-use crate::proto::common::{PeerFeatureFlag, PortForwardConfigPb};
+use crate::proto::common::PeerFeatureFlag;
 use crossbeam::atomic::AtomicCell;
 
 use super::{
@@ -42,8 +42,6 @@ pub enum GlobalCtxEvent {
 
     DhcpIpv4Changed(Option<cidr::Ipv4Inet>, Option<cidr::Ipv4Inet>), // (old, new)
     DhcpIpv4Conflicted(Option<cidr::Ipv4Inet>),
-
-    PortForwardAdded(PortForwardConfigPb),
 }
 
 pub type EventBus = tokio::sync::broadcast::Sender<GlobalCtxEvent>;
@@ -97,7 +95,7 @@ impl GlobalCtx {
         let net_ns = NetNS::new(config_fs.get_netns());
         let hostname = config_fs.get_hostname();
 
-        let (event_bus, _) = tokio::sync::broadcast::channel(8);
+        let (event_bus, _) = tokio::sync::broadcast::channel(1024);
 
         let stun_info_collection = Arc::new(StunInfoCollector::new_with_default_servers());
 
@@ -141,13 +139,10 @@ impl GlobalCtx {
     }
 
     pub fn issue_event(&self, event: GlobalCtxEvent) {
-        if let Err(e) = self.event_bus.send(event.clone()) {
-            tracing::warn!(
-                "Failed to send event: {:?}, error: {:?}, receiver count: {}",
-                event,
-                e,
-                self.event_bus.receiver_count()
-            );
+        if self.event_bus.receiver_count() != 0 {
+            self.event_bus.send(event).unwrap();
+        } else {
+            tracing::warn!("No subscriber for event: {:?}", event);
         }
     }
 
