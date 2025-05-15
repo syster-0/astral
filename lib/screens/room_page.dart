@@ -173,21 +173,25 @@ class _RoomPageState extends State<RoomPage> {
           if (selectedRoom != null)
             Card(
               margin: const EdgeInsets.all(16),
-              child: ListTile(
-                title: Text('当前房间: ${selectedRoom.name}'),
-                subtitle: Text('连接状态: ${_coStateToText(isConnected)}'),
-                // 新增分享按钮（在行尾添加）
-                trailing: IconButton(
-                  icon: const Icon(Icons.share, size: 20),
-                  onPressed: () {
-                    // 复用房间卡片中的分享逻辑
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(minWidth: double.infinity),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
                     var shareCode = encryptRoomWithJWT(selectedRoom);
                     Clipboard.setData(ClipboardData(text: shareCode));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('房间信息已复制到剪贴板')),
                     );
                   },
-                  tooltip: '分享房间',
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    title: Text('当前房间: ${selectedRoom.name}'),
+                    subtitle: Text('连接状态: ${_coStateToText(isConnected)}'),
+                  ),
                 ),
               ),
             ),
