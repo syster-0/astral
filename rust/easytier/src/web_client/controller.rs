@@ -19,15 +19,13 @@ use crate::{
 
 pub struct Controller {
     token: String,
-    hostname: String,
     instance_map: DashMap<uuid::Uuid, NetworkInstance>,
 }
 
 impl Controller {
-    pub fn new(token: String, hostname: String) -> Self {
+    pub fn new(token: String) -> Self {
         Controller {
             token,
-            hostname,
             instance_map: DashMap::new(),
         }
     }
@@ -81,10 +79,6 @@ impl Controller {
 
     pub fn token(&self) -> String {
         self.token.clone()
-    }
-
-    pub fn hostname(&self) -> String {
-        self.hostname.clone()
     }
 }
 

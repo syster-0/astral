@@ -13,7 +13,7 @@ use futures::{StreamExt, TryFutureExt};
 use prost::Message;
 
 use tokio::{
-    sync::{broadcast, Mutex},
+    sync::{broadcast, mpsc, Mutex},
     task::JoinSet,
     time::{timeout, Duration},
 };
@@ -50,41 +50,6 @@ pub type PeerConnId = uuid::Uuid;
 const MAGIC: u32 = 0xd1e1a5e1;
 const VERSION: u32 = 1;
 
-pub struct PeerConnCloseNotify {
-    conn_id: PeerConnId,
-    sender: Arc<std::sync::Mutex<Option<broadcast::Sender<()>>>>,
-}
-
-impl PeerConnCloseNotify {
-    fn new(conn_id: PeerConnId) -> Self {
-        let (sender, _) = broadcast::channel(1);
-        Self {
-            conn_id,
-            sender: Arc::new(std::sync::Mutex::new(Some(sender))),
-        }
-    }
-
-    fn notify_close(&self) {
-        self.sender.lock().unwrap().take();
-    }
-
-    pub async fn get_waiter(&self) -> Option<broadcast::Receiver<()>> {
-        if let Some(sender) = self.sender.lock().unwrap().as_mut() {
-            let receiver = sender.subscribe();
-            return Some(receiver);
-        }
-        None
-    }
-
-    pub fn get_conn_id(&self) -> PeerConnId {
-        self.conn_id
-    }
-
-    pub fn is_closed(&self) -> bool {
-        self.sender.lock().unwrap().is_none()
-    }
-}
-
 pub struct PeerConn {
     conn_id: PeerConnId,
 
@@ -101,7 +66,7 @@ pub struct PeerConn {
     info: Option<HandshakeRequest>,
     is_client: Option<bool>,
 
-    close_event_notifier: Arc<PeerConnCloseNotify>,
+    close_event_sender: Option<mpsc::Sender<PeerConnId>>,
 
     ctrl_resp_sender: broadcast::Sender<ZCPacket>,
 
@@ -123,7 +88,7 @@ impl Debug for PeerConn {
 impl PeerConn {
     pub fn new(my_peer_id: PeerId, global_ctx: ArcGlobalCtx, tunnel: Box<dyn Tunnel>) -> Self {
         let tunnel_info = tunnel.info();
-        let (ctrl_sender, _ctrl_receiver) = broadcast::channel(8);
+        let (ctrl_sender, _ctrl_receiver) = broadcast::channel(100);
 
         let peer_conn_tunnel_filter = StatsRecorderTunnelFilter::new();
         let throughput = peer_conn_tunnel_filter.filter_output();
@@ -132,10 +97,8 @@ impl PeerConn {
 
         let (recv, sink) = (mpsc_tunnel.get_stream(), mpsc_tunnel.get_sink());
 
-        let conn_id = PeerConnId::new_v4();
-
         PeerConn {
-            conn_id: conn_id.clone(),
+            conn_id: PeerConnId::new_v4(),
 
             my_peer_id,
             global_ctx,
@@ -151,8 +114,7 @@ impl PeerConn {
 
             info: None,
             is_client: None,
-
-            close_event_notifier: Arc::new(PeerConnCloseNotify::new(conn_id)),
+            close_event_sender: None,
 
             ctrl_resp_sender: ctrl_sender,
 
@@ -305,8 +267,10 @@ impl PeerConn {
         let mut stream = self.recv.lock().await.take().unwrap();
         let sink = self.sink.clone();
         let sender = packet_recv_chan.clone();
-        let close_event_notifier = self.close_event_notifier.clone();
+        let close_event_sender = self.close_event_sender.clone().unwrap();
+        let conn_id = self.conn_id;
         let ctrl_sender = self.ctrl_resp_sender.clone();
+        let _conn_info = self.get_conn_info();
         let conn_info_for_instrument = self.get_conn_info();
 
         self.tasks.spawn(
@@ -348,7 +312,9 @@ impl PeerConn {
                 tracing::info!("end recving peer conn packet");
 
                 drop(sink);
-                close_event_notifier.notify_close();
+                if let Err(e) = close_event_sender.send(conn_id).await {
+                    tracing::error!(error = ?e, "peer conn close event send error");
+                }
 
                 task_ret
             }
@@ -369,14 +335,17 @@ impl PeerConn {
             self.throughput.clone(),
         );
 
-        let close_event_notifier = self.close_event_notifier.clone();
+        let close_event_sender = self.close_event_sender.clone().unwrap();
+        let conn_id = self.conn_id;
 
         self.tasks.spawn(async move {
             pingpong.pingpong().await;
 
             tracing::warn!(?pingpong, "pingpong task exit");
 
-            close_event_notifier.notify_close();
+            if let Err(e) = close_event_sender.send(conn_id).await {
+                tracing::warn!("close event sender error: {:?}", e);
+            }
 
             Ok(())
         });
@@ -404,8 +373,8 @@ impl PeerConn {
         ret
     }
 
-    pub fn get_close_notifier(&self) -> Arc<PeerConnCloseNotify> {
-        self.close_event_notifier.clone()
+    pub fn set_close_event_sender(&mut self, sender: mpsc::Sender<PeerConnId>) {
+        self.close_event_sender = Some(sender);
     }
 
     pub fn get_stats(&self) -> PeerConnStats {
@@ -433,13 +402,6 @@ impl PeerConn {
             is_client: self.is_client.unwrap_or_default(),
             network_name: info.network_name.clone(),
         }
-    }
-}
-
-impl Drop for PeerConn {
-    fn drop(&mut self) {
-        // if someone drop a conn manually, the notifier is not called.
-        self.close_event_notifier.notify_close();
     }
 }
 
@@ -534,13 +496,15 @@ mod tests {
             s_peer.do_handshake_as_server()
         );
 
+        s_peer.set_close_event_sender(tokio::sync::mpsc::channel(1).0);
         s_peer.start_recv_loop(create_packet_recv_chan().0).await;
         // do not start ping for s, s only reponde to ping from c
 
         assert!(c_ret.is_ok());
         assert!(s_ret.is_ok());
 
-        let close_notifier = c_peer.get_close_notifier();
+        let (close_send, mut close_recv) = tokio::sync::mpsc::channel(1);
+        c_peer.set_close_event_sender(close_send);
         c_peer.start_pingpong();
         c_peer.start_recv_loop(create_packet_recv_chan().0).await;
 
@@ -556,9 +520,9 @@ mod tests {
         tokio::time::sleep(Duration::from_secs(15)).await;
 
         if conn_closed {
-            assert!(close_notifier.is_closed());
+            assert!(close_recv.try_recv().is_ok());
         } else {
-            assert!(!close_notifier.is_closed());
+            assert!(close_recv.try_recv().is_err());
         }
     }
 

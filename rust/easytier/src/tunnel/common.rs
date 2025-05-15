@@ -159,7 +159,7 @@ where
             reserve_buf(
                 &mut self_mut.buf,
                 *self_mut.max_packet_size,
-                *self_mut.max_packet_size * 2,
+                *self_mut.max_packet_size * 32,
             );
 
             let cap = self_mut.buf.capacity() - self_mut.buf.len();
@@ -454,7 +454,6 @@ pub mod tests {
                 let Ok(msg) = item else {
                     continue;
                 };
-                tracing::debug!(?msg, "recv a msg, try echo back");
                 if let Err(_) = send.send(msg).await {
                     break;
                 }
