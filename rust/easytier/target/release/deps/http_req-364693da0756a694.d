@@ -1,0 +1,14 @@
+F:\astral\rust\easytier\target\release\deps\libhttp_req-364693da0756a694.rmeta: C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\lib.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\chunked.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\error.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\request.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\response.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\stream.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\tls.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\uri.rs
+
+F:\astral\rust\easytier\target\release\deps\libhttp_req-364693da0756a694.rlib: C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\lib.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\chunked.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\error.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\request.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\response.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\stream.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\tls.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\uri.rs
+
+F:\astral\rust\easytier\target\release\deps\http_req-364693da0756a694.d: C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\lib.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\chunked.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\error.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\request.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\response.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\stream.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\tls.rs C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\uri.rs
+
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\lib.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\chunked.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\error.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\request.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\response.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\stream.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\tls.rs:
+C:\Users\baika\.cargo\git\checkouts\http_req-da52b5239d00ab76\b10aa9f\src\uri.rs:
