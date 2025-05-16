@@ -54,7 +54,7 @@ class NetConfig {
   bool use_smoltcp = false; //x
 
   /// 中继网络白名单
-  String relay_network_whitelist = '';
+  String relay_network_whitelist = '*';
 
   /// 是否禁用P2P
   bool disable_p2p = false; //x
