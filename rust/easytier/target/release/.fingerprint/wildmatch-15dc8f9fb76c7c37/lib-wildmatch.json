@@ -1,1 +1,0 @@
-{"rustc":10895048813736897673,"features":"[]","declared_features":"[\"serde\"]","target":10433062803755527833,"profile":2040997289075261528,"path":2554111427348013806,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"release\\.fingerprint\\wildmatch-15dc8f9fb76c7c37\\dep-lib-wildmatch","checksum":false}}],"rustflags":[],"config":2069994364910194474,"compile_kind":0}

@@ -1,9 +1,0 @@
-cargo:rustc-link-search=native=easytier/third_party/
-cargo:info=use os exist protoc: "E:\\protoc\\protoc.exe"
-cargo:rerun-if-changed=src/proto/error.proto
-cargo:rerun-if-changed=src/proto/tests.proto
-cargo:rerun-if-changed=src/proto/cli.proto
-cargo:rerun-if-changed=src/proto/web.proto
-cargo:rerun-if-changed=src/proto/peer_rpc.proto
-cargo:rerun-if-changed=src/proto/common.proto
-cargo:rerun-if-changed=F:\astral\rust\easytier\locales\app.yml
