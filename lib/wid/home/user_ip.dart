@@ -104,7 +104,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           TextField(
             controller: _usernameController,
@@ -120,10 +120,10 @@ class _UserIpBoxState extends State<UserIpBox> {
               border: const OutlineInputBorder(),
               prefixIcon: Icon(Icons.person, color: colorScheme.primary),
               floatingLabelBehavior: FloatingLabelBehavior.always,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), // 新增与房间选择框一致
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), 
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           TextField(
             controller: _roomController,
@@ -157,7 +157,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                   : null,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 9),
 
           Row(
             children: [
@@ -180,7 +180,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                     border: const OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lan, color: colorScheme.primary),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), // 新增与房间选择框一致
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), 
                     errorText: !isValidIP && !_aps.dhcp.watch(context)
                         ? '请输入有效的IPv4地址'
                         : null,
