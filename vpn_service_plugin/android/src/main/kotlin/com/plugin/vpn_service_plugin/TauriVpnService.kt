@@ -87,7 +87,6 @@ class TauriVpnService : VpnService() {
         var ipv4Addr = args?.getString(IPV4_ADDR) ?: "10.126.126.1/24"
         var dns = args?.getString(DNS) ?: "114.114.114.114"
         
-        
         // 从ipv4Addr中计算网段地址
         val ipAddrParts = ipv4Addr.split("/")
         if (ipAddrParts.size != 2) throw IllegalArgumentException("Invalid IP addr string")
@@ -122,7 +121,7 @@ class TauriVpnService : VpnService() {
 
         // 设置MTU和DNS
         builder.setMtu(mtu)
-        builder.addDnsServer(dns)
+        // builder.addDnsServer(dns)
 
         // 添加路由规则
         for (route in routes) {
