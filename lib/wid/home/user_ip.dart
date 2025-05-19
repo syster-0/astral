@@ -120,6 +120,41 @@ class _UserIpBoxState extends State<UserIpBox> {
               border: const OutlineInputBorder(),
               prefixIcon: Icon(Icons.person, color: colorScheme.primary),
               floatingLabelBehavior: FloatingLabelBehavior.always,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), // 新增与房间选择框一致
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          TextField(
+            controller: _roomController,
+            readOnly: true,
+            enabled: Aps().Connec_state.watch(context) != CoState.connected,
+            decoration: InputDecoration(
+              labelText: '选择房间',
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              border: const OutlineInputBorder(),
+              prefixIcon: Icon(
+                Icons.apartment,
+                color: colorScheme.primary,
+                size: 24,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.menu),
+                color: colorScheme.primary,
+                iconSize: 24,
+                onPressed: () => CanvasJump.show(
+                  context,
+                  rooms: _aps.rooms.watch(context).cast<Room>(),
+                  onSelect: (Room room) {
+                    _aps.setRoom(room);
+                    _roomController.text = room.name;
+                  },
+                ),
+              ),
+              errorText: _aps.selectroom.watch(context) == null
+                  ? '请选择房间'
+                  : null,
             ),
           ),
           const SizedBox(height: 12),
@@ -145,6 +180,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                     border: const OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lan, color: colorScheme.primary),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12), // 新增与房间选择框一致
                     errorText: !isValidIP && !_aps.dhcp.watch(context)
                         ? '请输入有效的IPv4地址'
                         : null,
@@ -178,41 +214,6 @@ class _UserIpBoxState extends State<UserIpBox> {
                 style: TextStyle(color: colorScheme.secondary, fontSize: 12),
               ),
             ),
-
-          // 弹窗逻辑
-          const SizedBox(height: 12),
-          TextField(
-            controller: _roomController,
-            readOnly: true, 
-            enabled: Aps().Connec_state.watch(context) != CoState.connected, 
-            decoration: InputDecoration(
-              labelText: '选择房间',
-              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              border: const OutlineInputBorder(),
-              prefixIcon: Icon(
-                Icons.apartment,
-                color: colorScheme.primary,
-                size: 24,
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.menu), 
-                color: colorScheme.primary,
-                iconSize: 24,
-                onPressed: () => CanvasJump.show(
-                  context,
-                  rooms: _aps.rooms.watch(context).cast<Room>(),
-                  onSelect: (Room room) {
-                    _aps.setRoom(room);
-                    _roomController.text = room.name;
-                  },
-                ),
-              ),
-              errorText: _aps.selectroom.watch(context) == null 
-                ? '请选择房间' 
-                : null,
-            ),
-          ),
         ],
       ),
     );
