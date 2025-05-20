@@ -40,7 +40,7 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(14),
                     child: StaggeredGrid.count(
                       crossAxisCount: columnCount,
                       mainAxisSpacing: 8,

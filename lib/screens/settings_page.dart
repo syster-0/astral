@@ -18,10 +18,15 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(14.0),
+    
       children: [
         Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Column(
+            
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('软件设置')),
               if (!Platform.isAndroid)
@@ -46,6 +51,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         if (!Platform.isAndroid)
           Card(
+            shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
             child: ExpansionTile(
               initiallyExpanded: false, // 默认折叠
               leading: const Icon(Icons.launch),
@@ -81,6 +89,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
 
         Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
             leading: const Icon(Icons.list_alt),
@@ -230,6 +241,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         if (!Platform.isAndroid)
           Card(
+            shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
             child: ExpansionTile(
               initiallyExpanded: false,
               leading: const Icon(Icons.route),
@@ -378,6 +392,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         if (Platform.isAndroid)
           Card(
+            shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
             child: ExpansionTile(
               initiallyExpanded: false,
               leading: const Icon(Icons.vpn_lock),
@@ -525,6 +542,9 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
             leading: const Icon(Icons.network_wifi),
@@ -770,6 +790,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Column(
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('关于')),

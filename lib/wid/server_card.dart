@@ -32,7 +32,7 @@ class _ServerCardState extends State<ServerCard> {
       child: Card(
         elevation: _isHovered ? 8 : 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           side: BorderSide(
             color: _isHovered ? colorScheme.primary : Colors.transparent,
             width: 1,
