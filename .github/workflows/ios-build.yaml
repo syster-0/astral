@@ -25,7 +25,8 @@ jobs:
         with:
           toolchain: stable
           override: true
-          target: aarch64-apple-ios  # 修改为 iOS 架构
+          target: aarch64-apple-ios
+          components: rust-src  # Add this line to ensure rust-src is available
 
       - name: 📦 安装系统依赖
         run: |
@@ -58,7 +59,7 @@ jobs:
 
       - name: 🛠️ 构建 iOS 应用
         run: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --verbose
 
       - name: 🔐 自签名和打包 IPA
         run: |
