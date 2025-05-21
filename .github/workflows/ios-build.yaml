@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted  # 使用支持 iOS 构建的运行器
+    runs-on: macos-latest  # 使用 
     permissions:
       contents: write
       packages: write
