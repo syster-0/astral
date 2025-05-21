@@ -767,7 +767,6 @@ impl RouteTable {
         policy: NextHopPolicy,
         mut cost_calc: T,
     ) {
-
         // build  peer_infos
         self.peer_infos.clear();
         for item in synced_info.peer_infos.iter() {
@@ -795,13 +794,11 @@ impl RouteTable {
                 path_len: 1,
             },
         );
-
         let (graph, idx_map) = Self::build_peer_graph_from_synced_info(
             self.peer_infos.iter().map(|x| *x.key()).collect(),
             &synced_info,
             &mut cost_calc,
         );
-
         let next_hop_map = if matches!(policy, NextHopPolicy::LeastHop) {
             Self::gen_next_hop_map_with_least_hop(my_peer_id, &graph, &idx_map, &mut cost_calc)
         } else {
@@ -810,6 +807,7 @@ impl RouteTable {
         for item in next_hop_map.iter() {
             self.next_hop_map.insert(*item.key(), *item.value());
         }
+        // build graph
 
         // build ipv4_peer_id_map, cidr_peer_id_map
         self.ipv4_peer_id_map.clear();
@@ -833,6 +831,7 @@ impl RouteTable {
             }
         }
     }
+
     fn get_peer_id_for_proxy(&self, ipv4: &Ipv4Addr) -> Option<PeerId> {
         let ipv4 = std::net::IpAddr::V4(*ipv4);
         for item in self.cidr_peer_id_map.iter() {
