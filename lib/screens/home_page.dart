@@ -1,6 +1,6 @@
 import 'package:astral/wid/home/about_home.dart';
 import 'package:astral/wid/home/servers_home.dart';
-import 'package:astral/wid/home/udp_log.dart';
+// import 'package:astral/wid/home/udp_log.dart';
 import 'package:astral/wid/home/user_ip.dart';
 import 'package:astral/wid/home/virtual_ip.dart';
 import 'package:astral/wid/home/connect_button.dart';
@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> {
                         VirtualIpBox(),
                         UserIpBox(),
                         ServersHome(),
-                        UdpLog(),
+                        // UdpLog(),
                         AboutHome(),
                       ],
                     ),
