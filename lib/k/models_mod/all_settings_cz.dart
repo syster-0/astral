@@ -302,7 +302,28 @@ class AllSettingsCz {
     }
     return false;
   }
+//autoSetMTU
+
+  /// 设置自动设置网卡跃点
+  Future<void> setAutoSetMTU(bool isAutoSet) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings!= null) {
+      settings.autoSetMTU = isAutoSet;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+  /// 获取自动设置网卡跃点状态
+  Future<bool> getAutoSetMTU() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings!= null) {
+      return settings.autoSetMTU;
+    }
+    return true;
+  }
 }
+
 
 // 在同一个文件中添加这个方法
 Future<String> _getDeviceName() async {

@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:astral/fun/net_astral_udp.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/src/rust/api/firewall.dart';
+import 'package:astral/src/rust/api/hops.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:flutter/material.dart';
 import 'package:vpn_service_plugin/vpn_service_plugin.dart';
@@ -264,7 +265,14 @@ class _ConnectButtonState extends State<ConnectButton>
     });
     Aps().Connec_state.value = CoState.connected;
     Aps().isConnecting.value = true;
-    _startVpn(ipv4Addr: Aps().ipv4.value, mtu: Aps().mtu.value);
+    if (Platform.isAndroid) {
+      _startVpn(ipv4Addr: Aps().ipv4.value, mtu: Aps().mtu.value);
+    }
+    if (Platform.isWindows) {
+      if (Aps().autoSetMTU.value) {
+        setInterfaceMetric(interfaceName: "astral", metric: 0);
+      }
+    }
     _startNetworkMonitoring();
   }
 

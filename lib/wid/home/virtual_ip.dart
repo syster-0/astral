@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/wid/home_box.dart';
 import 'package:flutter/material.dart';
@@ -66,21 +68,54 @@ class VirtualIpBox extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            children: [
-              Icon(Icons.public, size: 20, color: colorScheme.primary),
-              const Text(
-                '虚拟 IP: ',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              Text(
-                Aps().ipv4.watch(context),
-                style: TextStyle(color: colorScheme.secondary),
-              ),
-            ],
-          ),
+          if (Aps().ipv4.watch(context).isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                Icon(Icons.public, size: 20, color: colorScheme.primary),
+                const Text(
+                  '虚拟 IP: ',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  Aps().ipv4.watch(context),
+                  style: TextStyle(color: colorScheme.secondary),
+                ),
+              ],
+            ),
+          ],
+          if (Platform.isWindows) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    Icon(Icons.shield, size: 20, color: colorScheme.primary),
+                    const Text(
+                      '防火墙: ',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      Aps().firewallStatus.watch(context) ? '已开启' : '已关闭',
+                      style: TextStyle(color: colorScheme.secondary),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Switch(
+                  value: Aps().firewallStatus.watch(
+                    context,
+                  ), // 需要在Aps中添加firewall_enabled状态
+                  onChanged: (bool value) {
+                    Aps().setFirewall(value); // 切换防火墙状态
+                  },
+                  activeColor: colorScheme.primary,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

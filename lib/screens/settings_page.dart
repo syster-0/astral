@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:astral/fun/reg.dart';
 import 'package:astral/fun/up.dart';
 import 'package:astral/k/app_s/aps.dart';
+import 'package:astral/src/rust/api/hops.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -19,14 +20,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(14.0),
-    
+
       children: [
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Column(
-            
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('软件设置')),
               if (!Platform.isAndroid)
@@ -49,11 +47,76 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
+
+        if (Platform.isWindows)
+         Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ExpansionTile(
+              initiallyExpanded: false, // 默认折叠
+              leading: const Icon(Icons.launch),
+              title: const Text('网卡跃点设置'),
+              children: [
+                
+                SwitchListTile(
+                  title: const Text('自动设置跃点'),
+                  subtitle: const Text('每次启动网卡自动设置跃点最小'),
+                  value: Aps().autoSetMTU.watch(context),
+                  onChanged: (value) {
+                    Aps().setAutoSetMTU(value);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.list),
+                  title: const Text('查看跃点列表'),
+                  onTap: () async {
+                    try {
+                      final result = await getAllInterfacesMetrics();
+                      if (!context.mounted) return;
+
+                      await showDialog(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('网卡跃点列表'),
+                              content: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children:
+                                      result
+                                          .map((e) => Text('${e.$1}: ${e.$2}'))
+                                          .toList(),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('关闭'),
+                                ),
+                              ],
+                            ),
+                      );
+                    } catch (e, s) {
+                      await Sentry.captureException(e, stackTrace: s);
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('获取跃点列表失败')));
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+
         if (!Platform.isAndroid)
           Card(
             shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: ExpansionTile(
               initiallyExpanded: false, // 默认折叠
               leading: const Icon(Icons.launch),
@@ -89,9 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
 
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
             leading: const Icon(Icons.list_alt),
@@ -242,8 +303,8 @@ class _SettingsPageState extends State<SettingsPage> {
         if (!Platform.isAndroid)
           Card(
             shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: ExpansionTile(
               initiallyExpanded: false,
               leading: const Icon(Icons.route),
@@ -393,8 +454,8 @@ class _SettingsPageState extends State<SettingsPage> {
         if (Platform.isAndroid)
           Card(
             shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: ExpansionTile(
               initiallyExpanded: false,
               leading: const Icon(Icons.vpn_lock),
@@ -542,9 +603,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: ExpansionTile(
             initiallyExpanded: false, // 默认折叠
             leading: const Icon(Icons.network_wifi),
@@ -790,9 +849,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Column(
             children: [
               const ListTile(leading: Icon(Icons.info), title: Text('关于')),

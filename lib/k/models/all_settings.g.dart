@@ -17,48 +17,53 @@ const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
   properties: {
-    r'closeMinimize': PropertySchema(
+    r'autoSetMTU': PropertySchema(
       id: 0,
+      name: r'autoSetMTU',
+      type: IsarType.bool,
+    ),
+    r'closeMinimize': PropertySchema(
+      id: 1,
       name: r'closeMinimize',
       type: IsarType.bool,
     ),
     r'customVpn': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'customVpn',
       type: IsarType.stringList,
     ),
     r'listenList': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'listenList',
       type: IsarType.stringList,
     ),
     r'playerName': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'playerName',
       type: IsarType.string,
     ),
     r'room': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'room',
       type: IsarType.long,
     ),
     r'startup': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'startup',
       type: IsarType.bool,
     ),
     r'startupAutoConnect': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'startupAutoConnect',
       type: IsarType.bool,
     ),
     r'startupMinimize': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'startupMinimize',
       type: IsarType.bool,
     ),
     r'userListSimple': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'userListSimple',
       type: IsarType.bool,
     )
@@ -117,15 +122,16 @@ void _allSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeBool(offsets[0], object.closeMinimize);
-  writer.writeStringList(offsets[1], object.customVpn);
-  writer.writeStringList(offsets[2], object.listenList);
-  writer.writeString(offsets[3], object.playerName);
-  writer.writeLong(offsets[4], object.room);
-  writer.writeBool(offsets[5], object.startup);
-  writer.writeBool(offsets[6], object.startupAutoConnect);
-  writer.writeBool(offsets[7], object.startupMinimize);
-  writer.writeBool(offsets[8], object.userListSimple);
+  writer.writeBool(offsets[0], object.autoSetMTU);
+  writer.writeBool(offsets[1], object.closeMinimize);
+  writer.writeStringList(offsets[2], object.customVpn);
+  writer.writeStringList(offsets[3], object.listenList);
+  writer.writeString(offsets[4], object.playerName);
+  writer.writeLong(offsets[5], object.room);
+  writer.writeBool(offsets[6], object.startup);
+  writer.writeBool(offsets[7], object.startupAutoConnect);
+  writer.writeBool(offsets[8], object.startupMinimize);
+  writer.writeBool(offsets[9], object.userListSimple);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -135,16 +141,17 @@ AllSettings _allSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AllSettings();
-  object.closeMinimize = reader.readBool(offsets[0]);
-  object.customVpn = reader.readStringList(offsets[1]) ?? [];
+  object.autoSetMTU = reader.readBool(offsets[0]);
+  object.closeMinimize = reader.readBool(offsets[1]);
+  object.customVpn = reader.readStringList(offsets[2]) ?? [];
   object.id = id;
-  object.listenList = reader.readStringList(offsets[2]);
-  object.playerName = reader.readStringOrNull(offsets[3]);
-  object.room = reader.readLongOrNull(offsets[4]);
-  object.startup = reader.readBool(offsets[5]);
-  object.startupAutoConnect = reader.readBool(offsets[6]);
-  object.startupMinimize = reader.readBool(offsets[7]);
-  object.userListSimple = reader.readBool(offsets[8]);
+  object.listenList = reader.readStringList(offsets[3]);
+  object.playerName = reader.readStringOrNull(offsets[4]);
+  object.room = reader.readLongOrNull(offsets[5]);
+  object.startup = reader.readBool(offsets[6]);
+  object.startupAutoConnect = reader.readBool(offsets[7]);
+  object.startupMinimize = reader.readBool(offsets[8]);
+  object.userListSimple = reader.readBool(offsets[9]);
   return object;
 }
 
@@ -158,20 +165,22 @@ P _allSettingsDeserializeProp<P>(
     case 0:
       return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 2:
-      return (reader.readStringList(offset)) as P;
-    case 3:
-      return (reader.readStringOrNull(offset)) as P;
-    case 4:
-      return (reader.readLongOrNull(offset)) as P;
-    case 5:
       return (reader.readBool(offset)) as P;
+    case 2:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 3:
+      return (reader.readStringList(offset)) as P;
+    case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
+      return (reader.readLongOrNull(offset)) as P;
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
+      return (reader.readBool(offset)) as P;
+    case 9:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -271,6 +280,16 @@ extension AllSettingsQueryWhere
 
 extension AllSettingsQueryFilter
     on QueryBuilder<AllSettings, AllSettings, QFilterCondition> {
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      autoSetMTUEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'autoSetMTU',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
       closeMinimizeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -1075,6 +1094,18 @@ extension AllSettingsQueryLinks
 
 extension AllSettingsQuerySortBy
     on QueryBuilder<AllSettings, AllSettings, QSortBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByAutoSetMTU() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoSetMTU', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByAutoSetMTUDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoSetMTU', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByCloseMinimize() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closeMinimize', Sort.asc);
@@ -1167,6 +1198,18 @@ extension AllSettingsQuerySortBy
 
 extension AllSettingsQuerySortThenBy
     on QueryBuilder<AllSettings, AllSettings, QSortThenBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByAutoSetMTU() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoSetMTU', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByAutoSetMTUDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoSetMTU', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByCloseMinimize() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closeMinimize', Sort.asc);
@@ -1271,6 +1314,12 @@ extension AllSettingsQuerySortThenBy
 
 extension AllSettingsQueryWhereDistinct
     on QueryBuilder<AllSettings, AllSettings, QDistinct> {
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByAutoSetMTU() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'autoSetMTU');
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByCloseMinimize() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'closeMinimize');
@@ -1334,6 +1383,12 @@ extension AllSettingsQueryProperty
   QueryBuilder<AllSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> autoSetMTUProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'autoSetMTU');
     });
   }
 

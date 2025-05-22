@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:astral/k/models/server_mod.dart';
+import 'package:astral/src/rust/api/firewall.dart';
+import 'package:astral/src/rust/api/hops.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/wid/home/connect_button.dart';
 import 'package:flutter/material.dart';
@@ -80,6 +84,12 @@ class Aps {
     userListSimple.value = await AppDatabase().AllSettings.getUserMinimal();
     closeMinimize.value = await AppDatabase().AllSettings.getCloseMinimize();
     customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
+    // window平台
+    if (Platform.isWindows) {
+          updateFirewallStatus();
+          autoSetMTU.value = await AppDatabase().AllSettings.getAutoSetMTU();
+    }
+
   }
 
   // 开机自启动
@@ -94,6 +104,31 @@ class Aps {
 
   /// userListSimple
   final Signal<bool> userListSimple = signal(false); // 玩家列表
+
+  ///防火墙状态 只要有一个没有关闭就是false
+  final Signal<bool> firewallStatus = signal(false);
+  /// autoSetMTU
+  final Signal<bool> autoSetMTU = signal(true); // 自动设置MTU
+  /// 设置autoSetMTU
+  Future<void> setAutoSetMTU(bool value) async {
+    autoSetMTU.value = value;
+    await AppDatabase().AllSettings.setAutoSetMTU(value);
+    setInterfaceMetric(interfaceName: "astral", metric: 0);
+  }
+  // 设置防火墙状态
+  Future<void> setFirewall(bool value) async {
+    firewallStatus.value = value;
+    await setFirewallStatus(profileIndex: 1, enable: value);
+    await setFirewallStatus(profileIndex: 2, enable: value);
+    await setFirewallStatus(profileIndex: 3, enable: value);
+    updateListenListFromDb();
+  }
+  // 更新防火墙状态
+  Future<void> updateFirewallStatus() async {
+    firewallStatus.value = await getFirewallStatus(profileIndex: 1) &&
+        await getFirewallStatus(profileIndex: 2) &&
+        await getFirewallStatus(profileIndex: 3);
+  }
 
   /// 设置userListSimple
   Future<void> setUserListSimple(bool value) async {

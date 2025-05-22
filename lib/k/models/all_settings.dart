@@ -32,4 +32,7 @@ class AllSettings {
 
   /// 启动后自动连接
   bool startupAutoConnect = false;
+
+  /// 自动设置网卡跃点
+  bool autoSetMTU = true;
 }

@@ -7,6 +7,7 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/firewall.dart';
+import 'api/hops.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -144,6 +145,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<(String, int)> dco_decode_list_record_string_u_32(dynamic raw);
+
+  @protected
   NetworkInterfaceHop dco_decode_network_interface_hop(dynamic raw);
 
   @protected
@@ -151,6 +155,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   NodeHopStats dco_decode_node_hop_stats(dynamic raw);
+
+  @protected
+  (String, int) dco_decode_record_string_u_32(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -281,6 +288,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<(String, int)> sse_decode_list_record_string_u_32(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   NetworkInterfaceHop sse_decode_network_interface_hop(
     SseDeserializer deserializer,
   );
@@ -292,6 +304,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   NodeHopStats sse_decode_node_hop_stats(SseDeserializer deserializer);
+
+  @protected
+  (String, int) sse_decode_record_string_u_32(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -447,6 +462,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_record_string_u_32(
+    List<(String, int)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_network_interface_hop(
     NetworkInterfaceHop self,
     SseSerializer serializer,
@@ -460,6 +481,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_node_hop_stats(NodeHopStats self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_record_string_u_32(
+    (String, int) self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
