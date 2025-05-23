@@ -29,7 +29,7 @@ class _ConnectButtonState extends State<ConnectButton>
   int _connectionDuration = 0; // 连接持续时间（秒）
 
   // 添加超时时间常量
-  static const int connectionTimeoutSeconds = 30;
+  static const int connectionTimeoutSeconds = 15;
   
   // 辅助方法：验证IPv4地址格式
   bool _isValidIpAddress(String ip) {
