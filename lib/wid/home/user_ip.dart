@@ -136,34 +136,12 @@ class _UserIpBoxState extends State<UserIpBox> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
                 enabled: Aps().Connec_state.watch(context) != CoState.connected,
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Theme.of(context).disabledColor,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: colorScheme.outline,
-                  ),
-                ),
-                disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Theme.of(context).disabledColor,
-                  ),
-                ),
+                border: const OutlineInputBorder(),
                 prefixIcon: Icon(
-                  Icons.apartment,
-                  color: Aps().Connec_state.watch(context) != CoState.connected
-                      ? colorScheme.primary
-                      : Theme.of(context).disabledColor,
-                  size: 24,
+                  Icons.apartment, color: colorScheme.primary,
                 ),
                 suffixIcon: Icon(
-                  Icons.menu,
-                  color: Aps().Connec_state.watch(context) != CoState.connected
-                      ? colorScheme.primary
-                      : Theme.of(context).disabledColor,
-                  size: 24,
+                  Icons.menu, color: colorScheme.primary,
                 )
                 
               ),
