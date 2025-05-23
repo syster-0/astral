@@ -1,9 +1,7 @@
 import 'dart:io';
-
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/wid/home_box.dart';
 import 'package:flutter/material.dart';
-import 'package:graphview/GraphView.dart';
 
 // 添加模拟数据模型
 class NetworkNode {
@@ -49,6 +47,7 @@ class VirtualIpBox extends StatelessWidget {
               const Spacer(),
               // 添加状态指示器
               Container(
+                margin: const EdgeInsets.only(right: 4), 
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: _getStatusColor(
@@ -68,25 +67,8 @@ class VirtualIpBox extends StatelessWidget {
               ),
             ],
           ),
-          if (Aps().ipv4.watch(context).isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              children: [
-                Icon(Icons.public, size: 20, color: colorScheme.primary),
-                const Text(
-                  '虚拟 IP: ',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  Aps().ipv4.watch(context),
-                  style: TextStyle(color: colorScheme.secondary),
-                ),
-              ],
-            ),
-          ],
           if (Platform.isWindows) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Wrap(
@@ -103,6 +85,7 @@ class VirtualIpBox extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 const Spacer(),
                 Switch(
                   value: Aps().firewallStatus.watch(
@@ -112,6 +95,23 @@ class VirtualIpBox extends StatelessWidget {
                     Aps().setFirewall(value); // 切换防火墙状态
                   },
                   activeColor: colorScheme.primary,
+                ),
+              ],
+            ),
+          ],
+          if (Aps().ipv4.watch(context).isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                Icon(Icons.public, size: 20, color: colorScheme.primary),
+                const Text(
+                  '虚拟 IP: ',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  Aps().ipv4.watch(context),
+                  style: TextStyle(color: colorScheme.secondary),
                 ),
               ],
             ),
