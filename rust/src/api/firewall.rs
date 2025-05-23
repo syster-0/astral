@@ -1,3 +1,4 @@
+#[cfg(target_os = "windows")]
 pub use windows::{
     core::{Result, Interface, HRESULT, Error},
     Win32::{
@@ -8,7 +9,7 @@ pub use windows::{
         System::Com::{CoCreateInstance, CoInitializeEx, CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED},
     },
 };
-
+#[cfg(target_os = "windows")]
 pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
     unsafe {
         CoInitializeEx(None, COINIT_APARTMENTTHREADED)?;
@@ -27,7 +28,7 @@ pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
         Ok(enabled.as_bool())
     }
 }
-
+#[cfg(target_os = "windows")]
 pub fn set_firewall_status(profile_index: u32, enable: bool) -> Result<()> {
     unsafe {
         CoInitializeEx(None, COINIT_APARTMENTTHREADED)?;

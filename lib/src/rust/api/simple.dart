@@ -60,17 +60,11 @@ Future<JoinHandleResultString> createServer({
 
 Future<void> closeServer() => RustLib.instance.api.crateApiSimpleCloseServer();
 
-Future<NetworkInterfaceHops> getNetworkInterfaceHops() =>
-    RustLib.instance.api.crateApiSimpleGetNetworkInterfaceHops();
-
 Future<List<PeerRoutePair>> getPeerRoutePairs() =>
     RustLib.instance.api.crateApiSimpleGetPeerRoutePairs();
 
 Future<KVNetworkStatus> getNetworkStatus() =>
     RustLib.instance.api.crateApiSimpleGetNetworkStatus();
-
-Future<bool> setNetworkInterfaceHops({required int hop}) =>
-    RustLib.instance.api.crateApiSimpleSetNetworkInterfaceHops(hop: hop);
 
 Future<void> initApp() => RustLib.instance.api.crateApiSimpleInitApp();
 
@@ -303,43 +297,6 @@ class KVNodeInfo {
           txBytes == other.txBytes &&
           version == other.version &&
           cost == other.cost;
-}
-
-class NetworkInterfaceHop {
-  final String interfaceName;
-  final int hopCount;
-
-  const NetworkInterfaceHop({
-    required this.interfaceName,
-    required this.hopCount,
-  });
-
-  @override
-  int get hashCode => interfaceName.hashCode ^ hopCount.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NetworkInterfaceHop &&
-          runtimeType == other.runtimeType &&
-          interfaceName == other.interfaceName &&
-          hopCount == other.hopCount;
-}
-
-class NetworkInterfaceHops {
-  final List<NetworkInterfaceHop> hops;
-
-  const NetworkInterfaceHops({required this.hops});
-
-  @override
-  int get hashCode => hops.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NetworkInterfaceHops &&
-          runtimeType == other.runtimeType &&
-          hops == other.hops;
 }
 
 class NodeHopStats {

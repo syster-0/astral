@@ -134,9 +134,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<KVNodeInfo> dco_decode_list_kv_node_info(dynamic raw);
 
   @protected
-  List<NetworkInterfaceHop> dco_decode_list_network_interface_hop(dynamic raw);
-
-  @protected
   List<NodeHopStats> dco_decode_list_node_hop_stats(dynamic raw);
 
   @protected
@@ -144,12 +141,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<(String, int)> dco_decode_list_record_string_u_32(dynamic raw);
-
-  @protected
-  NetworkInterfaceHop dco_decode_network_interface_hop(dynamic raw);
-
-  @protected
-  NetworkInterfaceHops dco_decode_network_interface_hops(dynamic raw);
 
   @protected
   NodeHopStats dco_decode_node_hop_stats(dynamic raw);
@@ -273,11 +264,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<KVNodeInfo> sse_decode_list_kv_node_info(SseDeserializer deserializer);
 
   @protected
-  List<NetworkInterfaceHop> sse_decode_list_network_interface_hop(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   List<NodeHopStats> sse_decode_list_node_hop_stats(
     SseDeserializer deserializer,
   );
@@ -287,16 +273,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<(String, int)> sse_decode_list_record_string_u_32(
-    SseDeserializer deserializer,
-  );
-
-  @protected
-  NetworkInterfaceHop sse_decode_network_interface_hop(
-    SseDeserializer deserializer,
-  );
-
-  @protected
-  NetworkInterfaceHops sse_decode_network_interface_hops(
     SseDeserializer deserializer,
   );
 
@@ -442,12 +418,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_list_network_interface_hop(
-    List<NetworkInterfaceHop> self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_list_node_hop_stats(
     List<NodeHopStats> self,
     SseSerializer serializer,
@@ -462,18 +432,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_record_string_u_32(
     List<(String, int)> self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_network_interface_hop(
-    NetworkInterfaceHop self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_network_interface_hops(
-    NetworkInterfaceHops self,
     SseSerializer serializer,
   );
 

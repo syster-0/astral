@@ -64,7 +64,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.9.0';
 
   @override
-  int get rustContentHash => -1714095483;
+  int get rustContentHash => 907656687;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -97,8 +97,6 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<String>> crateApiSimpleGetIps();
 
-  Future<NetworkInterfaceHops> crateApiSimpleGetNetworkInterfaceHops();
-
   Future<KVNetworkStatus> crateApiSimpleGetNetworkStatus();
 
   Future<List<PeerRoutePair>> crateApiSimpleGetPeerRoutePairs();
@@ -129,8 +127,6 @@ abstract class RustLibApi extends BaseApi {
     required String interfaceName,
     required int metric,
   });
-
-  Future<bool> crateApiSimpleSetNetworkInterfaceHops({required int hop});
 
   Future<void> crateApiSimpleSetTunFd({required int fd});
 
@@ -390,36 +386,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "get_ips", argNames: []);
 
   @override
-  Future<NetworkInterfaceHops> crateApiSimpleGetNetworkInterfaceHops() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_network_interface_hops,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSimpleGetNetworkInterfaceHopsConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSimpleGetNetworkInterfaceHopsConstMeta =>
-      const TaskConstMeta(
-        debugName: "get_network_interface_hops",
-        argNames: [],
-      );
-
-  @override
   Future<KVNetworkStatus> crateApiSimpleGetNetworkStatus() {
     return handler.executeNormal(
       NormalTask(
@@ -428,7 +394,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 7,
             port: port_,
           );
         },
@@ -455,7 +421,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 8,
             port: port_,
           );
         },
@@ -483,7 +449,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 9,
             port: port_,
           );
         },
@@ -516,7 +482,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 10,
             port: port_,
           );
         },
@@ -544,7 +510,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 11,
             port: port_,
           );
         },
@@ -576,7 +542,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 12,
             port: port_,
           );
         },
@@ -606,7 +572,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 13,
             port: port_,
           );
         },
@@ -634,7 +600,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 14,
             port: port_,
           );
         },
@@ -669,7 +635,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 15,
             port: port_,
           );
         },
@@ -704,7 +670,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 16,
             port: port_,
           );
         },
@@ -726,37 +692,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<bool> crateApiSimpleSetNetworkInterfaceHops({required int hop}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_i_32(hop, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 18,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSimpleSetNetworkInterfaceHopsConstMeta,
-        argValues: [hop],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSimpleSetNetworkInterfaceHopsConstMeta =>
-      const TaskConstMeta(
-        debugName: "set_network_interface_hops",
-        argNames: ["hop"],
-      );
-
-  @override
   Future<void> crateApiSimpleSetTunFd({required int fd}) {
     return handler.executeNormal(
       NormalTask(
@@ -766,7 +701,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 17,
             port: port_,
           );
         },
@@ -1051,14 +986,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<NetworkInterfaceHop> dco_decode_list_network_interface_hop(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>)
-        .map(dco_decode_network_interface_hop)
-        .toList();
-  }
-
-  @protected
   List<NodeHopStats> dco_decode_list_node_hop_stats(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_node_hop_stats).toList();
@@ -1074,29 +1001,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<(String, int)> dco_decode_list_record_string_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_record_string_u_32).toList();
-  }
-
-  @protected
-  NetworkInterfaceHop dco_decode_network_interface_hop(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return NetworkInterfaceHop(
-      interfaceName: dco_decode_String(arr[0]),
-      hopCount: dco_decode_u_32(arr[1]),
-    );
-  }
-
-  @protected
-  NetworkInterfaceHops dco_decode_network_interface_hops(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return NetworkInterfaceHops(
-      hops: dco_decode_list_network_interface_hop(arr[0]),
-    );
   }
 
   @protected
@@ -1462,20 +1366,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<NetworkInterfaceHop> sse_decode_list_network_interface_hop(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <NetworkInterfaceHop>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_network_interface_hop(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
   List<NodeHopStats> sse_decode_list_node_hop_stats(
     SseDeserializer deserializer,
   ) {
@@ -1508,28 +1398,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_record_string_u_32(deserializer));
     }
     return ans_;
-  }
-
-  @protected
-  NetworkInterfaceHop sse_decode_network_interface_hop(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_interfaceName = sse_decode_String(deserializer);
-    var var_hopCount = sse_decode_u_32(deserializer);
-    return NetworkInterfaceHop(
-      interfaceName: var_interfaceName,
-      hopCount: var_hopCount,
-    );
-  }
-
-  @protected
-  NetworkInterfaceHops sse_decode_network_interface_hops(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_hops = sse_decode_list_network_interface_hop(deserializer);
-    return NetworkInterfaceHops(hops: var_hops);
   }
 
   @protected
@@ -1850,18 +1718,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_network_interface_hop(
-    List<NetworkInterfaceHop> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_network_interface_hop(item, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_list_node_hop_stats(
     List<NodeHopStats> self,
     SseSerializer serializer,
@@ -1893,25 +1749,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_record_string_u_32(item, serializer);
     }
-  }
-
-  @protected
-  void sse_encode_network_interface_hop(
-    NetworkInterfaceHop self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.interfaceName, serializer);
-    sse_encode_u_32(self.hopCount, serializer);
-  }
-
-  @protected
-  void sse_encode_network_interface_hops(
-    NetworkInterfaceHops self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_network_interface_hop(self.hops, serializer);
   }
 
   @protected
