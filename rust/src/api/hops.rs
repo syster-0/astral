@@ -1,7 +1,10 @@
+#[cfg(target_os = "windows")]
 use std::io;
+#[cfg(target_os = "windows")]
 use std::process::Command;
 
 /// 获取所有网卡及其跃点数
+#[cfg(target_os = "windows")]
 pub fn get_all_interfaces_metrics() -> io::Result<Vec<(String, u32)>> {
     let output = Command::new("netsh")
         .args(&["interface", "ipv4", "show", "interfaces"])
@@ -34,6 +37,7 @@ pub fn get_all_interfaces_metrics() -> io::Result<Vec<(String, u32)>> {
 }
 
 /// 设置指定网卡的跃点数
+#[cfg(target_os = "windows")]
 pub fn set_interface_metric(interface_name: &str, metric: u32) -> io::Result<()> {
     let output = Command::new("netsh")
         .args(&["interface", "ipv4", "set", "interface", interface_name, "metric=", &metric.to_string()])
