@@ -26,7 +26,6 @@ jobs:
           git clone https://github.com/flutter/flutter.git --branch 3.32.0 $HOME/flutter --depth 1
           echo "正在将 Flutter 添加到 PATH..."
           echo "$env:HOME\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          # 验证路径是否存在
           if (Test-Path "$env:HOME\flutter\bin\flutter.exe") {
               echo "Flutter 路径验证成功"
           } else {
