@@ -1,4 +1,4 @@
-package com.kevin.astral
+package com.example.astral
 
 import io.flutter.embedding.android.FlutterActivity
 
