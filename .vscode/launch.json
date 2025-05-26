@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Flutter (x86)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "install --debug",
+            ]
+        },
+        {
             "name": "Flutter",
             "request": "launch",
             "type": "dart",
