@@ -31,7 +31,7 @@ pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
 }
 /// 不是window就返回false
 #[cfg(not(target_os = "windows"))]
-pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
+pub fn get_firewall_status(profile_index: u32) -> Result<bool, std::io::Error> {
     Ok(false)
 }
 #[cfg(target_os = "windows")]
