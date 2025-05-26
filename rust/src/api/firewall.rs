@@ -1,3 +1,4 @@
+#[cfg(target_os = "windows")]
 pub use windows::{
     core::{Result, Interface, HRESULT, Error},
     Win32::Foundation::VARIANT_BOOL,
