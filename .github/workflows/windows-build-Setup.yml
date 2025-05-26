@@ -65,13 +65,12 @@ jobs:
       - name: 📝 创建 Inno Setup 脚本
         run: |
           echo "正在创建 Inno Setup 脚本..."
-          $version = "${{ github.ref_name }}" -replace 'v', ''
-          if (-not $version) { $version = "1.0.0" }
+          $version = Get-Content "$env:GITHUB_WORKSPACE\pubspec.yaml" | Select-String -Pattern "version: (.*)" | ForEach-Object { $_.Matches.Groups[1].Value }
           
           $scriptContent = @"
           ; Inno Setup 脚本文件
           #define MyAppName "Astral"
-          #define MyAppVersion "2.0.0-beta.83"
+          #define MyAppVersion "$version"
           #define MyAppPublisher "kevin"
           #define MyAppURL "https://astral.fan/"
           #define MyAppExeName "astral.exe"
