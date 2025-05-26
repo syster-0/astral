@@ -122,7 +122,12 @@ jobs:
           "@
           $scriptContent | Out-File -FilePath "$env:GITHUB_WORKSPACE\setup.iss" -Encoding utf8
           echo "Inno Setup 脚本已创建！"
-
+          
+      # 安装 Inno Setup
+      - name: 🔧 安装 Inno Setup
+        run: |
+          choco install innosetup -y
+          echo "Inno Setup 安装完成！"
       # 编译 Inno Setup 安装程序
       - name: 🔨 编译 Inno Setup 安装程序
         run: |
@@ -131,10 +136,7 @@ jobs:
           echo "Inno Setup 安装程序编译完成！"
             # 安装最新版 Inno Setup
 
-      - name: 📥 安装 Inno Setup
-        uses: zhuzichu520/inno-setup-action@v1.0.0
-        with:
-          filepath: './path/InstallerScript.iss'
+
 
       # 上传 Inno Setup 安装程序作为 Artifact
       - name: 📤 上传 Inno Setup 安装程序
