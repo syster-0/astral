@@ -51,16 +51,6 @@ jobs:
           Copy-Item -Path "$dllSourceDir\*" -Destination $releaseDir -Recurse -Force
           echo "DLL 文件已复制到 $releaseDir！"
 
-      # 安装最新版 Inno Setup
-      - name: 📥 安装 Inno Setup
-        uses: AmrEldib/install-inno-setup@v1
-        with:
-          version: "6.4.3"  # 可以替换为最新版本号
-
-      - name: 🔧 添加 Inno Setup 到 PATH
-        run: |
-          echo "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
       # 创建 Inno Setup 脚本
       - name: 📝 创建 Inno Setup 脚本
         run: |
@@ -139,13 +129,19 @@ jobs:
           echo "正在编译 Inno Setup 安装程序..."
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "$env:GITHUB_WORKSPACE\setup.iss"
           echo "Inno Setup 安装程序编译完成！"
+            # 安装最新版 Inno Setup
+
+      - name: 📥 安装 Inno Setup
+        uses: zhuzichu520/inno-setup-action@v1.0.0
+        with:
+          filepath: './path/InstallerScript.iss'
 
       # 上传 Inno Setup 安装程序作为 Artifact
       - name: 📤 上传 Inno Setup 安装程序
         uses: actions/upload-artifact@v4
         with:
           name: setup
-          path: ${{ github.workspace }}/astral-setup-*.exe
+          path: ${{ github.workspace }}/Astralsetup.exe
           
       # 创建 GitHub Release 并上传文件
       - name: 📢 创建 GitHub Release
@@ -153,6 +149,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ${{ github.workspace }}/astral-setup-*.exe
+            ${{ github.workspace }}/Astralsetup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
