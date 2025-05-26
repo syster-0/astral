@@ -18,7 +18,12 @@ jobs:
     steps:
       - name: 🛠️ 检出代码仓库
         uses: actions/checkout@v4
-
+          
+      # 安装 Inno Setup
+      - name: 🔧 安装 Inno Setup
+        run: |
+          choco install innosetup -y
+          echo "Inno Setup 安装完成！"
       # 安装 Flutter
       - name: 🐦 安装 Flutter
         run: |
@@ -122,12 +127,7 @@ jobs:
           "@
           $scriptContent | Out-File -FilePath "$env:GITHUB_WORKSPACE\setup.iss" -Encoding utf8
           echo "Inno Setup 脚本已创建！"
-          
-      # 安装 Inno Setup
-      - name: 🔧 安装 Inno Setup
-        run: |
-          choco install innosetup -y
-          echo "Inno Setup 安装完成！"
+
       # 编译 Inno Setup 安装程序
       - name: 🔨 编译 Inno Setup 安装程序
         run: |
