@@ -6,11 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-/// 获取所有网卡及其跃点数
 Future<List<(String, int)>> getAllInterfacesMetrics() =>
     RustLib.instance.api.crateApiHopsGetAllInterfacesMetrics();
 
-/// 设置指定网卡的跃点数
 Future<void> setInterfaceMetric({
   required String interfaceName,
   required int metric,

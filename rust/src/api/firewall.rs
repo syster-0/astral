@@ -9,12 +9,8 @@ pub use windows::{
         System::Com::{CoCreateInstance, CoInitializeEx, CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED},
     },
 };
-
+#[cfg(target_os = "windows")]
 pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
-    // 不是window就返回false
-    if !cfg!(windows) {
-        return Ok(false);
-    }
     unsafe {
         CoInitializeEx(None, COINIT_APARTMENTTHREADED)?;
 
@@ -32,6 +28,12 @@ pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
         Ok(enabled.as_bool())
     }
 }
+/// 不是window就返回false
+#[cfg(not(target_os = "windows"))]
+pub fn get_firewall_status(profile_index: u32) -> Result<bool> {
+    Ok(false)
+}
+#[cfg(target_os = "windows")]
 pub fn set_firewall_status(profile_index: u32, enable: bool) -> Result<()> {
     // 不是window就返回false
     if!cfg!(windows) {
@@ -52,4 +54,10 @@ pub fn set_firewall_status(profile_index: u32, enable: bool) -> Result<()> {
         policy.put_FirewallEnabled(profile_type, VARIANT_BOOL::from(enable))?;
         Ok(())
     }
+}
+
+/// 不是window就返回false
+#[cfg(not(target_os = "windows"))]
+pub fn set_firewall_status(profile_index: u32, enable: bool) -> Result<()> {
+    Ok(())
 }
