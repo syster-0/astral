@@ -24,8 +24,9 @@ jobs:
         run: |
           echo "正在克隆 Flutter 稳定分支..."
           git clone https://github.com/flutter/flutter.git --branch 3.29.3 $HOME/flutter --depth 1
-          echo "正在将 Flutter 添加到 PATH..."
-          echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "正在将Flutter添加到PATH..."
+          $env:PATH = "$env:GITHUB_WORKSPACE\flutter\bin;$env:PATH"
+          flutter doctor -v
           echo "Flutter 安装完成！"
 
       # 安装 Flutter 依赖
