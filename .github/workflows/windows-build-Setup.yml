@@ -153,7 +153,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: setup
-          path: ${{ github.workspace }}/Astralsetup.exe
+          path: ${{ github.workspace }}/Output/Astralsetup.exe
           
       # 创建 GitHub Release 并上传文件
       - name: 📢 创建 GitHub Release
@@ -161,6 +161,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ${{ github.workspace }}/Astralsetup.exe
+            ${{ github.workspace }}/Output/Astralsetup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
