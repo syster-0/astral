@@ -139,6 +139,11 @@ jobs:
       - name: 🔨 编译 Inno Setup 安装程序
         run: |
           echo "正在编译 Inno Setup 安装程序..."
+          # 下载中文语言文件
+          curl -o ChineseSimplified.isl https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl
+          mkdir -p "$env:GITHUB_WORKSPACE\Languages"
+          move ChineseSimplified.isl "$env:GITHUB_WORKSPACE\Languages\"
+          # 编译安装程序
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "$env:GITHUB_WORKSPACE\setup.iss"
           echo "Inno Setup 安装程序编译完成！"
             # 安装最新版 Inno Setup
