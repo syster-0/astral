@@ -166,7 +166,20 @@ Future<void> _initializeServer(dynamic rom) async {
     // IP有效且不是 "0.0.0.0"
     ipForServer = currentIp;
   }
-
+    List<Forward> forwards = [];
+    for (var conn in aps.connections.value) {
+      if (conn.enabled) {
+        for (var conn in conn.connections) {
+          forwards.add(
+            Forward(
+              bindAddr: conn.bindAddr,
+              dstAddr: conn.dstAddr,
+              proto: conn.proto,
+            ),
+          );
+        }
+      }
+    }
   await createServer(
     username: aps.PlayerName.value,
     enableDhcp: forceDhcp ? true : aps.dhcp.value,
@@ -174,6 +187,7 @@ Future<void> _initializeServer(dynamic rom) async {
     roomName: rom.roomName,
     roomPassword: rom.password,
     cidrs: aps.cidrproxy.value,
+    forwards: forwards,
     severurl:
         aps.servers.value.where((server) => server.enable).expand((server) {
           final urls = <String>[];

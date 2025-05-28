@@ -1,3 +1,4 @@
+use easytier::common::config::PortForwardConfig;
 pub use easytier::{
     common::{
         self,
@@ -170,7 +171,11 @@ pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<(
                                                 println!("{}", msg);
                                                 let _ = send_udp_to_localhost(&msg);
                                             }
-GlobalCtxEvent::PortForwardAdded(port_forward_config_pb) => todo!(),
+GlobalCtxEvent::PortForwardAdded(port_forward_config_pb) => {
+    let msg = format!("端口转发已添加。配置: {:?}", port_forward_config_pb);
+    println!("{}", msg);
+    let _ = send_udp_to_localhost(&msg);
+},
                                             }
                 }
                 Err(err) => {
@@ -509,6 +514,12 @@ pub struct FlagsC {
     pub accept_dns: bool,
 }
 
+pub struct Forward{
+    pub bind_addr: String,
+    pub dst_addr: String,
+    pub proto:String
+}
+
 // 创建服务器
 pub fn create_server(
     username: String,
@@ -519,6 +530,7 @@ pub fn create_server(
     severurl: Vec<String>,
     onurl: Vec<String>,
     cidrs: Vec<String>,
+    forwards: Vec<Forward>,
     flag: FlagsC,
 ) -> JoinHandle<Result<(), String>> {
     print!("{}", format!("创建服务器: {}，启用DHCP: {}, 指定IP: {}, 房间名称: {}, 房间密码: {}, 服务器URL: {:?}, 监听器URL: {:?}", username, enable_dhcp, specified_ip, room_name, room_password, severurl, onurl));
@@ -542,6 +554,20 @@ pub fn create_server(
         for c in cidrs {
             cfg.add_proxy_cidr(c.parse().unwrap());
         }
+        let mut old = cfg.get_port_forwards();
+
+        for c in forwards {
+            // 打印
+            println!("{}", format!("添加端口转发: {} -> {} -{}", c.bind_addr, c.dst_addr    , c.proto));
+            let port_forward_item = PortForwardConfig {
+                bind_addr:c.bind_addr.parse().unwrap(),
+                dst_addr:c.dst_addr.parse().unwrap(),
+                proto: c.proto,
+            };
+            old.push(port_forward_item);
+        }
+        
+        cfg.set_port_forwards(old);
         // Set flags more efficiently by directly mapping from input
         let mut flags = cfg.get_flags();
         flags.default_protocol = flag.default_protocol;

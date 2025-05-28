@@ -90,7 +90,6 @@ class Aps {
           updateFirewallStatus();
           autoSetMTU.value = await AppDatabase().AllSettings.getAutoSetMTU();
     Aps().updateConnections();
-
     }
 
   }

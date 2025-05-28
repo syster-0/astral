@@ -86,6 +86,7 @@ abstract class RustLibApi extends BaseApi {
     required List<String> severurl,
     required List<String> onurl,
     required List<String> cidrs,
+    required List<Forward> forwards,
     required FlagsC flag,
   });
 
@@ -206,6 +207,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required List<String> severurl,
     required List<String> onurl,
     required List<String> cidrs,
+    required List<Forward> forwards,
     required FlagsC flag,
   }) {
     return handler.executeNormal(
@@ -220,6 +222,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_list_String(severurl, serializer);
           sse_encode_list_String(onurl, serializer);
           sse_encode_list_String(cidrs, serializer);
+          sse_encode_list_forward(forwards, serializer);
           sse_encode_box_autoadd_flags_c(flag, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -243,6 +246,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           severurl,
           onurl,
           cidrs,
+          forwards,
           flag,
         ],
         apiImpl: this,
@@ -261,6 +265,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       "severurl",
       "onurl",
       "cidrs",
+      "forwards",
       "flag",
     ],
   );
@@ -855,6 +860,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Forward dco_decode_forward(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Forward(
+      bindAddr: dco_decode_String(arr[0]),
+      dstAddr: dco_decode_String(arr[1]),
+      proto: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -927,6 +945,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<Forward> dco_decode_list_forward(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_forward).toList();
   }
 
   @protected
@@ -1201,6 +1225,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Forward sse_decode_forward(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_bindAddr = sse_decode_String(deserializer);
+    var var_dstAddr = sse_decode_String(deserializer);
+    var var_proto = sse_decode_String(deserializer);
+    return Forward(
+      bindAddr: var_bindAddr,
+      dstAddr: var_dstAddr,
+      proto: var_proto,
+    );
+  }
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
@@ -1295,6 +1332,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Forward> sse_decode_list_forward(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Forward>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_forward(deserializer));
     }
     return ans_;
   }
@@ -1582,6 +1631,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_forward(Forward self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.bindAddr, serializer);
+    sse_encode_String(self.dstAddr, serializer);
+    sse_encode_String(self.proto, serializer);
+  }
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
@@ -1650,6 +1707,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_forward(List<Forward> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_forward(item, serializer);
     }
   }
 

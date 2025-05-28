@@ -30,7 +30,7 @@ class _ConnectButtonState extends State<ConnectButton>
 
   // 添加超时时间常量
   static const int connectionTimeoutSeconds = 15;
-  
+
   // 辅助方法：验证IPv4地址格式
   bool _isValidIpAddress(String ip) {
     if (ip.isEmpty) return false;
@@ -147,7 +147,40 @@ class _ConnectButtonState extends State<ConnectButton>
       // IP有效且不是 "0.0.0.0"
       ipForServer = currentIp;
     }
-
+    List<Forward> forwards = [];
+    for (var conn in aps.connections.value) {
+      if (conn.enabled) {
+        for (var conn in conn.connections) {
+          // 根据协议类型添加转发规则
+          if (conn.proto == 'all') {
+            // ALL协议时添加TCP和UDP两条规则
+            forwards.add(
+              Forward(
+                bindAddr: conn.bindAddr,
+                dstAddr: conn.dstAddr,
+                proto: 'tcp',
+              ),
+            );
+            forwards.add(
+              Forward(
+                bindAddr: conn.bindAddr,
+                dstAddr: conn.dstAddr,
+                proto: 'udp',
+              ),
+            );
+          } else {
+            // TCP或UDP时只添加对应协议的规则
+            forwards.add(
+              Forward(
+                bindAddr: conn.bindAddr,
+                dstAddr: conn.dstAddr,
+                proto: conn.proto,
+              ),
+            );
+          }
+        }
+      }
+    }
     await createServer(
       username: aps.PlayerName.value,
       enableDhcp: forceDhcp ? true : aps.dhcp.value,
@@ -155,6 +188,7 @@ class _ConnectButtonState extends State<ConnectButton>
       roomName: rom.roomName,
       roomPassword: rom.password,
       cidrs: aps.cidrproxy.value,
+      forwards: forwards,
       severurl:
           aps.servers.value.where((server) => server.enable).expand((server) {
             final urls = <String>[];
@@ -439,7 +473,9 @@ class _ConnectButtonState extends State<ConnectButton>
                       'progress_${Aps().Connec_state.watch(context) == CoState.connecting}',
                     ),
                     tween: Tween<double>(begin: 0.0, end: 1.0),
-                    duration: Duration(seconds: connectionTimeoutSeconds), // 使用变量控制动画时间
+                    duration: Duration(
+                      seconds: connectionTimeoutSeconds,
+                    ), // 使用变量控制动画时间
                     curve: Curves.easeInOut,
                     builder: (context, value, _) {
                       // 更新进度值

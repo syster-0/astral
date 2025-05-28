@@ -110,6 +110,7 @@ fn wire__crate__api__simple__create_server_impl(
             let api_severurl = <Vec<String>>::sse_decode(&mut deserializer);
             let api_onurl = <Vec<String>>::sse_decode(&mut deserializer);
             let api_cidrs = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_forwards = <Vec<crate::api::simple::Forward>>::sse_decode(&mut deserializer);
             let api_flag = <crate::api::simple::FlagsC>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -123,6 +124,7 @@ fn wire__crate__api__simple__create_server_impl(
                         api_severurl,
                         api_onurl,
                         api_cidrs,
+                        api_forwards,
                         api_flag,
                     ))?;
                     Ok(output_ok)
@@ -792,6 +794,20 @@ impl SseDecode for crate::api::simple::FlagsC {
     }
 }
 
+impl SseDecode for crate::api::simple::Forward {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_bindAddr = <String>::sse_decode(deserializer);
+        let mut var_dstAddr = <String>::sse_decode(deserializer);
+        let mut var_proto = <String>::sse_decode(deserializer);
+        return crate::api::simple::Forward {
+            bind_addr: var_bindAddr,
+            dst_addr: var_dstAddr,
+            proto: var_proto,
+        };
+    }
+}
+
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -883,6 +899,18 @@ impl SseDecode for Vec<String> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<String>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::simple::Forward> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::simple::Forward>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1166,6 +1194,25 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::FlagsC> for crate::ap
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::Forward {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.bind_addr.into_into_dart().into_dart(),
+            self.dst_addr.into_into_dart().into_dart(),
+            self.proto.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::simple::Forward {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::Forward>
+    for crate::api::simple::Forward
+{
+    fn into_into_dart(self) -> crate::api::simple::Forward {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::simple::KVNetworkStatus {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1407,6 +1454,15 @@ impl SseEncode for crate::api::simple::FlagsC {
     }
 }
 
+impl SseEncode for crate::api::simple::Forward {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.bind_addr, serializer);
+        <String>::sse_encode(self.dst_addr, serializer);
+        <String>::sse_encode(self.proto, serializer);
+    }
+}
+
 impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1468,6 +1524,16 @@ impl SseEncode for Vec<String> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <String>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::simple::Forward> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::simple::Forward>::sse_encode(item, serializer);
         }
     }
 }

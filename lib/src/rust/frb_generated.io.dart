@@ -105,6 +105,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlagsC dco_decode_flags_c(dynamic raw);
 
   @protected
+  Forward dco_decode_forward(dynamic raw);
+
+  @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
@@ -124,6 +127,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<Forward> dco_decode_list_forward(dynamic raw);
 
   @protected
   List<KVNodeConnectionStats> dco_decode_list_kv_node_connection_stats(
@@ -233,6 +239,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlagsC sse_decode_flags_c(SseDeserializer deserializer);
 
   @protected
+  Forward sse_decode_forward(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
@@ -254,6 +263,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<Forward> sse_decode_list_forward(SseDeserializer deserializer);
 
   @protected
   List<KVNodeConnectionStats> sse_decode_list_kv_node_connection_stats(
@@ -378,6 +390,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_flags_c(FlagsC self, SseSerializer serializer);
 
   @protected
+  void sse_encode_forward(Forward self, SseSerializer serializer);
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
@@ -404,6 +419,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_forward(List<Forward> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_kv_node_connection_stats(

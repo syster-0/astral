@@ -39,6 +39,7 @@ Future<JoinHandleResultString> createServer({
   required List<String> severurl,
   required List<String> onurl,
   required List<String> cidrs,
+  required List<Forward> forwards,
   required FlagsC flag,
 }) => RustLib.instance.api.crateApiSimpleCreateServer(
   username: username,
@@ -49,6 +50,7 @@ Future<JoinHandleResultString> createServer({
   severurl: severurl,
   onurl: onurl,
   cidrs: cidrs,
+  forwards: forwards,
   flag: flag,
 );
 
@@ -171,6 +173,30 @@ class FlagsC {
           disableRelayKcp == other.disableRelayKcp &&
           proxyForwardBySystem == other.proxyForwardBySystem &&
           acceptDns == other.acceptDns;
+}
+
+class Forward {
+  final String bindAddr;
+  final String dstAddr;
+  final String proto;
+
+  const Forward({
+    required this.bindAddr,
+    required this.dstAddr,
+    required this.proto,
+  });
+
+  @override
+  int get hashCode => bindAddr.hashCode ^ dstAddr.hashCode ^ proto.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Forward &&
+          runtimeType == other.runtimeType &&
+          bindAddr == other.bindAddr &&
+          dstAddr == other.dstAddr &&
+          proto == other.proto;
 }
 
 class KVNetworkStatus {
