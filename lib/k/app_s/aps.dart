@@ -89,6 +89,8 @@ class Aps {
     if (Platform.isWindows) {
           updateFirewallStatus();
           autoSetMTU.value = await AppDatabase().AllSettings.getAutoSetMTU();
+    Aps().updateConnections();
+
     }
 
   }
