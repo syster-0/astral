@@ -3,7 +3,7 @@ description: "astral"
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 
-version: 2.0.0-beta.80
+version: 2.0.0-beta.85
 
 environment:
   sdk: ^3.7.2
@@ -17,7 +17,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   rust_lib_astral:
     path: rust_builder
-  flutter_rust_bridge: 2.9.0
+  flutter_rust_bridge: 2.10.0
   signals_flutter: ^6.0.2
   isar_flutter_libs:
     hosted: https://pub.isar-community.dev
@@ -45,12 +45,14 @@ dependencies:
   sentry_flutter: ^8.14.2
   flutter_dotenv: ^5.2.1
   win32: ^5.12.0
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  build_runner: ^2.4.13
+  build_runner: ^2.4.4
+  json_serializable: ^6.7.1
   integration_test:
     sdk: flutter
   isar_generator:

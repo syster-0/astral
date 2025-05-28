@@ -1,7 +1,30 @@
 import 'dart:io';
-
 import 'package:isar/isar.dart';
 part 'net_config.g.dart';
+
+@embedded
+class ConnectionInfo {
+  late String bindAddr;
+  late String dstAddr;
+  late String proto;
+  ConnectionInfo() {
+    bindAddr = '';
+    dstAddr = '';
+    proto = '';
+  }
+}
+
+@embedded
+class ConnectionManager {
+  late String name; // 分组名称
+  late List<ConnectionInfo> connections;
+  late bool enabled;
+ ConnectionManager() {
+    name = '';
+    connections = [];
+    enabled = false;
+  }
+}
 
 @collection
 class NetConfig {
@@ -26,6 +49,9 @@ class NetConfig {
 
   // 子网代理
   List<String> cidrproxy = []; // 代理地址
+
+  // 转发配置
+  List<ConnectionManager>  connectionManagers = [];
   /// 默认协议
   String default_protocol = 'tcp'; //x
 

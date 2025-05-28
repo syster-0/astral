@@ -50,7 +50,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           ndk-version: '27.2.12479018'
-          cmake-version: '3.18.1'
+          cmake-version: '4.0.2'
 
       - name: 🐦 安装 Flutter
         run: |
@@ -83,10 +83,10 @@ jobs:
 
       - name: 🛠️ 构建 x86_64 架构 APK
         run: |
-          flutter build apk --release --target-platform android-x64
+          flutter build apk --debug --target-platform android-x64
 
       - name: 📤 上传 x86_64 架构 APK 到 Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-release-x86_64
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk

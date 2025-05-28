@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:astral/fun/reg.dart';
+import 'package:astral/fun/route_fun.dart';
 import 'package:astral/fun/up.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/src/rust/api/hops.dart';
@@ -47,7 +48,75 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-
+        if (Platform.isWindows)
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            child: ExpansionTile(
+              initiallyExpanded: false, // 默认折叠,
+              leading: const Icon(Icons.broadcast_on_personal),
+              title: const Text('广播管理'),
+              children: [
+                Builder(
+                  builder: (context) {
+                    final connections = Aps().connections.watch(context);
+                    return Column(
+                      children: [
+                        ...List.generate(connections.length, (index) {
+                          final manager = connections[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: ExpansionTile(
+                              leading: Switch(
+                                value: manager.enabled,
+                                onChanged: (value) async {
+                                  await Aps().updateConnectionEnabled(index, value);
+                                },
+                              ),
+                              title: Text(manager.name.isEmpty ? '未命名分组' : manager.name),
+                              subtitle: Text('${manager.connections.length} 个连接'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    tooltip: '编辑',
+                                    onPressed: () => editConnectionManager(context, index, manager),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, size: 20),
+                                    tooltip: '删除',
+                                    onPressed: () => deleteConnectionManager(context, index, manager.name),
+                                  ),
+                                ],
+                              ),
+                              children: [
+                                ...manager.connections.map((conn) => ListTile(
+                                  dense: true,
+                                  leading: const Icon(Icons.link, size: 16),
+                                  title: Text('${conn.bindAddr} → ${conn.dstAddr}'),
+                                  subtitle: Text('协议: ${conn.proto}'),
+                                )),
+                                if (manager.connections.isEmpty)
+                                  const ListTile(
+                                    dense: true,
+                                    title: Text('暂无连接配置'),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: const Text('新增广播分组'),
+                          onTap: () => addConnectionManager(context),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         if (Platform.isWindows)
          Card(
             shape: RoundedRectangleBorder(
@@ -55,10 +124,9 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             child: ExpansionTile(
               initiallyExpanded: false, // 默认折叠
-              leading: const Icon(Icons.launch),
+              leading: const Icon(Icons.network_check),
               title: const Text('网卡跃点设置'),
               children: [
-                
                 SwitchListTile(
                   title: const Text('自动设置跃点'),
                   subtitle: const Text('每次启动网卡自动设置跃点最小'),

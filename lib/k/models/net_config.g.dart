@@ -32,143 +32,149 @@ const NetConfigSchema = CollectionSchema(
       name: r'cidrproxy',
       type: IsarType.stringList,
     ),
-    r'data_compress_algo': PropertySchema(
+    r'connectionManagers': PropertySchema(
       id: 3,
+      name: r'connectionManagers',
+      type: IsarType.objectList,
+      target: r'ConnectionManager',
+    ),
+    r'data_compress_algo': PropertySchema(
+      id: 4,
       name: r'data_compress_algo',
       type: IsarType.long,
     ),
     r'default_protocol': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'default_protocol',
       type: IsarType.string,
     ),
     r'dev_name': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'dev_name',
       type: IsarType.string,
     ),
     r'dhcp': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'dhcp',
       type: IsarType.bool,
     ),
     r'disable_kcp_input': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'disable_kcp_input',
       type: IsarType.bool,
     ),
     r'disable_p2p': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'disable_p2p',
       type: IsarType.bool,
     ),
     r'disable_relay_kcp': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'disable_relay_kcp',
       type: IsarType.bool,
     ),
     r'disable_udp_hole_punching': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'disable_udp_hole_punching',
       type: IsarType.bool,
     ),
     r'enable_encryption': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'enable_encryption',
       type: IsarType.bool,
     ),
     r'enable_exit_node': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'enable_exit_node',
       type: IsarType.bool,
     ),
     r'enable_ipv6': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'enable_ipv6',
       type: IsarType.bool,
     ),
     r'enable_kcp_proxy': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'enable_kcp_proxy',
       type: IsarType.bool,
     ),
     r'hostname': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'hostname',
       type: IsarType.string,
     ),
     r'instance_name': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'instance_name',
       type: IsarType.string,
     ),
     r'ipv4': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'ipv4',
       type: IsarType.string,
     ),
     r'latency_first': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'latency_first',
       type: IsarType.bool,
     ),
     r'listeners': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'listeners',
       type: IsarType.stringList,
     ),
     r'mtu': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'mtu',
       type: IsarType.long,
     ),
     r'multi_thread': PropertySchema(
-      id: 21,
+      id: 22,
       name: r'multi_thread',
       type: IsarType.bool,
     ),
     r'netns': PropertySchema(
-      id: 22,
+      id: 23,
       name: r'netns',
       type: IsarType.string,
     ),
     r'network_name': PropertySchema(
-      id: 23,
+      id: 24,
       name: r'network_name',
       type: IsarType.string,
     ),
     r'network_secret': PropertySchema(
-      id: 24,
+      id: 25,
       name: r'network_secret',
       type: IsarType.string,
     ),
     r'no_tun': PropertySchema(
-      id: 25,
+      id: 26,
       name: r'no_tun',
       type: IsarType.bool,
     ),
     r'peer': PropertySchema(
-      id: 26,
+      id: 27,
       name: r'peer',
       type: IsarType.stringList,
     ),
     r'proxy_forward_by_system': PropertySchema(
-      id: 27,
+      id: 28,
       name: r'proxy_forward_by_system',
       type: IsarType.bool,
     ),
     r'relay_all_peer_rpc': PropertySchema(
-      id: 28,
+      id: 29,
       name: r'relay_all_peer_rpc',
       type: IsarType.bool,
     ),
     r'relay_network_whitelist': PropertySchema(
-      id: 29,
+      id: 30,
       name: r'relay_network_whitelist',
       type: IsarType.string,
     ),
     r'use_smoltcp': PropertySchema(
-      id: 30,
+      id: 31,
       name: r'use_smoltcp',
       type: IsarType.bool,
     )
@@ -180,7 +186,10 @@ const NetConfigSchema = CollectionSchema(
   idName: r'id',
   indexes: {},
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {
+    r'ConnectionManager': ConnectionManagerSchema,
+    r'ConnectionInfo': ConnectionInfoSchema
+  },
   getId: _netConfigGetId,
   getLinks: _netConfigGetLinks,
   attach: _netConfigAttach,
@@ -198,6 +207,15 @@ int _netConfigEstimateSize(
     for (var i = 0; i < object.cidrproxy.length; i++) {
       final value = object.cidrproxy[i];
       bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.connectionManagers.length * 3;
+  {
+    final offsets = allOffsets[ConnectionManager]!;
+    for (var i = 0; i < object.connectionManagers.length; i++) {
+      final value = object.connectionManagers[i];
+      bytesCount +=
+          ConnectionManagerSchema.estimateSize(value, offsets, allOffsets);
     }
   }
   bytesCount += 3 + object.default_protocol.length * 3;
@@ -235,34 +253,40 @@ void _netConfigSerialize(
   writer.writeBool(offsets[0], object.accept_dns);
   writer.writeBool(offsets[1], object.bind_device);
   writer.writeStringList(offsets[2], object.cidrproxy);
-  writer.writeLong(offsets[3], object.data_compress_algo);
-  writer.writeString(offsets[4], object.default_protocol);
-  writer.writeString(offsets[5], object.dev_name);
-  writer.writeBool(offsets[6], object.dhcp);
-  writer.writeBool(offsets[7], object.disable_kcp_input);
-  writer.writeBool(offsets[8], object.disable_p2p);
-  writer.writeBool(offsets[9], object.disable_relay_kcp);
-  writer.writeBool(offsets[10], object.disable_udp_hole_punching);
-  writer.writeBool(offsets[11], object.enable_encryption);
-  writer.writeBool(offsets[12], object.enable_exit_node);
-  writer.writeBool(offsets[13], object.enable_ipv6);
-  writer.writeBool(offsets[14], object.enable_kcp_proxy);
-  writer.writeString(offsets[15], object.hostname);
-  writer.writeString(offsets[16], object.instance_name);
-  writer.writeString(offsets[17], object.ipv4);
-  writer.writeBool(offsets[18], object.latency_first);
-  writer.writeStringList(offsets[19], object.listeners);
-  writer.writeLong(offsets[20], object.mtu);
-  writer.writeBool(offsets[21], object.multi_thread);
-  writer.writeString(offsets[22], object.netns);
-  writer.writeString(offsets[23], object.network_name);
-  writer.writeString(offsets[24], object.network_secret);
-  writer.writeBool(offsets[25], object.no_tun);
-  writer.writeStringList(offsets[26], object.peer);
-  writer.writeBool(offsets[27], object.proxy_forward_by_system);
-  writer.writeBool(offsets[28], object.relay_all_peer_rpc);
-  writer.writeString(offsets[29], object.relay_network_whitelist);
-  writer.writeBool(offsets[30], object.use_smoltcp);
+  writer.writeObjectList<ConnectionManager>(
+    offsets[3],
+    allOffsets,
+    ConnectionManagerSchema.serialize,
+    object.connectionManagers,
+  );
+  writer.writeLong(offsets[4], object.data_compress_algo);
+  writer.writeString(offsets[5], object.default_protocol);
+  writer.writeString(offsets[6], object.dev_name);
+  writer.writeBool(offsets[7], object.dhcp);
+  writer.writeBool(offsets[8], object.disable_kcp_input);
+  writer.writeBool(offsets[9], object.disable_p2p);
+  writer.writeBool(offsets[10], object.disable_relay_kcp);
+  writer.writeBool(offsets[11], object.disable_udp_hole_punching);
+  writer.writeBool(offsets[12], object.enable_encryption);
+  writer.writeBool(offsets[13], object.enable_exit_node);
+  writer.writeBool(offsets[14], object.enable_ipv6);
+  writer.writeBool(offsets[15], object.enable_kcp_proxy);
+  writer.writeString(offsets[16], object.hostname);
+  writer.writeString(offsets[17], object.instance_name);
+  writer.writeString(offsets[18], object.ipv4);
+  writer.writeBool(offsets[19], object.latency_first);
+  writer.writeStringList(offsets[20], object.listeners);
+  writer.writeLong(offsets[21], object.mtu);
+  writer.writeBool(offsets[22], object.multi_thread);
+  writer.writeString(offsets[23], object.netns);
+  writer.writeString(offsets[24], object.network_name);
+  writer.writeString(offsets[25], object.network_secret);
+  writer.writeBool(offsets[26], object.no_tun);
+  writer.writeStringList(offsets[27], object.peer);
+  writer.writeBool(offsets[28], object.proxy_forward_by_system);
+  writer.writeBool(offsets[29], object.relay_all_peer_rpc);
+  writer.writeString(offsets[30], object.relay_network_whitelist);
+  writer.writeBool(offsets[31], object.use_smoltcp);
 }
 
 NetConfig _netConfigDeserialize(
@@ -275,35 +299,42 @@ NetConfig _netConfigDeserialize(
   object.accept_dns = reader.readBool(offsets[0]);
   object.bind_device = reader.readBool(offsets[1]);
   object.cidrproxy = reader.readStringList(offsets[2]) ?? [];
-  object.data_compress_algo = reader.readLong(offsets[3]);
-  object.default_protocol = reader.readString(offsets[4]);
-  object.dev_name = reader.readString(offsets[5]);
-  object.dhcp = reader.readBool(offsets[6]);
-  object.disable_kcp_input = reader.readBool(offsets[7]);
-  object.disable_p2p = reader.readBool(offsets[8]);
-  object.disable_relay_kcp = reader.readBool(offsets[9]);
-  object.disable_udp_hole_punching = reader.readBool(offsets[10]);
-  object.enable_encryption = reader.readBool(offsets[11]);
-  object.enable_exit_node = reader.readBool(offsets[12]);
-  object.enable_ipv6 = reader.readBool(offsets[13]);
-  object.enable_kcp_proxy = reader.readBool(offsets[14]);
-  object.hostname = reader.readString(offsets[15]);
+  object.connectionManagers = reader.readObjectList<ConnectionManager>(
+        offsets[3],
+        ConnectionManagerSchema.deserialize,
+        allOffsets,
+        ConnectionManager(),
+      ) ??
+      [];
+  object.data_compress_algo = reader.readLong(offsets[4]);
+  object.default_protocol = reader.readString(offsets[5]);
+  object.dev_name = reader.readString(offsets[6]);
+  object.dhcp = reader.readBool(offsets[7]);
+  object.disable_kcp_input = reader.readBool(offsets[8]);
+  object.disable_p2p = reader.readBool(offsets[9]);
+  object.disable_relay_kcp = reader.readBool(offsets[10]);
+  object.disable_udp_hole_punching = reader.readBool(offsets[11]);
+  object.enable_encryption = reader.readBool(offsets[12]);
+  object.enable_exit_node = reader.readBool(offsets[13]);
+  object.enable_ipv6 = reader.readBool(offsets[14]);
+  object.enable_kcp_proxy = reader.readBool(offsets[15]);
+  object.hostname = reader.readString(offsets[16]);
   object.id = id;
-  object.instance_name = reader.readString(offsets[16]);
-  object.ipv4 = reader.readString(offsets[17]);
-  object.latency_first = reader.readBool(offsets[18]);
-  object.listeners = reader.readStringList(offsets[19]) ?? [];
-  object.mtu = reader.readLong(offsets[20]);
-  object.multi_thread = reader.readBool(offsets[21]);
-  object.netns = reader.readString(offsets[22]);
-  object.network_name = reader.readString(offsets[23]);
-  object.network_secret = reader.readString(offsets[24]);
-  object.no_tun = reader.readBool(offsets[25]);
-  object.peer = reader.readStringList(offsets[26]) ?? [];
-  object.proxy_forward_by_system = reader.readBool(offsets[27]);
-  object.relay_all_peer_rpc = reader.readBool(offsets[28]);
-  object.relay_network_whitelist = reader.readString(offsets[29]);
-  object.use_smoltcp = reader.readBool(offsets[30]);
+  object.instance_name = reader.readString(offsets[17]);
+  object.ipv4 = reader.readString(offsets[18]);
+  object.latency_first = reader.readBool(offsets[19]);
+  object.listeners = reader.readStringList(offsets[20]) ?? [];
+  object.mtu = reader.readLong(offsets[21]);
+  object.multi_thread = reader.readBool(offsets[22]);
+  object.netns = reader.readString(offsets[23]);
+  object.network_name = reader.readString(offsets[24]);
+  object.network_secret = reader.readString(offsets[25]);
+  object.no_tun = reader.readBool(offsets[26]);
+  object.peer = reader.readStringList(offsets[27]) ?? [];
+  object.proxy_forward_by_system = reader.readBool(offsets[28]);
+  object.relay_all_peer_rpc = reader.readBool(offsets[29]);
+  object.relay_network_whitelist = reader.readString(offsets[30]);
+  object.use_smoltcp = reader.readBool(offsets[31]);
   return object;
 }
 
@@ -321,13 +352,19 @@ P _netConfigDeserializeProp<P>(
     case 2:
       return (reader.readStringList(offset) ?? []) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readObjectList<ConnectionManager>(
+            offset,
+            ConnectionManagerSchema.deserialize,
+            allOffsets,
+            ConnectionManager(),
+          ) ??
+          []) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
@@ -345,36 +382,38 @@ P _netConfigDeserializeProp<P>(
     case 14:
       return (reader.readBool(offset)) as P;
     case 15:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 16:
       return (reader.readString(offset)) as P;
     case 17:
       return (reader.readString(offset)) as P;
     case 18:
-      return (reader.readBool(offset)) as P;
-    case 19:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 20:
-      return (reader.readLong(offset)) as P;
-    case 21:
-      return (reader.readBool(offset)) as P;
-    case 22:
       return (reader.readString(offset)) as P;
+    case 19:
+      return (reader.readBool(offset)) as P;
+    case 20:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 21:
+      return (reader.readLong(offset)) as P;
+    case 22:
+      return (reader.readBool(offset)) as P;
     case 23:
       return (reader.readString(offset)) as P;
     case 24:
       return (reader.readString(offset)) as P;
     case 25:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 26:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 27:
       return (reader.readBool(offset)) as P;
+    case 27:
+      return (reader.readStringList(offset) ?? []) as P;
     case 28:
       return (reader.readBool(offset)) as P;
     case 29:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 30:
+      return (reader.readString(offset)) as P;
+    case 31:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -708,6 +747,95 @@ extension NetConfigQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.listLength(
         r'cidrproxy',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connectionManagers',
         lower,
         includeLower,
         upper,
@@ -2676,7 +2804,14 @@ extension NetConfigQueryFilter
 }
 
 extension NetConfigQueryObject
-    on QueryBuilder<NetConfig, NetConfig, QFilterCondition> {}
+    on QueryBuilder<NetConfig, NetConfig, QFilterCondition> {
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      connectionManagersElement(FilterQuery<ConnectionManager> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'connectionManagers');
+    });
+  }
+}
 
 extension NetConfigQueryLinks
     on QueryBuilder<NetConfig, NetConfig, QFilterCondition> {}
@@ -3628,6 +3763,13 @@ extension NetConfigQueryProperty
     });
   }
 
+  QueryBuilder<NetConfig, List<ConnectionManager>, QQueryOperations>
+      connectionManagersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'connectionManagers');
+    });
+  }
+
   QueryBuilder<NetConfig, int, QQueryOperations> data_compress_algoProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'data_compress_algo');
@@ -3796,6 +3938,863 @@ extension NetConfigQueryProperty
   QueryBuilder<NetConfig, bool, QQueryOperations> use_smoltcpProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'use_smoltcp');
+    });
+  }
+}
+
+// **************************************************************************
+// IsarEmbeddedGenerator
+// **************************************************************************
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+const ConnectionInfoSchema = Schema(
+  name: r'ConnectionInfo',
+  id: 4327833845601628272,
+  properties: {
+    r'bindAddr': PropertySchema(
+      id: 0,
+      name: r'bindAddr',
+      type: IsarType.string,
+    ),
+    r'dstAddr': PropertySchema(
+      id: 1,
+      name: r'dstAddr',
+      type: IsarType.string,
+    ),
+    r'proto': PropertySchema(
+      id: 2,
+      name: r'proto',
+      type: IsarType.string,
+    )
+  },
+  estimateSize: _connectionInfoEstimateSize,
+  serialize: _connectionInfoSerialize,
+  deserialize: _connectionInfoDeserialize,
+  deserializeProp: _connectionInfoDeserializeProp,
+);
+
+int _connectionInfoEstimateSize(
+  ConnectionInfo object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.bindAddr.length * 3;
+  bytesCount += 3 + object.dstAddr.length * 3;
+  bytesCount += 3 + object.proto.length * 3;
+  return bytesCount;
+}
+
+void _connectionInfoSerialize(
+  ConnectionInfo object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeString(offsets[0], object.bindAddr);
+  writer.writeString(offsets[1], object.dstAddr);
+  writer.writeString(offsets[2], object.proto);
+}
+
+ConnectionInfo _connectionInfoDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = ConnectionInfo();
+  object.bindAddr = reader.readString(offsets[0]);
+  object.dstAddr = reader.readString(offsets[1]);
+  object.proto = reader.readString(offsets[2]);
+  return object;
+}
+
+P _connectionInfoDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readString(offset)) as P;
+    case 1:
+      return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension ConnectionInfoQueryFilter
+    on QueryBuilder<ConnectionInfo, ConnectionInfo, QFilterCondition> {
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bindAddr',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'bindAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'bindAddr',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bindAddr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      bindAddrIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'bindAddr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dstAddr',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'dstAddr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'dstAddr',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dstAddr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      dstAddrIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'dstAddr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'proto',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'proto',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'proto',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'proto',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionInfo, ConnectionInfo, QAfterFilterCondition>
+      protoIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'proto',
+        value: '',
+      ));
+    });
+  }
+}
+
+extension ConnectionInfoQueryObject
+    on QueryBuilder<ConnectionInfo, ConnectionInfo, QFilterCondition> {}
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+const ConnectionManagerSchema = Schema(
+  name: r'ConnectionManager',
+  id: -9000775092511767832,
+  properties: {
+    r'connections': PropertySchema(
+      id: 0,
+      name: r'connections',
+      type: IsarType.objectList,
+      target: r'ConnectionInfo',
+    ),
+    r'enabled': PropertySchema(
+      id: 1,
+      name: r'enabled',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 2,
+      name: r'name',
+      type: IsarType.string,
+    )
+  },
+  estimateSize: _connectionManagerEstimateSize,
+  serialize: _connectionManagerSerialize,
+  deserialize: _connectionManagerDeserialize,
+  deserializeProp: _connectionManagerDeserializeProp,
+);
+
+int _connectionManagerEstimateSize(
+  ConnectionManager object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.connections.length * 3;
+  {
+    final offsets = allOffsets[ConnectionInfo]!;
+    for (var i = 0; i < object.connections.length; i++) {
+      final value = object.connections[i];
+      bytesCount +=
+          ConnectionInfoSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
+  bytesCount += 3 + object.name.length * 3;
+  return bytesCount;
+}
+
+void _connectionManagerSerialize(
+  ConnectionManager object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeObjectList<ConnectionInfo>(
+    offsets[0],
+    allOffsets,
+    ConnectionInfoSchema.serialize,
+    object.connections,
+  );
+  writer.writeBool(offsets[1], object.enabled);
+  writer.writeString(offsets[2], object.name);
+}
+
+ConnectionManager _connectionManagerDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = ConnectionManager();
+  object.connections = reader.readObjectList<ConnectionInfo>(
+        offsets[0],
+        ConnectionInfoSchema.deserialize,
+        allOffsets,
+        ConnectionInfo(),
+      ) ??
+      [];
+  object.enabled = reader.readBool(offsets[1]);
+  object.name = reader.readString(offsets[2]);
+  return object;
+}
+
+P _connectionManagerDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readObjectList<ConnectionInfo>(
+            offset,
+            ConnectionInfoSchema.deserialize,
+            allOffsets,
+            ConnectionInfo(),
+          ) ??
+          []) as P;
+    case 1:
+      return (reader.readBool(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension ConnectionManagerQueryFilter
+    on QueryBuilder<ConnectionManager, ConnectionManager, QFilterCondition> {
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'connections',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      enabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'enabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'name',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'name',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'name',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'name',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      nameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'name',
+        value: '',
+      ));
+    });
+  }
+}
+
+extension ConnectionManagerQueryObject
+    on QueryBuilder<ConnectionManager, ConnectionManager, QFilterCondition> {
+  QueryBuilder<ConnectionManager, ConnectionManager, QAfterFilterCondition>
+      connectionsElement(FilterQuery<ConnectionInfo> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'connections');
     });
   }
 }

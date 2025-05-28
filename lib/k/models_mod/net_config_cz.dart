@@ -541,7 +541,7 @@ class NetConfigRepository {
   /// accept_dns
   Future<void> updateAcceptDns(bool acceptDns) async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    if (config!= null) {
+    if (config != null) {
       config.accept_dns = acceptDns;
       await _isar.writeTxn(() async {
         await _isar.netConfigs.put(config);
@@ -551,6 +551,61 @@ class NetConfigRepository {
 
   Future<bool> getAcceptDns() async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    return config?.accept_dns?? false;
+    return config?.accept_dns ?? false;
   }
+
+    // 获取所有连接管理器
+  Future<List<ConnectionManager>> getConnectionManagers() async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    return config?.connectionManagers ?? [];
+  }
+
+  // 添加连接管理器
+  Future<void> addConnectionManager(ConnectionManager manager) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null) {
+      // Create a new list instead of adding to the existing fixed-length list
+      config.connectionManagers = [...config.connectionManagers, manager];
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+  // 更新连接管理器
+  Future<void> updateConnectionManager(int index, ConnectionManager manager) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+      // Create a new list with the updated item
+      List<ConnectionManager> newList = List.from(config.connectionManagers);
+      newList[index] = manager;
+      config.connectionManagers = newList;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+  // 删除连接管理器
+  Future<void> removeConnectionManager(int index) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+      // Create a new list without the item at the specified index
+      List<ConnectionManager> newList = List.from(config.connectionManagers);
+      newList.removeAt(index);
+      config.connectionManagers = newList;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+  // 更新连接管理器启用状态
+  Future<void> updateConnectionManagerEnabled(int index, bool enabled) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+      config.connectionManagers[index].enabled = enabled;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+
 }

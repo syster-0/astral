@@ -190,8 +190,8 @@ async-compression = { version = "0.4.17", default-features = false, features = [
     "tokio",
 ] }
 
-# kcp-sys = { git = "https://github.com/EasyTier/kcp-sys" }
-kcp-sys = { path = "./kcp-sys-main" }
+kcp-sys = { git = "https://github.com/EasyTier/kcp-sys" }
+
 prost-reflect = { version = "0.14.5", default-features = false, features = [
     "derive",
 ] }
@@ -212,8 +212,6 @@ derive_builder = "0.20.2"
 humantime-serde = "1.1.1"
 multimap = "0.10.0"
 version-compare = "0.2.0"
-
-bounded_join_set = "0.3.0"
 
 jemallocator = { version = "0.5.4", optional = true }
 jemalloc-ctl = { version = "0.5.4", optional = true }

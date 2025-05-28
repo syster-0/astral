@@ -19,14 +19,18 @@ jobs:
       - name: 🛠️ 检出代码仓库
         uses: actions/checkout@v4
 
-      # 安装 Flutter
-      - name: 🐦 安装 Flutter
+      # 安装Flutter
+      - name: 🐦 安装Flutter
         run: |
-          echo "正在克隆 Flutter 稳定分支..."
-          git clone https://github.com/flutter/flutter.git --branch 3.29.3 $HOME/flutter --depth 1
-          echo "正在将 Flutter 添加到 PATH..."
-          echo "$env:GITHUB_WORKSPACE\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "Flutter 安装完成！"
+          echo "正在克隆Flutter稳定分支..."
+          git clone https://github.com/flutter/flutter.git --branch 3.29.3 $env:GITHUB_WORKSPACE/flutter --depth 1
+
+          echo "正在将Flutter添加到PATH..."
+          echo "$env:GITHUB_WORKSPACE/flutter/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          echo "Flutter版本验证："
+          & "$env:GITHUB_WORKSPACE/flutter/bin/flutter.bat" --version
+        shell: pwsh
 
       # 安装 Flutter 依赖
       - name: 📦 安装 Flutter 依赖
@@ -34,6 +38,7 @@ jobs:
           echo "正在获取 Flutter 依赖..."
           flutter pub get
           echo "Flutter 依赖安装完成！"
+        shell: pwsh
 
       # 编译 Flutter Windows 应用
       - name: 🛠️ 编译 Flutter Windows 应用
@@ -41,6 +46,8 @@ jobs:
           echo "正在编译 Flutter Windows Release 版本..."
           flutter build windows --release
           echo "Flutter Windows Release 编译完成！"
+        shell: pwsh
+
 
       # 复制 DLL 文件到输出目录
       - name: 📂 复制 DLL 文件到 Release 目录

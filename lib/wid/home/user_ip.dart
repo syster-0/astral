@@ -135,7 +135,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                 labelText: '选择房间',
                 contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
-                enabled: Aps().Connec_state.watch(context) != CoState.connected,
+                enabled: Aps().Connec_state.watch(context) == CoState.idle,
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(
                   Icons.apartment, color: colorScheme.primary,

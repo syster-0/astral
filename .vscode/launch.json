@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Flutter (x86)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--no-build",
+        "--use-application-binary=build/app/outputs/flutter-apk/app-debug.apk"
+            ]
+        },
+        {
             "name": "Flutter",
             "request": "launch",
             "type": "dart",
