@@ -14,7 +14,6 @@ class _AboutHomeState extends State<AboutHome> {
   String version = '';
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     easytierVersion().then((value) {
       setState(() {

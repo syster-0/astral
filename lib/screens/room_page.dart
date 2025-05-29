@@ -91,36 +91,36 @@ class _RoomPageState extends State<RoomPage> {
 
   // 显示排序弹窗
   void _showSortingDialog(BuildContext context) {
-    final aps = Aps();
-    final filteredRooms = aps.rooms.watch(context)
-        .where((room) => true)
-        .toList()
-      ..sort((a, b) {
-        if (a.id == aps.selectroom.watch(context)?.id) return -1;
-        if (b.id == aps.selectroom.watch(context)?.id) return 1;
-        return 0;
-      });
+    // 创建本地排序副本
+    final localCopy = [..._aps.rooms.value.where((room) => true).toList()]..sort((a, b) {
+      if (a.id == _aps.selectroom.value?.id) return -1;
+      if (b.id == _aps.selectroom.value?.id) return 1;
+      return 0;
+    });
 
     showDialog(
       context: context,
       builder: (context) => SortingJumpDialog(
-        rooms: filteredRooms,
+        // 传递本地副本
+        rooms: localCopy,
         onApply: (sortedRooms) {
-          // 强制更新 RoomPage 的排序逻辑
+          // 直接应用排序结果并更新选中状态
           setState(() {
-            // 获取当前房间列表并创建副本
-            final currentRooms = aps.rooms.value.where((room) => true).toList();
-            // 创建排序后的ID列表
-            final sortedIds = sortedRooms.map((r) => r.id).toList();
-            // 应用排序并更新状态 
-            aps.rooms.value = currentRooms
-              ..sort((a, b) => sortedIds.indexOf(a.id).compareTo(sortedIds.indexOf(b.id)));
+            // 1. 直接使用排序结果更新本地列表
+            _aps.rooms.value = [...sortedRooms];
+            
+            // 2. 强制选中排序后的第一个房间
+            if (sortedRooms.isNotEmpty) {
+              _aps.selectroom.value = sortedRooms.first;
+            }
           });
         },
         onSave: (sortedRooms) async {
-          for (var room in sortedRooms) {
-            await aps.updateRoom(room);
-          }
+          await Future.wait(sortedRooms.map((room) => _aps.updateRoom(room)));
+          // 同步更新本地排序
+          setState(() {
+            _aps.rooms.value = [...sortedRooms];
+          });
           Navigator.pop(context);
         },
       ),
@@ -198,12 +198,12 @@ class _RoomPageState extends State<RoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 监听连接状态
+    // 监听连接状态和房间列表变化
     final isConnected = _aps.Connec_state.watch(context);
-    // 获取当前选中房间（如无此逻辑请替换为你的实际选中房间变量）
-    final selectedRoom = _aps.selectroom.watch(context); // 已在build方法内部正确使用
+    // 使用双重监听确保选中状态实时更新
+    final selectedRoom = _aps.selectroom.watch(context);
 
-    // 添加排序逻辑
+    // 实时获取并排序房间列表
     final filteredRooms = _aps.rooms.watch(context)
         .where((room) => true)
         .toList()
@@ -212,6 +212,15 @@ class _RoomPageState extends State<RoomPage> {
         if (b.id == selectedRoom?.id) return 1;
         return 0;
       });
+
+    // 强制触发重建当房间顺序变化时
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (filteredRooms.isNotEmpty && 
+          filteredRooms.first.id != selectedRoom?.id) {
+        // 如果第一个房间未被选中则自动选择
+        _aps.selectroom.value = filteredRooms.first;
+      }
+    });
 
     // 构建房间列表视图
     Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {

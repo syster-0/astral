@@ -31,6 +31,7 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
   @override
   void initState() {
     super.initState();
+    // 创建本地副本
     _sortedRooms = [...widget.rooms];
   }
 
@@ -46,12 +47,11 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: _buildTitle(colorScheme),
       content: SizedBox(
-        width: screenSize.width / 1.2,
-        height: (screenSize.height / 2) + 12, 
+        width: screenSize.width *  0.65,
+        height: screenSize.height / 2, 
         child: Column(
           children: [
             Expanded(
-              flex: 115, 
               child: _buildRoomList(colorScheme),
             ),
           ],
@@ -82,79 +82,66 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
       child: Material(
         borderRadius: BorderRadius.circular(16), 
         color: Colors.transparent,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: AnimatedOpacity(
-                opacity: _isScrolling ? 1.0 : 0.0,
-                duration: Duration(milliseconds: 200),
-                child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  trackVisibility: false,
-                  thickness: 11,
-                  radius: const Radius.circular(16),
-                  interactive: true,
-                  child: SizedBox.expand(),
-                ),
-              ),
-            ),
-            ReorderableListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              scrollController: _scrollController,
-              itemCount: _sortedRooms.length,
-              itemBuilder: (context, index) {
-                final room = _sortedRooms[index];
-                return Padding(
-                  key: ValueKey(room.id),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: MouseRegion(
-                    onEnter: (_) {
-                      setState(() {
-                        _currentHoveredRoomName = room.name;
-                      });
-                    },
-                    onExit: (_) {
-                      setState(() {
-                        _currentHoveredRoomName = '';
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: _currentHoveredRoomName == room.name
-                            ? colorScheme.primaryContainer.withOpacity(0.12)
-                            : (Theme.of(context).brightness == Brightness.light)
-                              ? colorScheme.surfaceVariant.withOpacity(0.95) 
-                              : colorScheme.surfaceVariant.withOpacity(0.15),
-                        border: Border.all(
-                          color: _currentHoveredRoomName == room.name
-                              ? colorScheme.primary
-                              : Colors.transparent,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(room.name, style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
-                        subtitle: Text(room.encrypted ? '加密房间' : '开放房间', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                        trailing: Icon(Icons.drag_handle, color: colorScheme.primary.withAlpha(150)),
-                      ),
+        child: ReorderableListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          scrollController: _scrollController,
+          itemCount: _sortedRooms.length,
+          proxyDecorator: (Widget child, int index, Animation<double> animation) {
+            return child;
+          },
+          itemBuilder: (context, index) {
+            final room = _sortedRooms[index];
+            return Padding(
+              key: ValueKey(room.id),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: MouseRegion(
+                onEnter: (_) {
+                  setState(() {
+                    _currentHoveredRoomName = room.name;
+                  });
+                },
+                onExit: (_) {
+                  setState(() {
+                    _currentHoveredRoomName = '';
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: _currentHoveredRoomName == room.name
+                        ? colorScheme.primaryContainer.withOpacity(0.12)
+                        : (Theme.of(context).brightness == Brightness.light)
+                          ? colorScheme.surfaceVariant.withOpacity(0.95) 
+                          : colorScheme.surfaceVariant.withOpacity(0.15),
+                    border: Border.all(
+                      color: _currentHoveredRoomName == room.name
+                          ? colorScheme.primary
+                          : Colors.transparent,
+                      width: 1.5,
                     ),
-                  )
-                );
-              },
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) {
-                    newIndex -= 1;
-                  }
-                  final movedItem = _sortedRooms.removeAt(oldIndex);
-                  _sortedRooms.insert(newIndex, movedItem);
-                });
-              },
-            ),
-          ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      title: Text(room.name, style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
+                      subtitle: Text(room.encrypted ? '加密房间' : '开放房间', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                      trailing: null,
+                    ),
+                  ),
+                ),
+              )
+            );
+          },
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              final movedItem = _sortedRooms.removeAt(oldIndex);
+              _sortedRooms.insert(newIndex, movedItem);
+            });
+          },
         ),
       ),
     );
@@ -164,6 +151,7 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
   Widget _buildApplyButton(ColorScheme colorScheme) {
     return TextButton(
       onPressed: () {
+        // 直接传递本地排序结果
         widget.onApply(_sortedRooms);
       },
       child: Text('应用', 
@@ -176,6 +164,7 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
   Widget _buildSaveButton(ColorScheme colorScheme) {
     return TextButton(
       onPressed: () async {
+        // 直接传递本地排序结果
         await widget.onSave(_sortedRooms);
       },
       child: Text('保存', 
