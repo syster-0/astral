@@ -210,7 +210,7 @@ jobs:
             end;
           end;
           "@
-          $scriptContent | Out-File -FilePath "`$env:GITHUB_WORKSPACE\setup.iss" -Encoding utf8
+          $scriptContent | Out-File -FilePath "$env:GITHUB_WORKSPACE\setup.iss" -Encoding utf8
           echo "Inno Setup 脚本已创建！"
 
       # 编译 Inno Setup 安装程序
