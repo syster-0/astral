@@ -1,6 +1,6 @@
 import 'package:astral/wid/home/about_home.dart';
+import 'package:astral/wid/home/contributors.dart'; // 添加这行
 import 'package:astral/wid/home/servers_home.dart';
-import 'package:astral/wid/home/udp_log.dart';
 import 'package:astral/wid/home/user_ip.dart';
 import 'package:astral/wid/home/virtual_ip.dart';
 import 'package:astral/wid/home/connect_button.dart';
@@ -50,6 +50,7 @@ class _HomePageState extends State<HomePage> {
                         ServersHome(),
                         // UdpLog(),
                         AboutHome(),
+                        Contributors(), // 添加贡献者组件
                       ],
                     ),
                   ),
