@@ -1,15 +1,14 @@
 import 'package:astral/fun/e_d_room.dart';
-import 'package:astral/fun/random_name.dart';
 import 'package:astral/fun/show_add_room_dialog.dart';
 import 'package:astral/fun/show_edit_room_dialog.dart';
+import 'package:astral/fun/sorting_jump_dialog.dart';
 import 'package:astral/screens/user_page.dart';
 import 'package:astral/wid/room_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:astral/k/app_s/aps.dart';
-import 'package:astral/k/models/room.dart';
-import 'package:uuid/uuid.dart';
+
 
 class RoomPage extends StatefulWidget {
   const RoomPage({super.key});
@@ -90,6 +89,44 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
+  // 显示排序弹窗
+  void _showSortingDialog(BuildContext context) {
+    final aps = Aps();
+    final filteredRooms = aps.rooms.watch(context)
+        .where((room) => true)
+        .toList()
+      ..sort((a, b) {
+        if (a.id == aps.selectroom.watch(context)?.id) return -1;
+        if (b.id == aps.selectroom.watch(context)?.id) return 1;
+        return 0;
+      });
+
+    showDialog(
+      context: context,
+      builder: (context) => SortingJumpDialog(
+        rooms: filteredRooms,
+        onApply: (sortedRooms) {
+          // 强制更新 RoomPage 的排序逻辑
+          setState(() {
+            // 获取当前房间列表并创建副本
+            final currentRooms = aps.rooms.value.where((room) => true).toList();
+            // 创建排序后的ID列表
+            final sortedIds = sortedRooms.map((r) => r.id).toList();
+            // 应用排序并更新状态 
+            aps.rooms.value = currentRooms
+              ..sort((a, b) => sortedIds.indexOf(a.id).compareTo(sortedIds.indexOf(b.id)));
+          });
+        },
+        onSave: (sortedRooms) async {
+          for (var room in sortedRooms) {
+            await aps.updateRoom(room);
+          }
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   // 构建房间列表视图
   Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {
     final columnCount = _getColumnCount(constraints.maxWidth);
@@ -164,8 +201,68 @@ class _RoomPageState extends State<RoomPage> {
     // 监听连接状态
     final isConnected = _aps.Connec_state.watch(context);
     // 获取当前选中房间（如无此逻辑请替换为你的实际选中房间变量）
-    final selectedRoom = _aps.selectroom.watch(context); // 假设有 selectedRoom 字段
+    final selectedRoom = _aps.selectroom.watch(context); // 已在build方法内部正确使用
 
+    // 添加排序逻辑
+    final filteredRooms = _aps.rooms.watch(context)
+        .where((room) => true)
+        .toList()
+      ..sort((a, b) {
+        if (a.id == selectedRoom?.id) return -1;
+        if (b.id == selectedRoom?.id) return 1;
+        return 0;
+      });
+
+    // 构建房间列表视图
+    Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {
+      final columnCount = _getColumnCount(constraints.maxWidth);
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(12.0),
+            sliver: SliverMasonryGrid.count(
+              crossAxisCount: columnCount,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              // 使用排序后的房间列表长度
+              childCount: filteredRooms.length,
+              itemBuilder: (context, index) {
+                final room = filteredRooms[index];
+                return RoomCard(
+                  // 传递 Room 对象和标签名称列表
+                  room: room,
+                  onEdit: () {
+                    showEditRoomDialog(context, room: room);
+                  },
+                  onDelete: () {
+                    _aps.deleteRoom(room.id);
+                  },
+                  onShare: () {
+                    var a = encryptRoomWithJWT(room);
+                    // 复制房间信息到剪贴板
+                    Clipboard.setData(ClipboardData(text: a));
+                    // 显示 SnackBar 提示
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('房间信息已复制到剪贴板')));
+                  },
+                );
+              },
+            ),
+          ),
+          // 添加底部安全区域，防止内容被遮挡
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height:
+                  MediaQuery.of(context).padding.bottom + 20, // 底部安全区高度 + 额外间距
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 返回构建的UI
     return Scaffold(
       body: Column(
         children: [
@@ -201,7 +298,7 @@ class _RoomPageState extends State<RoomPage> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('连接状态: ${_coStateToText(isConnected)}${isConnected == CoState.connected ?' (点击分享房间)':''}'),
+                          Text('连接状态: ${_coStateToText(isConnected)}${isConnected == CoState.connected ? ' (点击分享房间)' : ''}'),
                         ],
                       ),
                     ),
@@ -210,55 +307,42 @@ class _RoomPageState extends State<RoomPage> {
               ),
             ),
           Expanded(
-            child:
-                isConnected != CoState.idle
-                    // 已连接：显示用户列表
-                    ? const UserPage()
-                    // 未连接：显示房间列表
-                    : LayoutBuilder(
-                      builder: (context, constraints) {
-                        return _buildRoomsView(context, constraints);
-                      },
-                    ),
+            child: isConnected != CoState.idle
+                // 已连接：显示用户列表
+                ? const UserPage()
+                // 未连接：显示房间列表
+                : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return _buildRoomsView(context, constraints);
+                  },
+                ),
           ),
         ],
       ),
-      floatingActionButton:
-          isConnected != CoState.idle
-              ? null // 已连接时不显示按钮
-              : Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'paste',
-                    onPressed: _showPasteDialog,
-                    child: const Icon(Icons.paste),
-                  ),
-                  const SizedBox(width: 16),
-                  FloatingActionButton(
-                    heroTag: 'add',
-                    onPressed: () => showAddRoomDialog(context),
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              ),
+      floatingActionButton: isConnected != CoState.idle
+          ? null // 已连接时不显示按钮
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'paste',
+                  onPressed: _showPasteDialog,
+                  child: const Icon(Icons.paste),
+                ),
+                const SizedBox(width: 16),
+                FloatingActionButton(
+                  heroTag: 'add',
+                  onPressed: () => showAddRoomDialog(context),
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(width: 16),
+                FloatingActionButton(
+                  heroTag: 'sort',
+                  onPressed: () => _showSortingDialog(context),
+                  child: const Icon(Icons.sort),
+                ),
+              ],
+            ),
     );
   }
-}
-
-void addEncryptedRoom(
-  bool isEncrypted,
-  String? name,
-  String? roomname,
-  String? password,
-) {
-  var room = Room(
-    name: name ?? RandomName(), // 如果 name 为 null，则使用空字符串
-    encrypted: isEncrypted,
-    roomName:
-        isEncrypted ? Uuid().v4() : (roomname ?? ""), // 如果未加密，则使用随机UUID作为房间名
-    password: isEncrypted ? Uuid().v4() : (password ?? ""), // 如果未加密，则生成一个随机密码
-    tags: [],
-  );
-  Aps().addRoom(room);
 }

@@ -1,5 +1,5 @@
 import 'package:astral/fun/random_name.dart';
-import 'package:astral/screens/room_page.dart';
+import 'package:astral/fun/room_utils.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showAddRoomDialog(BuildContext context) async {
