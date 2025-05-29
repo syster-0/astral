@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:astral/fun/up.dart';
-import 'package:astral/fun/reg.dart';
 import 'package:astral/k/database/app_data.dart';
 import 'package:astral/k/mod/window_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -22,13 +21,6 @@ void main() async {
       await AppDatabase().init();
       AppInfoUtil.init();
       await RustLib.init();
-      
-      
-      // 注册或更新URL scheme（Windows平台）
-      if (Platform.isWindows) {
-        await UrlSchemeRegistrar.updateUrlSchemeRegistration();
-      }
-      
       if (!kIsWeb &&
           (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
         await WindowManagerUtils.initializeWindow();
@@ -46,4 +38,3 @@ void main() async {
     },
   );
 }
-
