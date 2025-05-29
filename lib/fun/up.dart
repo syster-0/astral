@@ -201,13 +201,9 @@ Future<void> checkForUpdates(BuildContext context, {bool showNoUpdateMessage = t
 
   /// 处理下载逻辑
   Future<void> _handleDownload(BuildContext context, Map<String, dynamic> releaseInfo) async {
-    final downloadUrl = _getDownloadUrl(releaseInfo);
-    if (downloadUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('当前平台不支持自动下载，请手动下载')),
-      );
-      return;
-    }
+    final downloadUrlPath = _getDownloadUrl(releaseInfo);
+    if (downloadUrlPath == null) return;
+    final downloadUrl = Aps().downloadAccelerate.value + downloadUrlPath;
 
     final fileName = _getPlatformFileName();
     
@@ -250,13 +246,16 @@ Future<void> checkForUpdates(BuildContext context, {bool showNoUpdateMessage = t
     return null;
   }
 
-  /// 下载文件并显示进度
+  /// 下载文件并显示进度 - 修复版本
   Future<String?> _downloadFile(String url, String fileName, Function(double) onProgress) async {
+    IOSink? sink;
     try {
       final request = http.Request('GET', Uri.parse(url));
       final response = await request.send();
       
-      if (response.statusCode != 200) return null;
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
+      }
   
       final contentLength = response.contentLength;
       final dir = await getTemporaryDirectory();
@@ -267,32 +266,45 @@ Future<void> checkForUpdates(BuildContext context, {bool showNoUpdateMessage = t
         await file.delete();
       }
       
-      final sink = file.openWrite();
-      
+      sink = file.openWrite();
       int downloadedBytes = 0;
       
-      await response.stream.listen(
-        (chunk) {
-          sink.add(chunk);
-          downloadedBytes += chunk.length;
-          
-          if (contentLength != null && contentLength > 0) {
-            final progress = downloadedBytes / contentLength;
-            onProgress(progress);
-          }
-        },
-        onDone: () async {
-          await sink.close();
-          onProgress(1.0); // 确保进度达到100%
-        },
-        onError: (error) async {
-          await sink.close();
-          throw error;
-        },
-      ).asFuture();
-  
+      // 使用 await for 替代 listen
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        downloadedBytes += chunk.length;
+        
+        if (contentLength != null && contentLength > 0) {
+          final progress = downloadedBytes / contentLength;
+          onProgress(progress);
+        }
+      }
+      
+      await sink.flush();
+      await sink.close();
+      sink = null;
+      
+      onProgress(1.0); // 确保进度达到100%
       return file.path;
+      
     } catch (e) {
+      // 确保文件流被关闭
+      if (sink != null) {
+        try {
+          await sink.close();
+        } catch (_) {}
+      }
+      
+      // 清理可能创建的不完整文件
+      try {
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/$fileName');
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {}
+      
+      debugPrint('下载失败: $e');
       return null;
     }
   }
@@ -447,7 +459,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
           _isDownloading = false;
           _filePath = filePath;
           if (filePath == null) {
-            _error = '下载失败';
+            _error = '下载失败：无法保存文件';
           }
         });
       }
@@ -455,7 +467,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
       if (mounted) {
         setState(() {
           _isDownloading = false;
-          _error = '下载失败: $e';
+          _error = '下载失败: ${e.toString()}';
         });
       }
     }
