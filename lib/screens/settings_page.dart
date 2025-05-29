@@ -24,10 +24,35 @@ class _SettingsPageState extends State<SettingsPage> {
 
       children: [
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Column(
-            children: [
-              const ListTile(leading: Icon(Icons.info), title: Text('软件设置')),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ExpansionTile(
+              initiallyExpanded: false, // 默认折叠,
+              leading: const Icon(Icons.info),
+              title: const Text('软件设置'),
+              children: [
+            if (Platform.isAndroid)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('申请Root权限'),
+                subtitle: const Text('获取Root权限则无需创建VPN'),
+                onTap: () async {
+                  try {
+                    final result = await const MethodChannel('astral_channel').invokeMethod('requestRoot');
+                    if (!context.mounted) return;
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result ? 'Root权限获取成功' : 'Root权限获取失败')),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('请求Root权限失败')),
+                    );
+                  }
+                },
+              ),
               if (!Platform.isAndroid)
                 SwitchListTile(
                   title: const Text('最小化'),
@@ -45,12 +70,44 @@ class _SettingsPageState extends State<SettingsPage> {
                   Aps().setUserListSimple(value);
                 },
               ),
+              SwitchListTile(
+                title: const Text('参与内测版'),
+                subtitle: const Text('加群分享你的bug'),
+                value: Aps().beta.watch(context),
+                onChanged: (value) {
+                  Aps().setBeta(value);
+                },
+              ),
+              if (!Aps().beta.watch(context))
+                SwitchListTile(
+                  title: const Text('自动更新'),
+                  subtitle: const Text('享受最新bug'),
+                  value: Aps().autoCheckUpdate.watch(context),
+                  onChanged: (value) {
+                    Aps().setAutoCheckUpdate(value);
+                  },
+                ),
+              ListTile(
+                title: const Text('下载加速'),
+                subtitle: TextFormField(
+                  decoration: const InputDecoration(
+                    hintText: '启用下载加速功能',
+                    border: OutlineInputBorder(),
+                  ),
+                  initialValue: Aps().downloadAccelerate.watch(context),
+                  onChanged: (value) {
+                    Aps().setDownloadAccelerate(value);
+                  },
+                ),
+              ),
             ],
           ),
         ),
         if (Platform.isWindows)
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: ExpansionTile(
               initiallyExpanded: false, // 默认折叠,
               leading: const Icon(Icons.broadcast_on_personal),
@@ -64,38 +121,62 @@ class _SettingsPageState extends State<SettingsPage> {
                         ...List.generate(connections.length, (index) {
                           final manager = connections[index];
                           return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             child: ExpansionTile(
                               leading: Switch(
                                 value: manager.enabled,
                                 onChanged: (value) async {
-                                  await Aps().updateConnectionEnabled(index, value);
+                                  await Aps().updateConnectionEnabled(
+                                    index,
+                                    value,
+                                  );
                                 },
                               ),
-                              title: Text(manager.name.isEmpty ? '未命名分组' : manager.name),
-                              subtitle: Text('${manager.connections.length} 个连接'),
+                              title: Text(
+                                manager.name.isEmpty ? '未命名分组' : manager.name,
+                              ),
+                              subtitle: Text(
+                                '${manager.connections.length} 个连接',
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.edit, size: 20),
                                     tooltip: '编辑',
-                                    onPressed: () => editConnectionManager(context, index, manager),
+                                    onPressed:
+                                        () => editConnectionManager(
+                                          context,
+                                          index,
+                                          manager,
+                                        ),
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete, size: 20),
                                     tooltip: '删除',
-                                    onPressed: () => deleteConnectionManager(context, index, manager.name),
+                                    onPressed:
+                                        () => deleteConnectionManager(
+                                          context,
+                                          index,
+                                          manager.name,
+                                        ),
                                   ),
                                 ],
                               ),
                               children: [
-                                ...manager.connections.map((conn) => ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.link, size: 16),
-                                  title: Text('${conn.bindAddr} → ${conn.dstAddr}'),
-                                  subtitle: Text('协议: ${conn.proto}'),
-                                )),
+                                ...manager.connections.map(
+                                  (conn) => ListTile(
+                                    dense: true,
+                                    leading: const Icon(Icons.link, size: 16),
+                                    title: Text(
+                                      '${conn.bindAddr} → ${conn.dstAddr}',
+                                    ),
+                                    subtitle: Text('协议: ${conn.proto}'),
+                                  ),
+                                ),
                                 if (manager.connections.isEmpty)
                                   const ListTile(
                                     dense: true,
@@ -118,7 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         if (Platform.isWindows)
-         Card(
+          Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
