@@ -85,6 +85,9 @@ class Aps {
     userListSimple.value = await AppDatabase().AllSettings.getUserMinimal();
     closeMinimize.value = await AppDatabase().AllSettings.getCloseMinimize();
     customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
+    beta.value = await AppDatabase().AllSettings.getBeta();
+    autoCheckUpdate.value = await AppDatabase().AllSettings.getAutoCheckUpdate();
+    downloadAccelerate.value = await AppDatabase().AllSettings.getDownloadAccelerate();
     // window平台
     if (Platform.isWindows) {
           updateFirewallStatus();
@@ -136,6 +139,34 @@ class Aps {
 
   /// userListSimple
   final Signal<bool> userListSimple = signal(false); // 玩家列表
+  
+    /// beta - 参与测试版
+  final Signal<bool> beta = signal(false);
+  
+  /// autoCheckUpdate - 自动检查更新
+  final Signal<bool> autoCheckUpdate = signal(true);
+  
+  /// downloadAccelerate - 下载加速
+  final Signal<String> downloadAccelerate = signal('https://gh.xmly.dev/');
+
+    /// 设置beta
+  Future<void> setBeta(bool value) async {
+    beta.value = value;
+    await AppDatabase().AllSettings.setBeta(value);
+  }
+  
+  /// 设置autoCheckUpdate
+  Future<void> setAutoCheckUpdate(bool value) async {
+    autoCheckUpdate.value = value;
+    await AppDatabase().AllSettings.setAutoCheckUpdate(value);
+  }
+  
+  /// 设置downloadAccelerate
+  Future<void> setDownloadAccelerate(String value) async {
+    downloadAccelerate.value = value;
+    await AppDatabase().AllSettings.setDownloadAccelerate(value);
+  }
+  
 
   ///防火墙状态 只要有一个没有关闭就是false
   final Signal<bool> firewallStatus = signal(false);

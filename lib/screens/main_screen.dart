@@ -36,13 +36,18 @@ class _MainScreenState extends State<MainScreen>
 
     // 在初始化时进行更新检查
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final updateChecker = UpdateChecker(owner: 'ldoubil', repo: 'astral');
-      if (mounted) {
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          if (mounted) {
-            updateChecker.scheckForUpdates(context);
-          }
-        });
+      if (Aps().autoCheckUpdate.value || Aps().beta.value) {
+        final updateChecker = UpdateChecker(owner: 'ldoubil', repo: 'astral');
+        if (mounted) {
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (mounted) {
+              updateChecker.checkForUpdates(
+                context,
+                showNoUpdateMessage: false,
+              );
+            }
+          });
+        }
       }
     });
   }
