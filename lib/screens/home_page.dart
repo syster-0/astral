@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> {
                         VirtualIpBox(),
                         UserIpBox(),
                         ServersHome(),
-                        UdpLog(),
+                        // UdpLog(),
                         AboutHome(),
                       ],
                     ),

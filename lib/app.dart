@@ -1,9 +1,9 @@
 import 'package:astral/fun/net_astral_udp.dart';
 import 'package:astral/screens/main_screen.dart';
+import 'package:astral/services/app_links_service.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// 仅在桌面平台导入系统托盘
 
 class KevinApp extends StatefulWidget {
   const KevinApp({super.key});
@@ -13,12 +13,16 @@ class KevinApp extends StatefulWidget {
 
 class _KevinAppState extends State<KevinApp> {
   final _aps = Aps();
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
     getIpv4AndIpV6Addresses();
+    
   }
+
+
 
   @override
   void dispose() {
@@ -28,6 +32,7 @@ class _KevinAppState extends State<KevinApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       localizationsDelegates: const [
         // 添加国际化支持
         GlobalMaterialLocalizations.delegate,
@@ -57,7 +62,7 @@ class _KevinAppState extends State<KevinApp> {
         ),
       ),
       themeMode: _aps.themeMode.watch(context), // 设置当前主题模式
-      home: MainScreen(),
+      home: const MainScreen(),
     );
   }
 }
