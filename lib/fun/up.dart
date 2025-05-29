@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 
 class UpdateChecker {
   /// GitHub 仓库所有者
@@ -21,94 +25,63 @@ class UpdateChecker {
     this.branch = 'main',
   });
 
-  /// 检查更新
-  Future<void> scheckForUpdates(BuildContext context) async {
-    try {
-      final releaseInfo = await _fetchLatestRelease();
-      if (releaseInfo == null) {
-        _showUpdateDialog(
-          // 添加空值处理
-          context,
-          '检查更新失败',
-          '无法获取最新版本信息',
-          'https://github.com/$owner/$repo/releases',
-        );
-        return;
-      }
-      // 获取当前应用版本
-      final currentVersion = await _getCurrentVersion();
-      debugPrint('当前版本: $currentVersion');
-      debugPrint('服务器版本: ${releaseInfo['tag_name']}');
-
-      // 比较版本号，如果有新版本则显示更新弹窗
-      if (_shouldUpdate(currentVersion, releaseInfo['tag_name'])) {
-        _showUpdateDialog(
-          context,
-          releaseInfo['tag_name'],
-          releaseInfo['body'] ?? '新版本已发布',
-          releaseInfo['html_url'],
-        );
-      }
-    } catch (e) {
+/// 检查更新
+Future<void> checkForUpdates(BuildContext context, {bool showNoUpdateMessage = true}) async {
+  try {
+    final releaseInfo = await _fetchLatestRelease(includePrereleases: Aps().beta.value);
+    if (releaseInfo == null) {
       _showUpdateDialog(
         context,
-        '更新检查失败',
-        '检查更新时发生错误: $e',
+        '检查更新失败',
+        '无法获取最新版本信息',
+        'https://github.com/$owner/$repo/releases',
+      );
+      return;
+    }
+
+    // 获取当前应用版本
+    final currentVersion = await _getCurrentVersion();
+    debugPrint('当前版本: $currentVersion');
+    debugPrint('服务器版本: ${releaseInfo['tag_name']}');
+    
+    // 比较版本号，如果有新版本则显示更新弹窗
+    // 在 checkForUpdates 方法中修改 _showUpdateDialog 调用
+    if (_shouldUpdate(currentVersion, releaseInfo['tag_name'])) {
+      _showUpdateDialog(
+        context,
+        releaseInfo['tag_name'],
+        releaseInfo['body'] ?? '新版本已发布',
+        releaseInfo['html_url'],
+        releaseInfo: releaseInfo, // 传递完整的 release 信息
+      );
+    } else if (showNoUpdateMessage) {
+      _showUpdateDialog(
+        context,
+        '当前已是最新版本',
+        '当前版本为: $currentVersion',
         'https://github.com/$owner/$repo/releases',
       );
     }
+  } catch (e) {
+    _showUpdateDialog(
+      context,
+      '更新检查失败',
+      '检查更新时发生错误: $e',
+      'https://github.com/$owner/$repo/releases',
+    );
   }
-
-  Future<void> checkForUpdates(BuildContext context) async {
-    try {
-      final releaseInfo = await _fetchLatestRelease();
-      if (releaseInfo == null) {
-        _showUpdateDialog(
-          // 添加空值处理
-          context,
-          '检查更新失败',
-          '无法获取最新版本信息',
-          'https://github.com/$owner/$repo/releases',
-        );
-        return;
-      }
-
-      // 获取当前应用版本
-      final currentVersion = await _getCurrentVersion();
-      debugPrint('当前版本: $currentVersion');
-      debugPrint('服务器版本: ${releaseInfo['tag_name']}');
-      // 比较版本号，如果有新版本则显示更新弹窗
-      if (_shouldUpdate(currentVersion, releaseInfo['tag_name'])) {
-        _showUpdateDialog(
-          context,
-          releaseInfo['tag_name'],
-          releaseInfo['body'] ?? '新版本已发布',
-          releaseInfo['html_url'],
-        );
-      } else {
-        _showUpdateDialog(
-          context,
-          '当前已是最新版本',
-          '当前版本为: $currentVersion',
-          'https://github.com/$owner/$repo/releases',
-        );
-      }
-    } catch (e) {
-      _showUpdateDialog(
-        context,
-        '更新检查失败',
-        '检查更新时发生错误: $e',
-        'https://github.com/$owner/$repo/releases',
-      );
-    }
-  }
+}
 
   /// 获取最新发布版本信息
-  Future<Map<String, dynamic>?> _fetchLatestRelease() async {
+  Future<Map<String, dynamic>?> _fetchLatestRelease({bool includePrereleases = false}) async {
     try {
-      // 添加异常捕获
+      // 根据 includePrereleases 参数选择不同的 API 端点
+      final apiUrl = includePrereleases 
+          ? 'https://api.github.com/repos/$owner/$repo/releases'  // 获取所有版本
+          : 'https://api.github.com/repos/$owner/$repo/releases/latest';  // 只获取最新稳定版
+      
       final response = await http.get(
-        Uri.parse('https://api.github.com/repos/$owner/$repo/releases'),
+        Uri.parse(apiUrl),
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'User-Agent': 'astral',
@@ -116,11 +89,15 @@ class UpdateChecker {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> releases = json.decode(response.body);
-        if (releases.isEmpty) return null;
-
-        // 获取第一个发布版本（最新版本）
-        return releases[0];
+        if (includePrereleases) {
+          // 获取所有版本，返回第一个（最新的，可能是预发布版）
+          final List<dynamic> releases = json.decode(response.body);
+          if (releases.isEmpty) return null;
+          return releases[0];
+        } else {
+          // 获取最新稳定版
+          return json.decode(response.body);
+        }
       } else {
         return {
           // 返回错误信息
@@ -203,56 +180,96 @@ class UpdateChecker {
     BuildContext context,
     String version,
     String releaseNotes,
-    String downloadUrl,
-  ) {
+    String downloadUrl, {
+    Map<String, dynamic>? releaseInfo,
+  }) {
     final isLatestVersion = version.contains("当前已是最新版本");
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(isLatestVersion ? version : '发现新版本: $version'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!isLatestVersion) Text('更新内容:'),
-                  if (!isLatestVersion) const SizedBox(height: 8),
-                  Text(releaseNotes, style: const TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('稍后再说'),
-              ),
-              if (!isLatestVersion) // 仅在新版本弹窗显示更新按钮
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _launchUrl(downloadUrl);
-                  },
-                  child: const Text('立即更新'),
-                ),
-              if (isLatestVersion) // 最新版本显示确认按钮
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('确定'),
-                ),
-            ],
-          ),
+      barrierDismissible: false,
+      builder: (context) => _UpdateDialog(
+        version: version,
+        releaseNotes: releaseNotes,
+        downloadUrl: downloadUrl,
+        isLatestVersion: isLatestVersion,
+        releaseInfo: releaseInfo,
+        onDownload: releaseInfo != null ? () => _handleDownload(context, releaseInfo) : null,
+      ),
     );
   }
 
-  /// 打开浏览器跳转到下载链接
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {}
+  /// 处理下载逻辑
+  Future<void> _handleDownload(BuildContext context, Map<String, dynamic> releaseInfo) async {
+    final downloadUrl = _getDownloadUrl(releaseInfo);
+    if (downloadUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('当前平台不支持自动下载，请手动下载')),
+      );
+      return;
+    }
+
+    final fileName = _getPlatformFileName();
+    
+    // 显示下载进度对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _DownloadProgressDialog(
+        onDownload: (onProgress) => _downloadFile(downloadUrl, fileName, onProgress),
+        fileName: fileName,
+      ),
+    );
   }
+
+  /// 根据平台获取对应的下载文件名
+  String _getPlatformFileName() {
+    if (Platform.isAndroid) {
+      return 'app-release-arm64-v8a.apk';
+    } else if (Platform.isWindows) {
+      return 'Astralsetup.exe';
+    } else {
+      // 其他平台暂不支持直接下载
+      return '';
+    }
+  }
+
+  /// 从release信息中获取对应平台的下载链接
+  String? _getDownloadUrl(Map<String, dynamic> releaseInfo) {
+    final fileName = _getPlatformFileName();
+    if (fileName.isEmpty) return null;
+
+    final assets = releaseInfo['assets'] as List<dynamic>?;
+    if (assets == null) return null;
+
+    for (final asset in assets) {
+      if (asset['name'] == fileName) {
+        return asset['browser_download_url'];
+      }
+    }
+    return null;
+  }
+
+  /// 下载文件并显示进度
+  Future<String?> _downloadFile(String url, String fileName, Function(double) onProgress) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) return null;
+
+      final bytes = response.bodyBytes;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$fileName');
+
+      // 模拟下载进度（实际项目中应该使用流式下载）
+      await file.writeAsBytes(bytes);
+      onProgress(1.0); // 下载完成
+
+      return file.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
 }
 
 class AppInfoUtil {
@@ -288,5 +305,190 @@ class AppInfoUtil {
   /// 获取包名
   static String getPackageName() {
     return _packageInfo?.packageName ?? '';
+  }
+}
+
+/// 更新对话框组件
+class _UpdateDialog extends StatelessWidget {
+  final String version;
+  final String releaseNotes;
+  final String downloadUrl;
+  final bool isLatestVersion;
+  final Map<String, dynamic>? releaseInfo;
+  final VoidCallback? onDownload;
+
+  const _UpdateDialog({
+    required this.version,
+    required this.releaseNotes,
+    required this.downloadUrl,
+    required this.isLatestVersion,
+    this.releaseInfo,
+    this.onDownload,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(isLatestVersion ? version : '发现新版本: $version'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isLatestVersion) const Text('更新内容:'),
+            if (!isLatestVersion) const SizedBox(height: 8),
+            Text(releaseNotes, style: const TextStyle(fontSize: 14)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('稍后再说'),
+        ),
+        if (!isLatestVersion && onDownload != null)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              onDownload!();
+            },
+            child: const Text('立即更新'),
+          ),
+        if (!isLatestVersion && onDownload == null)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _launchUrl(downloadUrl);
+            },
+            child: const Text('手动下载'),
+          ),
+        if (isLatestVersion)
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('确定'),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+}
+
+/// 下载进度对话框组件
+class _DownloadProgressDialog extends StatefulWidget {
+  final Future<String?> Function(Function(double) onProgress) onDownload;
+  final String fileName;
+
+  const _DownloadProgressDialog({
+    required this.onDownload,
+    required this.fileName,
+  });
+
+  @override
+  State<_DownloadProgressDialog> createState() => _DownloadProgressDialogState();
+}
+
+class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
+  double _progress = 0.0;
+  bool _isDownloading = true;
+  String? _filePath;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  Future<void> _startDownload() async {
+    try {
+      final filePath = await widget.onDownload((progress) {
+        if (mounted) {
+          setState(() {
+            _progress = progress;
+          });
+        }
+      });
+
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _filePath = filePath;
+          if (filePath == null) {
+            _error = '下载失败';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _error = '下载失败: $e';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_isDownloading ? '正在下载更新' : (_error != null ? '下载失败' : '下载完成')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_isDownloading) ...[
+            LinearProgressIndicator(value: _progress),
+            const SizedBox(height: 16),
+            Text('下载进度: ${(_progress * 100).toStringAsFixed(1)}%'),
+          ] else if (_error != null) ...[
+            Text(_error!),
+          ] else ...[
+            const Icon(Icons.check_circle, color: Colors.green, size: 48),
+            const SizedBox(height: 16),
+            Text('文件已下载到: ${widget.fileName}'),
+            const SizedBox(height: 8),
+            const Text('是否立即安装？'),
+          ],
+        ],
+      ),
+      actions: [
+        if (!_isDownloading) ...[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          if (_filePath != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _installFile(_filePath!);
+              },
+              child: const Text('立即安装'),
+            ),
+          if (_error != null)
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('确定'),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _installFile(String filePath) async {
+    try {
+      await OpenFile.open(filePath);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('无法打开安装文件: $e')),
+        );
+      }
+    }
   }
 }

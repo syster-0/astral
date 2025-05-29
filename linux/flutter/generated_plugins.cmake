@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_localization
   gtk
   isar_flutter_libs
+  open_file_linux
   screen_retriever_linux
   sentry_flutter
   system_tray

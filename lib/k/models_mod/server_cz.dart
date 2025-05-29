@@ -17,7 +17,7 @@ class ServerCz {
           url: "124.71.134.95:11010",
           enable: true,
           tcp: true,
-          udp: true,
+          udp: false,
           ws: false,
           wss: false,
           quic: false,

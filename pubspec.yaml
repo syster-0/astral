@@ -3,12 +3,13 @@ description: "astral"
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 
-version: 2.0.0-beta.85
+version: 2.0.0-beta.86
 
 environment:
   sdk: ^3.7.2
 
 dependencies:
+  open_file: ^3.0.0
   vpn_service_plugin:
     path: vpn_service_plugin
   flutter:

@@ -13,41 +13,25 @@ class AllSettingsCz {
   }
 
   Future<void> init() async {
-    AllSettings? settings = await _isar.allSettings.get(
-      1,
-    ); // 1. 使用可变变量 settings
-    bool needsSave = false; // 2. 标记是否需要保存
-
+    AllSettings? settings = await _isar.allSettings.get(1);
+    
     if (settings == null) {
-      // 3. 如果是首次运行 (settings 为 null)
-      settings = AllSettings(); // 创建新实例
-
-      // 直接在新实例上设置所有默认值
-      settings.playerName = await _getDeviceName(); // 设置默认 playerName
-      settings.listenList = [
-        // 设置默认 listenList
-        "tcp://0.0.0.0:11010",
-        "udp://0.0.0.0:11010",
-      ];
-      needsSave = true; // 标记这个新创建并完全初始化的对象需要保存
-    } else {
-      // 4. 如果 settings 已存在，检查各个字段是否需要设置默认值
-      if (settings.playerName == null) {
-        settings.playerName = await _getDeviceName();
-        needsSave = true;
-      }
-      if (settings.listenList == null) {
-        settings.listenList = ["tcp://0.0.0.0:11010", "udp://0.0.0.0:11010"];
-        needsSave = true;
-      }
-    }
-
-    // 5. 如果有任何更改或这是新对象，则保存到数据库
-    if (needsSave) {
+      // 如果是首次运行，创建新实例并使用默认值
+      settings = AllSettings();
+      // 只需要设置特殊的默认值（需要异步获取的）
+      settings.playerName = await _getDeviceName();
+      
       await _isar.writeTxn(() async {
-        // 此处的 settings! 是安全的，因为如果它开始时为 null，则已被赋值
         await _isar.allSettings.put(settings!);
       });
+    } else {
+      // 如果 settings 已存在，只检查 playerName（因为它需要异步获取）
+      if (settings.playerName == null || settings.playerName!.isEmpty) {
+        settings.playerName = await _getDeviceName();
+        await _isar.writeTxn(() async {
+          await _isar.allSettings.put(settings!);
+        });
+      }
     }
   }
 
@@ -302,28 +286,79 @@ class AllSettingsCz {
     }
     return false;
   }
-//autoSetMTU
+  //autoSetMTU
 
   /// 设置自动设置网卡跃点
   Future<void> setAutoSetMTU(bool isAutoSet) async {
     AllSettings? settings = await _isar.allSettings.get(1);
-    if (settings!= null) {
+    if (settings != null) {
       settings.autoSetMTU = isAutoSet;
       await _isar.writeTxn(() async {
         await _isar.allSettings.put(settings);
       });
     }
   }
+
   /// 获取自动设置网卡跃点状态
   Future<bool> getAutoSetMTU() async {
     AllSettings? settings = await _isar.allSettings.get(1);
-    if (settings!= null) {
+    if (settings != null) {
       return settings.autoSetMTU;
     }
     return true;
   }
-}
 
+  /// 设置参与测试版
+  Future<void> setBeta(bool isBeta) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.beta = isBeta;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取参与测试版状态
+  Future<bool> getBeta() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    return settings?.beta ?? AllSettings().beta;
+  }
+
+  /// 设置自动检查更新
+  Future<void> setAutoCheckUpdate(bool isAutoCheck) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.autoCheckUpdate = isAutoCheck;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取自动检查更新状态
+  Future<bool> getAutoCheckUpdate() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    return settings?.autoCheckUpdate ?? AllSettings().autoCheckUpdate;
+  }
+
+  /// 设置下载加速地址
+  Future<void> setDownloadAccelerate(String accelerateUrl) async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    if (settings != null) {
+      settings.downloadAccelerate = accelerateUrl;
+      await _isar.writeTxn(() async {
+        await _isar.allSettings.put(settings);
+      });
+    }
+  }
+
+  /// 获取下载加速地址
+  Future<String> getDownloadAccelerate() async {
+    AllSettings? settings = await _isar.allSettings.get(1);
+    return settings?.downloadAccelerate ?? AllSettings().downloadAccelerate;
+  }
+}
 
 // 在同一个文件中添加这个方法
 Future<String> _getDeviceName() async {

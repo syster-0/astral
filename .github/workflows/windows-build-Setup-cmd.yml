@@ -1,4 +1,4 @@
-name: 🪟 构建 WindowsSetup 应用
+name: 🪟 构建 WindowsSetupCmd 应用
 
 on:
   workflow_dispatch:
@@ -121,7 +121,6 @@ jobs:
           Source: "$env:GITHUB_WORKSPACE\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
           Source: "$env:GITHUB_WORKSPACE\build\windows\x64\runner\Release\wintun.dll"; DestDir: "{app}"; Flags: ignoreversion
           Source: "$env:GITHUB_WORKSPACE\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
-
           [Registry]
           Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
           Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey

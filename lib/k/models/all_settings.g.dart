@@ -17,53 +17,68 @@ const AllSettingsSchema = CollectionSchema(
   name: r'AllSettings',
   id: 7675443445704401613,
   properties: {
-    r'autoSetMTU': PropertySchema(
+    r'autoCheckUpdate': PropertySchema(
       id: 0,
+      name: r'autoCheckUpdate',
+      type: IsarType.bool,
+    ),
+    r'autoSetMTU': PropertySchema(
+      id: 1,
       name: r'autoSetMTU',
       type: IsarType.bool,
     ),
+    r'beta': PropertySchema(
+      id: 2,
+      name: r'beta',
+      type: IsarType.bool,
+    ),
     r'closeMinimize': PropertySchema(
-      id: 1,
+      id: 3,
       name: r'closeMinimize',
       type: IsarType.bool,
     ),
     r'customVpn': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'customVpn',
       type: IsarType.stringList,
     ),
+    r'downloadAccelerate': PropertySchema(
+      id: 5,
+      name: r'downloadAccelerate',
+      type: IsarType.string,
+    ),
     r'listenList': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'listenList',
       type: IsarType.stringList,
     ),
     r'playerName': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'playerName',
       type: IsarType.string,
     ),
     r'room': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'room',
       type: IsarType.long,
     ),
     r'startup': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'startup',
       type: IsarType.bool,
     ),
     r'startupAutoConnect': PropertySchema(
-      id: 7,
+      id: 10,
       name: r'startupAutoConnect',
       type: IsarType.bool,
     ),
     r'startupMinimize': PropertySchema(
-      id: 8,
+      id: 11,
       name: r'startupMinimize',
       type: IsarType.bool,
     ),
     r'userListSimple': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'userListSimple',
       type: IsarType.bool,
     )
@@ -95,6 +110,7 @@ int _allSettingsEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  bytesCount += 3 + object.downloadAccelerate.length * 3;
   {
     final list = object.listenList;
     if (list != null) {
@@ -122,16 +138,19 @@ void _allSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeBool(offsets[0], object.autoSetMTU);
-  writer.writeBool(offsets[1], object.closeMinimize);
-  writer.writeStringList(offsets[2], object.customVpn);
-  writer.writeStringList(offsets[3], object.listenList);
-  writer.writeString(offsets[4], object.playerName);
-  writer.writeLong(offsets[5], object.room);
-  writer.writeBool(offsets[6], object.startup);
-  writer.writeBool(offsets[7], object.startupAutoConnect);
-  writer.writeBool(offsets[8], object.startupMinimize);
-  writer.writeBool(offsets[9], object.userListSimple);
+  writer.writeBool(offsets[0], object.autoCheckUpdate);
+  writer.writeBool(offsets[1], object.autoSetMTU);
+  writer.writeBool(offsets[2], object.beta);
+  writer.writeBool(offsets[3], object.closeMinimize);
+  writer.writeStringList(offsets[4], object.customVpn);
+  writer.writeString(offsets[5], object.downloadAccelerate);
+  writer.writeStringList(offsets[6], object.listenList);
+  writer.writeString(offsets[7], object.playerName);
+  writer.writeLong(offsets[8], object.room);
+  writer.writeBool(offsets[9], object.startup);
+  writer.writeBool(offsets[10], object.startupAutoConnect);
+  writer.writeBool(offsets[11], object.startupMinimize);
+  writer.writeBool(offsets[12], object.userListSimple);
 }
 
 AllSettings _allSettingsDeserialize(
@@ -141,17 +160,20 @@ AllSettings _allSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AllSettings();
-  object.autoSetMTU = reader.readBool(offsets[0]);
-  object.closeMinimize = reader.readBool(offsets[1]);
-  object.customVpn = reader.readStringList(offsets[2]) ?? [];
+  object.autoCheckUpdate = reader.readBool(offsets[0]);
+  object.autoSetMTU = reader.readBool(offsets[1]);
+  object.beta = reader.readBool(offsets[2]);
+  object.closeMinimize = reader.readBool(offsets[3]);
+  object.customVpn = reader.readStringList(offsets[4]) ?? [];
+  object.downloadAccelerate = reader.readString(offsets[5]);
   object.id = id;
-  object.listenList = reader.readStringList(offsets[3]);
-  object.playerName = reader.readStringOrNull(offsets[4]);
-  object.room = reader.readLongOrNull(offsets[5]);
-  object.startup = reader.readBool(offsets[6]);
-  object.startupAutoConnect = reader.readBool(offsets[7]);
-  object.startupMinimize = reader.readBool(offsets[8]);
-  object.userListSimple = reader.readBool(offsets[9]);
+  object.listenList = reader.readStringList(offsets[6]);
+  object.playerName = reader.readStringOrNull(offsets[7]);
+  object.room = reader.readLongOrNull(offsets[8]);
+  object.startup = reader.readBool(offsets[9]);
+  object.startupAutoConnect = reader.readBool(offsets[10]);
+  object.startupMinimize = reader.readBool(offsets[11]);
+  object.userListSimple = reader.readBool(offsets[12]);
   return object;
 }
 
@@ -167,20 +189,26 @@ P _allSettingsDeserializeProp<P>(
     case 1:
       return (reader.readBool(offset)) as P;
     case 2:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 7:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 9:
+      return (reader.readBool(offset)) as P;
+    case 10:
+      return (reader.readBool(offset)) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
+    case 12:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -281,10 +309,30 @@ extension AllSettingsQueryWhere
 extension AllSettingsQueryFilter
     on QueryBuilder<AllSettings, AllSettings, QFilterCondition> {
   QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      autoCheckUpdateEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'autoCheckUpdate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
       autoSetMTUEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'autoSetMTU',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition> betaEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'beta',
         value: value,
       ));
     });
@@ -522,6 +570,142 @@ extension AllSettingsQueryFilter
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'downloadAccelerate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'downloadAccelerate',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'downloadAccelerate',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'downloadAccelerate',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterFilterCondition>
+      downloadAccelerateIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'downloadAccelerate',
+        value: '',
+      ));
     });
   }
 
@@ -1094,6 +1278,19 @@ extension AllSettingsQueryLinks
 
 extension AllSettingsQuerySortBy
     on QueryBuilder<AllSettings, AllSettings, QSortBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByAutoCheckUpdate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoCheckUpdate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByAutoCheckUpdateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoCheckUpdate', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByAutoSetMTU() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'autoSetMTU', Sort.asc);
@@ -1103,6 +1300,18 @@ extension AllSettingsQuerySortBy
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByAutoSetMTUDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'autoSetMTU', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByBeta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'beta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> sortByBetaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'beta', Sort.desc);
     });
   }
 
@@ -1116,6 +1325,20 @@ extension AllSettingsQuerySortBy
       sortByCloseMinimizeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closeMinimize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByDownloadAccelerate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadAccelerate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      sortByDownloadAccelerateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadAccelerate', Sort.desc);
     });
   }
 
@@ -1198,6 +1421,19 @@ extension AllSettingsQuerySortBy
 
 extension AllSettingsQuerySortThenBy
     on QueryBuilder<AllSettings, AllSettings, QSortThenBy> {
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByAutoCheckUpdate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoCheckUpdate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByAutoCheckUpdateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoCheckUpdate', Sort.desc);
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByAutoSetMTU() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'autoSetMTU', Sort.asc);
@@ -1207,6 +1443,18 @@ extension AllSettingsQuerySortThenBy
   QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByAutoSetMTUDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'autoSetMTU', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByBeta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'beta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy> thenByBetaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'beta', Sort.desc);
     });
   }
 
@@ -1220,6 +1468,20 @@ extension AllSettingsQuerySortThenBy
       thenByCloseMinimizeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'closeMinimize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByDownloadAccelerate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadAccelerate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QAfterSortBy>
+      thenByDownloadAccelerateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadAccelerate', Sort.desc);
     });
   }
 
@@ -1314,9 +1576,22 @@ extension AllSettingsQuerySortThenBy
 
 extension AllSettingsQueryWhereDistinct
     on QueryBuilder<AllSettings, AllSettings, QDistinct> {
+  QueryBuilder<AllSettings, AllSettings, QDistinct>
+      distinctByAutoCheckUpdate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'autoCheckUpdate');
+    });
+  }
+
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByAutoSetMTU() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'autoSetMTU');
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByBeta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'beta');
     });
   }
 
@@ -1329,6 +1604,14 @@ extension AllSettingsQueryWhereDistinct
   QueryBuilder<AllSettings, AllSettings, QDistinct> distinctByCustomVpn() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'customVpn');
+    });
+  }
+
+  QueryBuilder<AllSettings, AllSettings, QDistinct>
+      distinctByDownloadAccelerate({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'downloadAccelerate',
+          caseSensitive: caseSensitive);
     });
   }
 
@@ -1386,9 +1669,21 @@ extension AllSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AllSettings, bool, QQueryOperations> autoCheckUpdateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'autoCheckUpdate');
+    });
+  }
+
   QueryBuilder<AllSettings, bool, QQueryOperations> autoSetMTUProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'autoSetMTU');
+    });
+  }
+
+  QueryBuilder<AllSettings, bool, QQueryOperations> betaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'beta');
     });
   }
 
@@ -1402,6 +1697,13 @@ extension AllSettingsQueryProperty
       customVpnProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'customVpn');
+    });
+  }
+
+  QueryBuilder<AllSettings, String, QQueryOperations>
+      downloadAccelerateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'downloadAccelerate');
     });
   }
 

@@ -35,4 +35,13 @@ class AllSettings {
 
   /// 自动设置网卡跃点
   bool autoSetMTU = true;
+
+  /// 参与测试版
+  bool beta = false;
+
+  /// 自动检查更新
+  bool autoCheckUpdate = true;
+
+  /// 下载加速
+  String downloadAccelerate = 'https://gh.xmly.dev/';
 }

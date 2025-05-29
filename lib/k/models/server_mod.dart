@@ -12,7 +12,7 @@ class ServerMod {
   // tcp 开启
   bool tcp = true;
   // udp 开启
-  bool udp = true;
+  bool udp = false;
   // ws 开启
   bool ws = false;
   // wss 开启
@@ -37,7 +37,7 @@ class ServerMod {
     this.name = "",
     this.url = "",
     this.tcp = true,
-    this.udp = true,
+    this.udp = false,
     this.ws = false,
     this.wss = false,
     this.quic = false,
