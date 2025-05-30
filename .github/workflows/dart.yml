@@ -53,7 +53,7 @@ jobs:
         with:
           workflow: "windows-build-Setup.yml"
           name: release
-          path: ./downloaded/windowsSetup
+          path: ./downloaded/
           search_artifacts: true
           if_no_artifact_found: warn
 
@@ -72,7 +72,7 @@ jobs:
           echo "Windows 文件:"
           ls -la ./downloaded/windows || echo "目录不存在"
           echo "WindowsSetup 文件:"
-          ls -la./downloaded/windowsSetup || echo "目录不存在"
+          ls -la./downloaded/ || echo "目录不存在"
           
       - name: 🤖 生成分支差异提交内容
         id: generate_changelog
@@ -183,6 +183,7 @@ jobs:
           prerelease: true  # 标记为预发布版本
           files: |
             ./downloaded/arm64-v8a/*.apk
-            ./downloaded/windowsSetup/*.exe
+            ./downloaded/*.exe
+            ./downloaded/windows/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
