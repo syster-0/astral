@@ -50,7 +50,6 @@ class _HomePageState extends State<HomePage> {
                         ServersHome(),
                         // UdpLog(),
                         AboutHome(),
-                        Contributors(), // 添加贡献者组件
                       ],
                     ),
                   ),

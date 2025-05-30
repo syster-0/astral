@@ -33,7 +33,7 @@ class _UserIpBoxState extends State<UserIpBox> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.delayed(const Duration(milliseconds: 100), () {
       // 初始化时同步一次状态
       _usernameController.text = _aps.PlayerName.value;
       _virtualIPController.text = _aps.ipv4.value;
@@ -60,7 +60,6 @@ class _UserIpBoxState extends State<UserIpBox> {
   @override
   Widget build(BuildContext context) {
     var colorScheme = Theme.of(context).colorScheme;
-    var isValidIP = _isValidIPv4(_aps.ipv4.value);
 
     return HomeBox(
       widthSpan: 2,
@@ -112,6 +111,7 @@ class _UserIpBoxState extends State<UserIpBox> {
             },
             decoration: InputDecoration(
               labelText: '用户名',
+              // 默认值
               border: const OutlineInputBorder(),
               prefixIcon: Icon(Icons.person, color: colorScheme.primary),
               floatingLabelBehavior: FloatingLabelBehavior.always,
