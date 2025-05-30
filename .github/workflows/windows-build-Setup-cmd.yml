@@ -1,7 +1,7 @@
 name: 🪟 构建 WindowsSetupCmd 应用
 
 on:
-  # workflow_dispatch:
+  workflow_dispatch:
   # push:  # 每次 push 到仓库时触发
   #   tags:
   #     - 'v*'   # 指定触发分支

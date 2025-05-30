@@ -33,10 +33,10 @@ class _UserIpBoxState extends State<UserIpBox> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 100), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       // 初始化时同步一次状态
-      _usernameController.text = _aps.PlayerName.value;
-      _virtualIPController.text = _aps.ipv4.value;
+      _usernameController.text = _aps.PlayerName.watch(context);
+      _virtualIPController.text = _aps.ipv4.watch(context);
       _roomController.text = _aps.selectroom.value?.name ?? '';
       
       // 初始化验证状态
