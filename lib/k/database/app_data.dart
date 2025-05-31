@@ -35,10 +35,8 @@ class AppDatabase {
       dbDir = customDbDir;
     } else if (Platform.isAndroid) {
       // Android平台使用应用专属目录
-
       final appDocDir = await getApplicationDocumentsDirectory();
-
-      dbDir =  Directory(path.join(appDocDir.path, 'db')).path;
+      dbDir = Directory(path.join(appDocDir.path, 'db')).path;
     } else {
       // 其他平台使用可执行文件所在目录
       final executablePath = Platform.resolvedExecutable;
