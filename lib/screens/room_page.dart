@@ -334,6 +334,12 @@ class _RoomPageState extends State<RoomPage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 FloatingActionButton(
+                  heroTag: 'sort',
+                  onPressed: () => _showSortingDialog(context),
+                  child: const Icon(Icons.sort),
+                ),
+                const SizedBox(width: 16),
+                FloatingActionButton(
                   heroTag: 'paste',
                   onPressed: _showPasteDialog,
                   child: const Icon(Icons.paste),
@@ -343,12 +349,6 @@ class _RoomPageState extends State<RoomPage> {
                   heroTag: 'add',
                   onPressed: () => showAddRoomDialog(context),
                   child: const Icon(Icons.add),
-                ),
-                const SizedBox(width: 16),
-                FloatingActionButton(
-                  heroTag: 'sort',
-                  onPressed: () => _showSortingDialog(context),
-                  child: const Icon(Icons.sort),
                 ),
               ],
             ),

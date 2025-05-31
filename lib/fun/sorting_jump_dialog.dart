@@ -133,6 +133,7 @@ class _SortingJumpDialogState extends State<SortingJumpDialog> {
               )
             );
           },
+          buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
             setState(() {
               if (newIndex > oldIndex) {
