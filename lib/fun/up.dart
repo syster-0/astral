@@ -520,78 +520,10 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     );
   }
 
-  /// 检查和请求安装权限
-  Future<bool> _checkInstallPermission() async {
-    if (!Platform.isAndroid) return true;
-    
-    try {
-      // 检查安装权限
-      final installPermission = await Permission.requestInstallPackages.status;
-      if (installPermission.isDenied) {
-        final result = await Permission.requestInstallPackages.request();
-        if (result.isDenied) {
-          return false;
-        }
-      }
-      
-      // 检查存储权限
-      final storagePermission = await Permission.storage.status;
-      if (storagePermission.isDenied) {
-        final result = await Permission.storage.request();
-        if (result.isDenied) {
-          return false;
-        }
-      }
-      
-      return true;
-    } catch (e) {
-      debugPrint('权限检查失败: $e');
-      return false;
-    }
-  }
-
-  /// 显示权限设置引导
-  Future<void> _showPermissionGuide(BuildContext context) async {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('需要权限'),
-        content: const Text(
-          '为了正常安装更新，需要以下权限：\n\n'
-          '1. 安装未知来源应用权限\n'
-          '2. 存储权限\n\n'
-          '请在设置中手动开启这些权限。'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              openAppSettings();
-            },
-            child: const Text('去设置'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _installFile(String filePath) async {
     try {
       if (Platform.isAndroid) {
-        // 首先检查权限
-        final hasPermission = await _checkInstallPermission();
-        if (!hasPermission) {
-          if (mounted) {
-            await _showPermissionGuide(context);
-          }
-          return;
-        }
-        
-        // 尝试安装
+        // Android平台需要特殊处理
         final result = await OpenFile.open(
           filePath,
           type: "application/vnd.android.package-archive"
@@ -605,47 +537,13 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
       }
     } catch (e) {
       if (mounted) {
-        _showInstallErrorDialog(context, e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('无法打开安装文件: $e\n\n提示：请确保已开启"允许安装未知来源应用"权限'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
-  }
-
-  /// 显示安装错误对话框
-  void _showInstallErrorDialog(BuildContext context, String error) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('安装失败'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('错误信息: $error'),
-            const SizedBox(height: 16),
-            const Text(
-              '解决方案：\n'
-              '1. 确保已开启"允许安装未知来源应用"权限\n'
-              '2. 检查存储权限是否已授予\n'
-              '3. 确保设备有足够的存储空间\n'
-              '4. 尝试手动安装下载的APK文件',
-              style: TextStyle(fontSize: 14),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('确定'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              openAppSettings();
-            },
-            child: const Text('打开设置'),
-          ),
-        ],
-      ),
-    );
   }
 }
