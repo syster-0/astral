@@ -14,6 +14,8 @@ class Room {
   String password = "";
   // 房间标签
   List<String> tags = [];
+  // 排序字段
+  int sortOrder = 0;
 
   //构造
   Room({
@@ -23,5 +25,6 @@ class Room {
     this.roomName = "",
     this.password = "",
     this.tags = const [],
+    this.sortOrder = 0,
   });
 }

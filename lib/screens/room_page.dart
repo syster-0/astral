@@ -4,6 +4,7 @@ import 'package:astral/fun/show_add_room_dialog.dart';
 import 'package:astral/fun/show_edit_room_dialog.dart';
 import 'package:astral/screens/user_page.dart';
 import 'package:astral/wid/room_card.dart';
+import 'package:astral/wid/room_reorder_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -18,10 +19,11 @@ class RoomPage extends StatefulWidget {
   State<RoomPage> createState() => _RoomPageState();
 }
 
+// 在_RoomPageState类中添加排序相关方法
 class _RoomPageState extends State<RoomPage> {
-  // 使用 Aps 实例
   final _aps = Aps();
-   bool isHovered = false;
+  bool isHovered = false;
+  bool _isReorderMode = false; // 添加重排序模式标志
 
   // 根据宽度计算列数
   int _getColumnCount(double width) {
@@ -93,6 +95,44 @@ class _RoomPageState extends State<RoomPage> {
   // 构建房间列表视图
   Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {
     final columnCount = _getColumnCount(constraints.maxWidth);
+    final rooms = _aps.rooms.watch(context);
+    
+    // 如果是重排序模式，使用ReorderableListView
+    if (_isReorderMode) {
+      return ReorderableListView.builder(
+        padding: const EdgeInsets.all(12.0),
+        itemCount: rooms.length,
+        onReorder: (oldIndex, newIndex) {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final List<Room> reorderedRooms = List.from(rooms);
+          final Room item = reorderedRooms.removeAt(oldIndex);
+          reorderedRooms.insert(newIndex, item);
+          _aps.reorderRooms(reorderedRooms);
+        },
+        itemBuilder: (context, index) {
+          final room = rooms[index];
+          return Card(
+            key: ValueKey(room.id),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            child: ListTile(
+              leading: const Icon(Icons.drag_handle),
+              title: Text(room.name),
+              subtitle: Text('排序: ${room.sortOrder}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  showEditRoomDialog(context, room: room);
+                },
+              ),
+            ),
+          );
+        },
+      );
+    }
+    
+    // 正常的网格视图
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -102,20 +142,10 @@ class _RoomPageState extends State<RoomPage> {
             crossAxisCount: columnCount,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            // 使用过滤后的房间列表长度
-            childCount:
-                _aps.rooms.watch(context).where((room) {
-                  return true;
-                }).length,
+            childCount: rooms.length,
             itemBuilder: (context, index) {
-              // 获取过滤后的房间列表
-              final filteredRooms =
-                  _aps.rooms.watch(context).where((room) {
-                    return true;
-                  }).toList();
-              final room = filteredRooms[index];
+              final room = rooms[index];
               return RoomCard(
-                // 传递 Room 对象和标签名称列表
                 room: room,
                 onEdit: () {
                   showEditRoomDialog(context, room: room);
@@ -125,38 +155,22 @@ class _RoomPageState extends State<RoomPage> {
                 },
                 onShare: () {
                   var a = encryptRoomWithJWT(room);
-                  // 复制房间信息到剪贴板
                   Clipboard.setData(ClipboardData(text: a));
-                  // 显示 SnackBar 提示
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('房间信息已复制到剪贴板')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('房间信息已复制到剪贴板')),
+                  );
                 },
               );
             },
           ),
         ),
-        // 添加底部安全区域，防止内容被遮挡
         SliverToBoxAdapter(
           child: SizedBox(
-            height:
-                MediaQuery.of(context).padding.bottom + 20, // 底部安全区高度 + 额外间距
+            height: MediaQuery.of(context).padding.bottom + 20,
           ),
         ),
       ],
     );
-  }
-
-  // 新增：CoState 枚举转中文
-  String _coStateToText(CoState state) {
-    switch (state) {
-      case CoState.idle:
-        return '未连接';
-      case CoState.connecting:
-        return '连接中';
-      case CoState.connected:
-        return '已连接';
-    }
   }
 
   @override
@@ -201,7 +215,7 @@ class _RoomPageState extends State<RoomPage> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('连接状态: ${_coStateToText(isConnected)}${isConnected == CoState.connected ?' (点击分享房间)':''}'),
+                          Text('连接状态: ${isConnected == CoState.connected ? '已连接' : isConnected == CoState.connecting ? '连接中' : '未连接'}${isConnected == CoState.connected ? ' (点击分享房间)' : ''}'),
                         ],
                       ),
                     ),
@@ -239,6 +253,15 @@ class _RoomPageState extends State<RoomPage> {
                     heroTag: 'add',
                     onPressed: () => showAddRoomDialog(context),
                     child: const Icon(Icons.add),
+                  ),
+                  // 在 AppBar 的 actions 中添加排序按钮
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'sort',
+                    onPressed: () {
+                      RoomReorderSheet.show(context, _aps.rooms.value);
+                    },
+                    child: const Icon(Icons.sort),
                   ),
                 ],
               ),

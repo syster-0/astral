@@ -22,9 +22,9 @@ class RoomCz {
     return await _isar.rooms.get(id);
   }
 
-  // 获取所有房间
+  // 获取所有房间（按排序字段排序）
   Future<List<Room>> getAllRooms() async {
-    return await _isar.rooms.where().findAll();
+    return await _isar.rooms.where().sortBySortOrder().findAll();
   }
 
   // 更新房间
@@ -41,8 +41,29 @@ class RoomCz {
     });
   }
 
-  // 根据标签查询房间
+  // 根据标签查询房间（按排序字段排序）
   Future<List<Room>> getRoomsByTag(String tag) async {
-    return await _isar.rooms.filter().tagsElementEqualTo(tag).findAll();
+    return await _isar.rooms.filter().tagsElementEqualTo(tag).sortBySortOrder().findAll();
+  }
+
+  // 更新房间排序
+  Future<void> updateRoomOrder(int roomId, int newOrder) async {
+    await _isar.writeTxn(() async {
+      final room = await _isar.rooms.get(roomId);
+      if (room != null) {
+        room.sortOrder = newOrder;
+        await _isar.rooms.put(room);
+      }
+    });
+  }
+
+  // 批量更新房间排序
+  Future<void> updateRoomsOrder(List<Room> rooms) async {
+    await _isar.writeTxn(() async {
+      for (int i = 0; i < rooms.length; i++) {
+        rooms[i].sortOrder = i;
+      }
+      await _isar.rooms.putAll(rooms);
+    });
   }
 }

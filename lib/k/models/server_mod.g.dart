@@ -145,7 +145,7 @@ ServerMod _serverModDeserialize(
     srv: reader.readBoolOrNull(offsets[5]) ?? false,
     tcp: reader.readBoolOrNull(offsets[6]) ?? true,
     txt: reader.readBoolOrNull(offsets[7]) ?? false,
-    udp: reader.readBoolOrNull(offsets[8]) ?? true,
+    udp: reader.readBoolOrNull(offsets[8]) ?? false,
     url: reader.readStringOrNull(offsets[9]) ?? "",
     wg: reader.readBoolOrNull(offsets[10]) ?? false,
     ws: reader.readBoolOrNull(offsets[11]) ?? false,
@@ -178,7 +178,7 @@ P _serverModDeserializeProp<P>(
     case 7:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 8:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 9:
       return (reader.readStringOrNull(offset) ?? "") as P;
     case 10:

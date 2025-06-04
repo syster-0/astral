@@ -41,7 +41,12 @@ class _UserIpBoxState extends State<UserIpBox> {
           _usernameController.text = _aps.PlayerName.value; // 监听玩家名变化
         }
         if (!_virtualIPFocusNode.hasFocus) {
-          _virtualIPController.text = _aps.ipv4.value; // 监听IP地址变化
+          final newIP = _aps.ipv4.value;
+          _virtualIPController.text = newIP; // 监听IP地址变化
+          // 同时更新验证状态
+          setState(() {
+            _isValidIP = _isValidIPv4(newIP);
+          });
         }
         // 房间选择器不是文本输入框，可以直接更新
         _roomController.text = _aps.selectroom.value?.name ?? ''; // 监听房间选择变化

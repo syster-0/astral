@@ -61,9 +61,13 @@ class Aps {
   }
 
   // 杂项初始化
+  // 在initMisc方法中修改房间加载逻辑
   Future<void> initMisc() async {
-    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
-
+    // 获取房间时按排序字段排序
+    var roomsList = await AppDatabase().RoomSetting.getAllRooms();
+    roomsList.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    rooms.value = roomsList;
+  
     if (rooms.value.isEmpty) {
       final s = Room(
         name: RandomName(),
@@ -71,6 +75,7 @@ class Aps {
         roomName: Uuid().v4(),
         password: Uuid().v4(),
         tags: [],
+        sortOrder: 0, // 添加排序字段
       );
       await addRoom(s);
       // 并且 selectroom 如果没有选中任何一个房间 就选中第一个
@@ -638,6 +643,12 @@ class Aps {
     await AppDatabase().RoomSetting.updateRoom(room);
     rooms.value = await AppDatabase().RoomSetting.getAllRooms();
     return room.id;
+  }
+
+  /// 重新排序房间
+  Future<void> reorderRooms(List<Room> reorderedRooms) async {
+    await AppDatabase().RoomSetting.updateRoomsOrder(reorderedRooms);
+    rooms.value = await AppDatabase().RoomSetting.getAllRooms();
   }
 
   /// 所选房间
