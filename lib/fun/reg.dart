@@ -40,17 +40,17 @@ class UrlSchemeRegistrar {
     try {
       final executablePath = Platform.resolvedExecutable;
       
-      // 直接通过reg add命令注册，无需临时文件
+      // 使用用户级别的注册表，避免权限问题
       final commands = [
         // 注册主键
-        ['add', 'HKEY_CLASSES_ROOT\\astral', '/ve', '/d', 'URL:Astral Protocol', '/f'],
-        ['add', 'HKEY_CLASSES_ROOT\\astral', '/v', 'URL Protocol', '/d', '', '/f'],
+        ['add', 'HKEY_CURRENT_USER\\Software\\Classes\\astral', '/ve', '/d', 'URL:Astral Protocol', '/f'],
+        ['add', 'HKEY_CURRENT_USER\\Software\\Classes\\astral', '/v', 'URL Protocol', '/d', '', '/f'],
         
         // 注册图标
-        ['add', 'HKEY_CLASSES_ROOT\\astral\\DefaultIcon', '/ve', '/d', '"$executablePath",1', '/f'],
+        ['add', 'HKEY_CURRENT_USER\\Software\\Classes\\astral\\DefaultIcon', '/ve', '/d', '"$executablePath",1', '/f'],
         
         // 注册命令
-        ['add', 'HKEY_CLASSES_ROOT\\astral\\shell\\open\\command', '/ve', '/d', '"$executablePath" "%1"', '/f'],
+        ['add', 'HKEY_CURRENT_USER\\Software\\Classes\\astral\\shell\\open\\command', '/ve', '/d', '"$executablePath" "%1"', '/f'],
       ];
       
       // 执行所有注册表命令
@@ -84,7 +84,7 @@ class UrlSchemeRegistrar {
     try {
       final result = await Process.run('reg', [
         'query',
-        'HKEY_CLASSES_ROOT\\astral',
+        'HKEY_CURRENT_USER\\Software\\Classes\\astral',
         '/ve'
       ]);
       

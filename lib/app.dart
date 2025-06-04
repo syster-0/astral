@@ -3,7 +3,6 @@ import 'package:astral/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// 仅在桌面平台导入系统托盘
 
 class KevinApp extends StatefulWidget {
   const KevinApp({super.key});
@@ -18,6 +17,7 @@ class _KevinAppState extends State<KevinApp> {
   void initState() {
     super.initState();
     getIpv4AndIpV6Addresses();
+    // 初始化链接服务
   }
 
   @override
