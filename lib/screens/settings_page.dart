@@ -9,6 +9,7 @@ import 'package:astral/screens/logs_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -30,35 +31,70 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _checkInstallPermission() async {
     try {
-      final result = await const MethodChannel('astral_channel').invokeMethod('checkInstallPermission');
+      final status = await Permission.requestInstallPackages.status;
       if (mounted) {
         setState(() {
-          _hasInstallPermission = result ?? false;
+          _hasInstallPermission = status.isGranted;
         });
       }
     } catch (e) {
       // 权限检查失败，默认为false
+      if (mounted) {
+        setState(() {
+          _hasInstallPermission = false;
+        });
+      }
     }
   }
 
   Future<void> _requestInstallPermission() async {
     try {
-      final result = await const MethodChannel('astral_channel').invokeMethod('requestInstallPermission');
+      final status = await Permission.requestInstallPackages.request();
       if (!context.mounted) return;
       
       await _checkInstallPermission(); // 重新检查权限状态
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result ? '安装权限获取成功' : '安装权限获取失败'),
+          content: Text(status.isGranted ? '安装权限获取成功' : '安装权限获取失败'),
         ),
       );
+      
+      // 如果权限被永久拒绝，提示用户去设置页面
+      if (status.isPermanentlyDenied) {
+        _showPermissionDialog();
+      }
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请求安装权限失败')),
       );
     }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('权限被拒绝'),
+          content: const Text('安装权限被永久拒绝，请前往设置页面手动开启权限。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('去设置'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
