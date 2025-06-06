@@ -4,6 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:astral/k/app_s/aps.dart';
 
+// 添加DragHandle定义
+class DragHandle extends StatelessWidget {
+  const DragHandle({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 16,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.outline,
+        borderRadius: BorderRadius.circular(2.5),
+      ),
+    );
+  }
+}
+
 class RoomReorderSheet extends StatefulWidget {
   final List<Room> rooms;
   final Function(List<Room>) onReorder;
@@ -33,7 +50,7 @@ class RoomReorderSheet extends StatefulWidget {
               onReorder: (reorderedRooms) {
                 aps.reorderRooms(reorderedRooms);
                 Navigator.of(context).pop();
-              },
+              }
             ),
           ),
         ),
@@ -71,6 +88,7 @@ class RoomReorderSheet extends StatefulWidget {
 
 class _RoomReorderSheetState extends State<RoomReorderSheet> {
   late List<Room> _rooms;
+  String _currentHoveredRoomName = ''; // 新增悬停状态变量
 
   @override
   void initState() {
@@ -85,54 +103,43 @@ class _RoomReorderSheetState extends State<RoomReorderSheet> {
     
     return Column(
       children: [
-        // 拖拽指示器（仅移动端显示）
-        if (MediaQuery.of(context).size.width <= 600)
-          Container(
-            width: 32,
-            height: 4,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        
         // 标题栏
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 8, 16),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(24, 14, 8, 16), // 上边距从8增加到14
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  '调整房间顺序',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
+              Row(
+                children: [
+                  Icon(
+                    Icons.sort,
+                    color: colorScheme.primary,
+                    size: 24,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '房间排序',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(
-                  Icons.close,
+              const SizedBox(height: 4),
+              Text(
+                '拖拽房间卡片来调整显示顺序',
+                textAlign: TextAlign.left,
+                maxLines: null,
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
         ),
-        
-        // 提示文本
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: Text(
-            '拖拽房间卡片来调整显示顺序',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        
+
         // 房间列表 - 使用 Expanded 填充剩余空间
         Expanded(
           child: ReorderableListView.builder(
@@ -188,7 +195,7 @@ class _RoomReorderSheetState extends State<RoomReorderSheet> {
             },
           ),
         ),
-        
+
         // 底部按钮
         Padding(
           padding: const EdgeInsets.all(24),
@@ -227,7 +234,7 @@ class _RoomReorderSheetState extends State<RoomReorderSheet> {
   }
 }
 
-class _RoomReorderItem extends StatelessWidget {
+class _RoomReorderItem extends StatefulWidget {
   final Room room;
   final int index;
 
@@ -238,75 +245,54 @@ class _RoomReorderItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _RoomReorderItemState createState() => _RoomReorderItemState();
+}
+
+class _RoomReorderItemState extends State<_RoomReorderItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        // 设置卡片的阴影高度
-        elevation: 1,
-        // 设置卡片的圆角
-        borderRadius: BorderRadius.circular(16),
-        // 设置卡片的背景色为低对比度的surface容器色
-        color: colorScheme.surfaceContainerLow,
-        child: InkWell(
-          // 设置水波纹效果的圆角，与外层Material保持一致
-          borderRadius: BorderRadius.circular(16),
-          // 设置点击时的水波纹颜色，使用主题色的10%透明度
-          splashColor: colorScheme.primary.withOpacity(0.1),
-          // 设置长按时的高亮颜色，使用主题色的5%透明度
-          highlightColor: colorScheme.primary.withOpacity(0.05),
-          onTap: () {}, // 空函数，只为了触发水波纹效果
-          child: ReorderableDragStartListener(
-            // 传入当前项的索引，用于拖拽排序
-            index: index,
-            child: ListTile(
-              // 设置列表项的内边距
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
+      child: ReorderableDragStartListener(
+        index: widget.index,
+        child: MouseRegion(
+          onEnter: (_) {
+            setState(() {
+              _isHovered = true;
+            });
+          },
+          onExit: (_) {
+            setState(() {
+              _isHovered = false;
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: _isHovered 
+                  ? colorScheme.primaryContainer.withOpacity(0.12)
+                  : (theme.brightness == Brightness.light)
+                      ? colorScheme.surfaceVariant.withOpacity(0.95)
+                      : colorScheme.surfaceVariant.withOpacity(0.15),
+              border: Border.all(
+                color: _isHovered 
+                    ? colorScheme.primary 
+                    : Colors.transparent,
+                width: 1.5,
               ),
-              // 左侧图标区域
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  // 根据房间是否加密设置不同的背景色
-                  color: room.encrypted 
-                      ? colorScheme.primaryContainer  // 加密房间使用主题色容器
-                      : colorScheme.secondaryContainer,  // 非加密房间使用次要色容器
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  // 根据房间是否加密显示不同的图标
-                  room.encrypted ? Icons.lock : Icons.public,
-                  // 图标颜色跟随容器色的对应前景色
-                  color: room.encrypted 
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSecondaryContainer,
-                  size: 20,
-                ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                title: Text(widget.room.name, style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
+                subtitle: Text(widget.room.encrypted ? '加密房间' : '开放房间', style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ),
-              // 主标题显示房间名称，为空时显示"未命名房间"
-              title: Text(
-                room.name.isEmpty ? '未命名房间' : room.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              // 副标题显示房间ID，超出部分省略
-              subtitle: Text(
-                room.roomName,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              // 右侧显示拖动手柄图标
             ),
           ),
         ),
