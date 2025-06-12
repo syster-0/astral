@@ -5,9 +5,8 @@ import 'package:astral/wid/server_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:isar/isar.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:astral/wid/server_reorder_sheet.dart';
+import 'package:astral/wid/public_servers_dialog.dart'; // 新增公共服务器对话框导入
 
 
 class ServerPage extends StatefulWidget {
@@ -195,108 +194,10 @@ class _ServerPageState extends State<ServerPage> {
   }
 
   // 显示公共服务器列表对话框
-  void _showPublicServersDialog() async {
-    // 显示加载对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('正在获取公共服务器列表...'),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      // 从API获取公共服务器列表
-      final response = await http.get(
-        Uri.parse('https://astral.fan/server.json'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      // 关闭加载对话框
-      Navigator.of(context).pop();
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        final publicServers = jsonData.map((item) => {
-          'name': item['name'] as String,
-          'url': item['url'] as String,
-        }).toList();
-
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('公共服务器列表'),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 400,
-              child: ListView.builder(
-                itemCount: publicServers.length,
-                itemBuilder: (context, index) {
-                  final server = publicServers[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    child: ListTile(
-                      title: Text(
-                        server['name']!,
-                        style: const TextStyle(fontSize: 14),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        server['url']!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      trailing: ElevatedButton(
-                        onPressed: () {
-                          _addPublicServer(server['name']!, server['url']!);
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        child: const Text('添加', style: TextStyle(fontSize: 12)),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('关闭'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
-      }
-    } catch (e) {
-      // 关闭加载对话框（如果还在显示）
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('获取公共服务器列表失败: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  void _showPublicServersDialog() {
+    // 改为直接收集完整的URL字符串
+    final existingUrls = _aps.servers.value.map((server) => server.url).toList();
+    PublicServersDialog.show(context, _addPublicServer, existingUrls);
   }
 
   // 添加公共服务器
@@ -319,6 +220,8 @@ class _ServerPageState extends State<ServerPage> {
     );
 
     _aps.addServer(server);
+    // 强制触发服务器列表更新
+    _aps.servers.value = [..._aps.servers.value];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('已添加服务器: $name')),
     );

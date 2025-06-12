@@ -3,8 +3,6 @@ import 'package:astral/k/models/server_mod.dart';
 import 'package:astral/k/app_s/aps.dart';
 import 'dart:async'; // 添加对dart:async的导入以使用Completer
 
-// 如果存在原有代码，请保留
-
 // 新增服务器排序弹窗组件
 class DragHandle extends StatelessWidget {
   const DragHandle({Key? key}) : super(key: key);
