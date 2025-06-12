@@ -1078,7 +1078,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
               SwitchListTile(
                 title: const Text('KCP输入'),
-                subtitle: const Text('是否否接收 KCP 协议的数据'),
+                subtitle: const Text('是否接收 KCP 协议的数据'),
                 value: Aps().disableKcpInput.watch(context),
                 onChanged: (value) {
                   Aps().updateDisableKcpInput(value);
