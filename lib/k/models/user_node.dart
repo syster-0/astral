@@ -73,13 +73,22 @@ class UserNode {
   
   /// 从广播消息创建用户节点
   factory UserNode.fromBroadcastMessage(Map<String, dynamic> data) {
+    int? port;
+    final rawPort = data['messagePort'];
+    if (rawPort is int) {
+      port = rawPort;
+    } else if (rawPort is String) {
+      port = int.tryParse(rawPort);
+    } else if (rawPort is double) {
+      port = rawPort.toInt();
+    }
     return UserNode(
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? '',
       avatar: data['avatar'],
       tags: List<String>.from(data['tags'] ?? []),
       statusMessage: data['statusMessage'],
-      messagePort: data['messagePort'],
+      messagePort: port,
       lastSeen: DateTime.fromMillisecondsSinceEpoch(
         data['timestamp'] ?? DateTime.now().millisecondsSinceEpoch,
       ),

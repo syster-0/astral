@@ -466,9 +466,31 @@ class _ChatPageState extends State<ChatPage> {
 
       // 发送Base64编码的图片数据
       final onlineUsers = await _aps.nodeDiscoveryService.getOnlineUsers();
+      print('准备发送图片给 ${onlineUsers.length} 个在线用户:');
       for (var user in onlineUsers) {
-        if (user.userId != _aps.nodeDiscoveryService.currentUser?.userId) {
-          await _aps.nodeDiscoveryService.sendMessageToUser(user.userId, imageMessageContent);
+        print('- ${user.userName} (${user.userId})');
+      }
+
+      final currentUser = _aps.nodeDiscoveryService.currentUser;
+      if (currentUser == null) {
+        print('警告: 当前用户信息未设置，发送的图片消息可能没有发送者信息。');
+      } else {
+        print('当前用户: ${currentUser.userName} (${currentUser.userId})');
+      }
+
+      for (var user in onlineUsers) {
+        if (user.userId != currentUser?.userId) {
+          try {
+            print('尝试发送图片给: ${user.userName} (${user.userId})');
+            bool success = await _aps.nodeDiscoveryService.sendMessageToUser(user.userId, imageMessageContent);
+            if (success) {
+              print('图片成功发送给: ${user.userName}');
+            } else {
+              print('图片发送失败给: ${user.userName}');
+            }
+          } catch (e) {
+            print('发送图片给 ${user.userName} 时发生错误: $e');
+          }
         }
       }
 
