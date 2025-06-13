@@ -4,6 +4,7 @@ import 'package:astral/screens/user_list_page.dart';
 import 'package:astral/k/models/user_node.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert'; // 用于base64编码
+import 'package:photo_view/photo_view.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -38,12 +39,15 @@ class _ChatPageState extends State<ChatPage> {
         isOwn: false,
       ),
     ]);
-    
+
     // 设置消息接收回调
-    _aps.nodeDiscoveryService.setMessageCallback((String senderId, String messageId, String message) {
+    _aps.nodeDiscoveryService.setMessageCallback((
+      String senderId,
+      String messageId,
+      String message,
+    ) {
       _onMessageReceived(senderId, message);
     });
-    
   }
 
   @override
@@ -70,7 +74,7 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _messages.add(message);
     });
-
+    Future.microtask(_scrollToBottom);
     _messageController.clear();
     _scrollToBottom();
 
@@ -81,15 +85,19 @@ class _ChatPageState extends State<ChatPage> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        // 增加一个小延迟确保内容完全渲染
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +113,7 @@ class _ChatPageState extends State<ChatPage> {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outline.withOpacity(0.2),
-                ),
+                bottom: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
               ),
             ),
             child: Row(
@@ -156,16 +162,20 @@ class _ChatPageState extends State<ChatPage> {
           ),
           // 消息列表
           Expanded(
-            child: _messages.isEmpty
-                ? _buildEmptyState(colorScheme)
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      return _buildMessageBubble(_messages[index], colorScheme);
-                    },
-                  ),
+            child:
+                _messages.isEmpty
+                    ? _buildEmptyState(colorScheme)
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        return _buildMessageBubble(
+                          _messages[index],
+                          colorScheme,
+                        );
+                      },
+                    ),
           ),
           // 消息输入区域
           _buildMessageInput(colorScheme, isDesktop),
@@ -232,21 +242,21 @@ class _ChatPageState extends State<ChatPage> {
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.7,
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: message.isOwn
-                    ? colorScheme.primary
-                    : colorScheme.surfaceVariant,
+                color:
+                    message.isOwn
+                        ? colorScheme.primary
+                        : colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomLeft: message.isOwn
-                      ? const Radius.circular(18)
-                      : const Radius.circular(4),
-                  bottomRight: message.isOwn
-                      ? const Radius.circular(4)
-                      : const Radius.circular(18),
+                  bottomLeft:
+                      message.isOwn
+                          ? const Radius.circular(18)
+                          : const Radius.circular(4),
+                  bottomRight:
+                      message.isOwn
+                          ? const Radius.circular(4)
+                          : const Radius.circular(18),
                 ),
               ),
               child: Column(
@@ -265,25 +275,55 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   message.type == MessageType.text
                       ? Text(
-                          message.content,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: message.isOwn
-                                ? colorScheme.onPrimary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        )
-                      : Image.memory(
-                          base64Decode(message.content),
-                          width: 200,
-                          fit: BoxFit.cover,
+                        message.content,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color:
+                              message.isOwn
+                                  ? colorScheme.onPrimary
+                                  : colorScheme.onSurfaceVariant,
                         ),
+                      )
+                      : GestureDetector(
+                        onTap:
+                            () => _showImagePreview(context, message.content),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.memory(
+                                base64Decode(message.content),
+                                width: 200,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            // 放大图标提示
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.zoom_in,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(message.timestamp),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: message.isOwn
-                          ? colorScheme.onPrimary.withOpacity(0.7)
-                          : colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      color:
+                          message.isOwn
+                              ? colorScheme.onPrimary.withOpacity(0.7)
+                              : colorScheme.onSurfaceVariant.withOpacity(0.7),
                       fontSize: 10,
                     ),
                   ),
@@ -317,9 +357,7 @@ class _ChatPageState extends State<ChatPage> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outline.withOpacity(0.2),
-          ),
+          top: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
         ),
       ),
       child: Row(
@@ -345,10 +383,10 @@ class _ChatPageState extends State<ChatPage> {
                   horizontal: 20,
                   vertical: 12,
                 ),
-                
               ),
               maxLines: null,
-              textInputAction: isDesktop ? TextInputAction.newline : TextInputAction.send,
+              textInputAction:
+                  isDesktop ? TextInputAction.newline : TextInputAction.send,
               onSubmitted: (value) {
                 if (value.trim().isNotEmpty) {
                   _sendMessage();
@@ -361,10 +399,7 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: _sendMessage,
             backgroundColor: colorScheme.primary,
             heroTag: "chat_send",
-            child: Icon(
-              Icons.send,
-              color: colorScheme.onPrimary,
-            ),
+            child: Icon(Icons.send, color: colorScheme.onPrimary),
           ),
         ],
       ),
@@ -386,18 +421,55 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _showImagePreview(BuildContext context, String base64Image) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.transparent,
+              child: Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  ),
+                  child: PhotoView(
+                    backgroundDecoration: const BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    imageProvider: MemoryImage(base64Decode(base64Image)),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 2.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   int _getOnlineUserCount() {
     return _aps.allUsersNode.value.length;
   }
-
-
 
   void _broadcastMessage(String content) async {
     // 向所有在线用户发送消息
     for (final user in _aps.allUsersNode.value) {
       if (user.userId != _aps.nodeDiscoveryService.currentUser?.userId) {
         try {
-          await _aps.nodeDiscoveryService.sendMessageToUser(user.userId, content);
+          await _aps.nodeDiscoveryService.sendMessageToUser(
+            user.userId,
+            content,
+          );
         } catch (e) {
           print('发送消息给 ${user.userName} 失败: $e');
         }
@@ -409,7 +481,9 @@ class _ChatPageState extends State<ChatPage> {
     // 打印所有在线用户信息
     print('当前在线用户列表:');
     for (var user in _aps.allUsersNode.value) {
-      print('用户ID: ${user.userId}, 用户名: ${user.userName}, IP: ${user.ipAddress}');
+      print(
+        '用户ID: ${user.userId}, 用户名: ${user.userName}, IP: ${user.ipAddress}',
+      );
     }
 
     // 查找发送者信息并打印详细信息
@@ -439,18 +513,30 @@ class _ChatPageState extends State<ChatPage> {
 
     final chatMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: message.startsWith('image_base64:') ? message.substring('image_base64:'.length) : message,
+      content:
+          message.startsWith('image_base64:')
+              ? message.substring('image_base64:'.length)
+              : message,
       sender: sender.userName,
       timestamp: DateTime.now(),
       isOwn: false,
-      type: message.startsWith('image_base64:') ? MessageType.image : MessageType.text,
+      type:
+          message.startsWith('image_base64:')
+              ? MessageType.image
+              : MessageType.text,
     );
 
     setState(() {
       _messages.add(chatMessage);
     });
 
-    _scrollToBottom();
+    if (message.startsWith('image_base64:')) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollToBottom();
+      });
+    } else {
+      _scrollToBottom();
+    }
   }
 
   Future<void> _sendImage() async {
@@ -482,7 +568,10 @@ class _ChatPageState extends State<ChatPage> {
         if (user.userId != currentUser?.userId) {
           try {
             print('尝试发送图片给: ${user.userName} (${user.userId})');
-            bool success = await _aps.nodeDiscoveryService.sendMessageToUser(user.userId, imageMessageContent);
+            bool success = await _aps.nodeDiscoveryService.sendMessageToUser(
+              user.userId,
+              imageMessageContent,
+            );
             if (success) {
               print('图片成功发送给: ${user.userName}');
             } else {
@@ -508,18 +597,15 @@ class _ChatPageState extends State<ChatPage> {
       setState(() {
         _messages.add(localChatMessage);
       });
-      _scrollToBottom();
-      // No return here, allow the function to complete normally if image is picked.
-      // If image is not picked (image == null), the rest of the function will not execute this block.
+      // 只在图片渲染完成后滚动一次，避免多次滚动导致跳动
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollToBottom();
+      });
     }
-    // If no image is picked, the function will simply end here.
   }
 }
 
-enum MessageType {
-  text,
-  image,
-}
+enum MessageType { text, image }
 
 class ChatMessage {
   final String id;

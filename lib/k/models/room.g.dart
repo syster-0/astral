@@ -22,28 +22,33 @@ const RoomSchema = CollectionSchema(
       name: r'encrypted',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'messageKey': PropertySchema(
       id: 1,
+      name: r'messageKey',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
     r'password': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'password',
       type: IsarType.string,
     ),
     r'roomName': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'roomName',
       type: IsarType.string,
     ),
     r'sortOrder': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'sortOrder',
       type: IsarType.long,
     ),
     r'tags': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'tags',
       type: IsarType.stringList,
     )
@@ -68,6 +73,7 @@ int _roomEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.messageKey.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.password.length * 3;
   bytesCount += 3 + object.roomName.length * 3;
@@ -88,11 +94,12 @@ void _roomSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.encrypted);
-  writer.writeString(offsets[1], object.name);
-  writer.writeString(offsets[2], object.password);
-  writer.writeString(offsets[3], object.roomName);
-  writer.writeLong(offsets[4], object.sortOrder);
-  writer.writeStringList(offsets[5], object.tags);
+  writer.writeString(offsets[1], object.messageKey);
+  writer.writeString(offsets[2], object.name);
+  writer.writeString(offsets[3], object.password);
+  writer.writeString(offsets[4], object.roomName);
+  writer.writeLong(offsets[5], object.sortOrder);
+  writer.writeStringList(offsets[6], object.tags);
 }
 
 Room _roomDeserialize(
@@ -104,11 +111,12 @@ Room _roomDeserialize(
   final object = Room(
     encrypted: reader.readBoolOrNull(offsets[0]) ?? false,
     id: id,
-    name: reader.readStringOrNull(offsets[1]) ?? "",
-    password: reader.readStringOrNull(offsets[2]) ?? "",
-    roomName: reader.readStringOrNull(offsets[3]) ?? "",
-    sortOrder: reader.readLongOrNull(offsets[4]) ?? 0,
-    tags: reader.readStringList(offsets[5]) ?? const [],
+    messageKey: reader.readStringOrNull(offsets[1]) ?? "",
+    name: reader.readStringOrNull(offsets[2]) ?? "",
+    password: reader.readStringOrNull(offsets[3]) ?? "",
+    roomName: reader.readStringOrNull(offsets[4]) ?? "",
+    sortOrder: reader.readLongOrNull(offsets[5]) ?? 0,
+    tags: reader.readStringList(offsets[6]) ?? const [],
   );
   return object;
 }
@@ -129,8 +137,10 @@ P _roomDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset) ?? "") as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset) ?? "") as P;
     case 5:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 6:
       return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -282,6 +292,136 @@ extension RoomQueryFilter on QueryBuilder<Room, Room, QFilterCondition> {
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'messageKey',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'messageKey',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'messageKey',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'messageKey',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterFilterCondition> messageKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'messageKey',
+        value: '',
       ));
     });
   }
@@ -956,6 +1096,18 @@ extension RoomQuerySortBy on QueryBuilder<Room, Room, QSortBy> {
     });
   }
 
+  QueryBuilder<Room, Room, QAfterSortBy> sortByMessageKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'messageKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterSortBy> sortByMessageKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'messageKey', Sort.desc);
+    });
+  }
+
   QueryBuilder<Room, Room, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1030,6 +1182,18 @@ extension RoomQuerySortThenBy on QueryBuilder<Room, Room, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Room, Room, QAfterSortBy> thenByMessageKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'messageKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Room, Room, QAfterSortBy> thenByMessageKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'messageKey', Sort.desc);
+    });
+  }
+
   QueryBuilder<Room, Room, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1086,6 +1250,13 @@ extension RoomQueryWhereDistinct on QueryBuilder<Room, Room, QDistinct> {
     });
   }
 
+  QueryBuilder<Room, Room, QDistinct> distinctByMessageKey(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'messageKey', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Room, Room, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1130,6 +1301,12 @@ extension RoomQueryProperty on QueryBuilder<Room, Room, QQueryProperty> {
   QueryBuilder<Room, bool, QQueryOperations> encryptedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'encrypted');
+    });
+  }
+
+  QueryBuilder<Room, String, QQueryOperations> messageKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'messageKey');
     });
   }
 

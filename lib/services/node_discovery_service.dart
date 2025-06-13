@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:astral/k/app_s/aps.dart';
 import 'package:astral/k/database/app_data.dart';
@@ -30,14 +31,19 @@ class NodeDiscoveryService {
   /// 是否正在运行
   bool _isRunning = false;
   
-  /// UDP Socket用于广播
+  /// UDP广播相关
   RawDatagramSocket? _udpSocket;
+  static const String _broadcastAddress = '255.255.255.255';
+  static const int _broadcastPort = 37627;
   
-  /// UDP Socket用于消息接收
-  RawDatagramSocket? _messageSocket;
+  /// WebSocket服务器
+  HttpServer? _webSocketServer;
   
-  /// 当前用户的消息接收端口
-  int? _messagePort;
+  /// WebSocket连接列表
+  final Set<WebSocket> _webSocketConnections = {};
+  
+  /// 当前用户的WebSocket服务端口
+  int? _webSocketPort;
   
   /// 广播间隔（秒）
   static const int _broadcastInterval = 2;
@@ -45,14 +51,14 @@ class NodeDiscoveryService {
   /// 清理间隔（秒）
   static const int _cleanupInterval = 5;
   
-  /// 广播目标地址
-  static const String _broadcastAddress = '255.255.255.255';
-  
-  /// 广播目标端口
-  static const int _broadcastPort = 37628;
+  /// WebSocket服务端口（原UDP广播端口）
+  static const int _defaultWebSocketPort = 37628;
   
   /// 消息回调函数
   Function(String fromUserId, String fromUserName, String message)? _onMessageReceived;
+  
+  /// 已知的其他节点WebSocket地址
+  final Set<String> _knownNodes = {};
 
   /// 启动节点发现服务
   Future<void> start() async {
@@ -60,40 +66,18 @@ class NodeDiscoveryService {
     
     try {
       await _initCurrentUser();
-      // 尝试初始化消息Socket，失败不影响整体启动
-      try {
-        await _initMessageSocket();
-        // 同步更新当前用户的消息端口
-        if (_currentUser != null && _messagePort != null) {
-          _currentUser!.messagePort = _messagePort;
-          await _userNodeCz.addOrUpdateUserNode(_currentUser!);
-        }
-        print('✓ 消息Socket初始化成功');
-      } catch (e) {
-        print('⚠️ 消息Socket初始化失败，消息功能将不可用: $e');
-      }
-      
-      // 尝试初始化UDP Socket，失败不影响整体启动
-      try {
-        await _initUdpSocket();
-        print('✓ UDP Socket初始化成功');
-      } catch (e) {
-        print('⚠️ UDP Socket初始化失败，广播功能将不可用: $e');
-      }
+      await _initUdpSocket();
+      await _initWebSocketServer();
       
       _startBroadcastTimer();
       _startCleanupTimer();
-      _isRunning = true;
       
-      if (_messagePort != null) {
-        print('✓ 节点发现服务已启动');
-      } else {
-        print('⚠️ 节点发现服务已启动，但消息功能不可用');
-      }
+      _isRunning = true;
+      print('节点发现服务启动成功，UDP广播端口: $_broadcastPort, WebSocket端口: $_webSocketPort');
     } catch (e) {
-      print('✗ 启动节点发现服务失败: $e');
-      print('⚠️ 服务将以受限模式运行');
-      _isRunning = true; // 即使部分功能失败，也标记为运行状态
+      print('启动节点发现服务失败: $e');
+      await stop();
+      rethrow;
     }
   }
 
@@ -111,12 +95,32 @@ class NodeDiscoveryService {
     _cleanupTimer = null;
     
     // 关闭UDP Socket
-    _udpSocket?.close();
-    _udpSocket = null;
+    try {
+      _udpSocket?.close();
+      _udpSocket = null;
+    } catch (e) {
+      print('关闭UDP Socket失败: $e');
+    }
     
-    // 关闭消息Socket
-    _messageSocket?.close();
-    _messageSocket = null;
+    // 关闭所有WebSocket连接
+    for (final ws in _webSocketConnections) {
+      try {
+        await ws.close();
+      } catch (e) {
+        print('关闭WebSocket连接失败: $e');
+      }
+    }
+    _webSocketConnections.clear();
+    
+    // 关闭WebSocket服务器
+    try {
+      await _webSocketServer?.close();
+      _webSocketServer = null;
+    } catch (e) {
+      print('关闭WebSocket服务器失败: $e');
+    }
+    
+    _knownNodes.clear();
     
     print('节点发现服务已停止');
   }
@@ -134,7 +138,7 @@ class NodeDiscoveryService {
       tags: ['default'], // 默认标签
       statusMessage: '在线',
       isOnline: true,
-      messagePort: _messagePort,
+      messagePort: _webSocketPort,
       lastSeen: DateTime.now(), // 确保设置当前时间
     );
     
@@ -184,8 +188,8 @@ class NodeDiscoveryService {
     if (_currentUser == null) return;
     
     try {
-      // 确保消息端口信息是最新的
-      _currentUser!.messagePort = _messagePort;
+      // 确保WebSocket端口信息是最新的
+      _currentUser!.messagePort = _webSocketPort;
       
       // 更新当前用户的最后活跃时间
       _currentUser!.updateOnlineStatus();
@@ -195,7 +199,6 @@ class NodeDiscoveryService {
       final broadcastMessage = _currentUser!.toBroadcastMessage();
       final messageJson = jsonEncode(broadcastMessage);
       
-      // 可以通过UDP广播或者现有的网络模块发送
       await _sendBroadcastMessage(messageJson);
       
       print('广播用户信息: ${_currentUser!.userName}');
@@ -204,302 +207,305 @@ class NodeDiscoveryService {
     }
   }
 
-  /// 初始化消息接收Socket
-  Future<void> _initMessageSocket() async {
-    print('=== 开始初始化消息接收Socket ===');
-    
-    try {
-      // 尝试绑定到随机端口
-      _messageSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      _messagePort = _messageSocket!.port;
-      
-      print('✓ 消息接收Socket已初始化，端口: $_messagePort');
-      
-      // 同步更新当前用户的消息端口
-      if (_currentUser != null && _messagePort != null) {
-        _currentUser!.messagePort = _messagePort;
-        await _userNodeCz.addOrUpdateUserNode(_currentUser!);
-        print('✓ 已同步更新当前用户的消息端口: $_messagePort');
-      }
-      
-      // 监听消息
-      _messageSocket!.listen((RawSocketEvent event) {
-        if (event == RawSocketEvent.read) {
-          final datagram = _messageSocket!.receive();
-          if (datagram != null) {
-            try {
-              final message = utf8.decode(datagram.data);
-              _handleReceivedMessage(message, datagram.address.address);
-            } catch (e) {
-              print('解码消息失败: $e');
-            }
-          }
-        }
-      }, onError: (error) {
-        print('✗ 消息Socket监听错误: $error');
-        if (error is SocketException) {
-          final socketError = error as SocketException;
-          print('消息Socket错误详情:');
-          print('  - 错误消息: ${socketError.message}');
-          if (socketError.osError != null) {
-            print('  - OS错误: ${socketError.osError!.errorCode} - ${socketError.osError!.message}');
-            
-            // 处理特定的网络错误
-            if (socketError.osError!.errorCode == 1232) {
-              print('⚠️ 消息Socket网络访问权限错误');
-              print('⚠️ 消息功能将被禁用，但应用将继续运行');
-              _messageSocket?.close();
-              _messageSocket = null;
-              _messagePort = null;
-              return;
-            }
-          }
-        }
-        
-        // 对于其他错误，尝试重新初始化
-        print('⚠️ 消息Socket遇到问题，将尝试重新初始化...');
-        try {
-          _messageSocket?.close();
-          _messageSocket = null;
-          _messagePort = null;
-          // 延迟重试
-          Timer(const Duration(seconds: 3), () {
-            if (_isRunning) {
-              print('🔄 尝试重新初始化消息Socket...');
-              _initMessageSocket();
-            }
-          });
-        } catch (e) {
-          print('清理消息Socket时出错: $e');
-        }
-      });
-      
-    } catch (e) {
-      print('✗ 初始化消息接收Socket失败: $e');
-      _messageSocket = null;
-      _messagePort = null;
-      
-      if (e is SocketException && e.osError?.errorCode == 1232) {
-        print('⚠️ 网络权限错误，消息功能将被禁用');
-        print('⚠️ 建议以管理员身份运行应用或检查防火墙设置');
-        // 不抛出异常，让应用继续运行
-        return;
-      }
-      
-      // 对于其他错误，记录但不崩溃
-      print('⚠️ 消息Socket初始化失败，将在稍后重试');
-      Timer(const Duration(seconds: 5), () {
-        if (_isRunning) {
-          print('🔄 重试初始化消息Socket...');
-          _initMessageSocket();
-        }
-      });
-    }
-    
-    print('=== 消息接收Socket初始化完成 ===\n');
-  }
-  
   /// 初始化UDP Socket
   Future<void> _initUdpSocket() async {
-    print('=== 开始初始化UDP Socket ===');
-    
     try {
-      // 先检查网络接口是否可用
-      print('检查网络接口...');
+      // 检查网络接口
       final interfaces = await NetworkInterface.list();
-      print('发现 ${interfaces.length} 个网络接口');
-      
       if (interfaces.isEmpty) {
-        print('⚠️ 没有可用的网络接口');
-        return;
+        throw Exception('没有可用的网络接口');
       }
       
-      // 显示可用的网络接口
-      for (int i = 0; i < interfaces.length; i++) {
-        final interface = interfaces[i];
-        print('接口 ${i + 1}: ${interface.name} (${interface.addresses.length} 个地址)');
-      }
-      
-      print('尝试绑定到端口 $_broadcastPort...');
-      // 绑定到广播端口用于接收
+      // 绑定到广播端口
       _udpSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, _broadcastPort);
-      print('✓ 成功绑定到端口 $_broadcastPort');
-      
       _udpSocket!.broadcastEnabled = true;
-      print('✓ 广播模式已启用');
       
       // 监听接收到的数据
       _udpSocket!.listen((RawSocketEvent event) {
         if (event == RawSocketEvent.read) {
           final datagram = _udpSocket!.receive();
           if (datagram != null) {
-            final message = String.fromCharCodes(datagram.data);
-            print('收到广播数据: ${message.length} 字符，来源: ${datagram.address.address}:${datagram.port}');
-            handleReceivedBroadcast(message, datagram.address.address);
+            try {
+              final message = utf8.decode(datagram.data);
+              final remoteAddress = datagram.address.address;
+              handleReceivedBroadcast(message, remoteAddress);
+            } catch (e) {
+              print('处理UDP消息失败: $e');
+            }
           }
         }
       }, onError: (error) {
-        print('✗ UDP Socket监听错误: $error');
+        print('UDP Socket错误: $error');
+        if (error.toString().contains('1232')) {
+          print('网络访问权限错误，尝试重新初始化UDP Socket...');
+          Future.delayed(const Duration(seconds: 2), () async {
+            try {
+              await _initUdpSocket();
+            } catch (e) {
+              print('重新初始化UDP Socket失败: $e');
+            }
+          });
+        }
+      });
+      
+      print('UDP Socket初始化成功，端口: $_broadcastPort');
+    } catch (e) {
+      print('初始化UDP Socket失败: $e');
+      rethrow;
+    }
+  }
+  
+  /// 初始化WebSocket服务器
+  Future<void> _initWebSocketServer() async {
+    print('=== 开始初始化WebSocket服务器 ===');
+    
+    try {
+      // 尝试绑定到默认端口，如果失败则使用随机端口
+      int port = _defaultWebSocketPort;
+      try {
+        _webSocketServer = await HttpServer.bind(InternetAddress.anyIPv4, port);
+        _webSocketPort = port;
+        print('✓ WebSocket服务器已绑定到默认端口: $port');
+      } catch (e) {
+        print('⚠️ 无法绑定到默认端口 $port，尝试随机端口: $e');
+        _webSocketServer = await HttpServer.bind(InternetAddress.anyIPv4, 0);
+        _webSocketPort = _webSocketServer!.port;
+        print('✓ WebSocket服务器已绑定到随机端口: $_webSocketPort');
+      }
+      
+      // 监听WebSocket连接
+      _webSocketServer!.listen((HttpRequest request) async {
+        if (WebSocketTransformer.isUpgradeRequest(request)) {
+          try {
+            final webSocket = await WebSocketTransformer.upgrade(request);
+            _handleNewWebSocketConnection(webSocket, request.connectionInfo?.remoteAddress.address ?? 'unknown');
+          } catch (e) {
+            print('WebSocket升级失败: $e');
+          }
+        } else {
+          // 非WebSocket请求，返回404
+          request.response.statusCode = HttpStatus.notFound;
+          await request.response.close();
+        }
+      }, onError: (error) {
+        print('✗ WebSocket服务器监听错误: $error');
         if (error is SocketException) {
           final socketError = error as SocketException;
-          print('Socket监听错误详情:');
+          print('WebSocket服务器错误详情:');
           print('  - 错误消息: ${socketError.message}');
           if (socketError.osError != null) {
             print('  - OS错误: ${socketError.osError!.errorCode} - ${socketError.osError!.message}');
           }
         }
-      });
-      
-      print('✓ UDP Socket已成功初始化，监听端口: ${_udpSocket!.port}');
-    } catch (e) {
-      print('✗ 初始化UDP Socket失败: $e');
-      
-      if (e is SocketException) {
-        final socketError = e as SocketException;
-        print('Socket初始化错误详情:');
-        print('  - 错误消息: ${socketError.message}');
-        print('  - 地址: ${socketError.address}');
-        print('  - 端口: ${socketError.port}');
-        if (socketError.osError != null) {
-          print('  - OS错误码: ${socketError.osError!.errorCode}');
-          print('  - OS错误描述: ${socketError.osError!.message}');
-        }
-      }
-      
-      // 如果绑定指定端口失败，尝试绑定任意端口
-      print('尝试使用随机端口作为备用方案...');
-      try {
-        _udpSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-        print('✓ 成功绑定到随机端口');
         
-        _udpSocket!.broadcastEnabled = true;
-        print('✓ 广播模式已启用');
-        
-        _udpSocket!.listen((RawSocketEvent event) {
-          if (event == RawSocketEvent.read) {
-            final datagram = _udpSocket!.receive();
-            if (datagram != null) {
-              try {
-                final message = utf8.decode(datagram.data);
-                print('收到广播数据: ${message.length} 字符，来源: ${datagram.address.address}:${datagram.port}');
-                handleReceivedBroadcast(message, datagram.address.address);
-              } catch (e) {
-                print('解码广播消息失败: $e');
-              }
-            }
-          }
-        }, onError: (error) {
-          print('✗ UDP Socket监听错误: $error');
-          if (error is SocketException) {
-            final socketError = error as SocketException;
-            print('Socket监听错误详情:');
-            print('  - 错误消息: ${socketError.message}');
-            if (socketError.osError != null) {
-              print('  - OS错误: ${socketError.osError!.errorCode} - ${socketError.osError!.message}');
-              
-              // 处理特定的网络错误，避免应用崩溃
-              if (socketError.osError!.errorCode == 1232) {
-                print('⚠️ 网络访问权限错误（可能是网卡切换导致）');
-                print('🔄 将尝试重新初始化UDP Socket...');
-                try {
-                  _udpSocket?.close();
-                  _udpSocket = null;
-                  // 延迟重试，等待网络状态稳定
-                  Timer(const Duration(seconds: 3), () {
-                    if (_isRunning) {
-                      print('🔄 重新尝试初始化UDP Socket（错误码1232恢复）...');
-                      _initUdpSocket();
-                    }
-                  });
-                } catch (e) {
-                  print('清理UDP Socket时出错: $e');
-                }
-                return;
-              }
-            }
-          }
-          
-          // 对于其他网络错误，记录日志但不让应用崩溃
-          print('⚠️ 网络监听遇到问题，将尝试重新初始化Socket');
-          try {
-            _udpSocket?.close();
-            _udpSocket = null;
-            // 延迟重试
-            Timer(const Duration(seconds: 5), () {
-              if (_isRunning) {
-                print('🔄 尝试重新初始化UDP Socket...');
-                _initUdpSocket();
-              }
-            });
-          } catch (e) {
-            print('清理Socket时出错: $e');
+        // 尝试重新初始化
+        print('⚠️ WebSocket服务器遇到问题，将尝试重新初始化...');
+        Timer(const Duration(seconds: 3), () {
+          if (_isRunning) {
+            print('🔄 尝试重新初始化WebSocket服务器...');
+            _initWebSocketServer();
           }
         });
-        
-        print('✓ UDP Socket已初始化（备用端口），监听端口: ${_udpSocket!.port}');
-      } catch (e2) {
-        print('✗ 初始化UDP Socket完全失败: $e2');
-        
-        if (e2 is SocketException) {
-          final socketError = e2 as SocketException;
-          print('备用Socket初始化错误详情:');
-          print('  - 错误消息: ${socketError.message}');
-          if (socketError.osError != null) {
-            print('  - OS错误码: ${socketError.osError!.errorCode}');
-            print('  - OS错误描述: ${socketError.osError!.message}');
-          }
-        }
-        
-        _udpSocket = null;
-        print('⚠️ 所有Socket初始化尝试均失败，网络广播功能不可用');
+      });
+      
+      print('✓ WebSocket服务器初始化成功，监听端口: $_webSocketPort');
+      
+    } catch (e) {
+      print('✗ 初始化WebSocket服务器失败: $e');
+      _webSocketServer = null;
+      _webSocketPort = null;
+      
+      if (e is SocketException && e.osError?.errorCode == 1232) {
+        print('⚠️ 网络权限错误，WebSocket功能将被禁用');
+        print('⚠️ 建议以管理员身份运行应用或检查防火墙设置');
+        return;
       }
+      
+      // 对于其他错误，记录但不崩溃
+      print('⚠️ WebSocket服务器初始化失败，将在稍后重试');
+      Timer(const Duration(seconds: 5), () {
+        if (_isRunning) {
+          print('🔄 重试初始化WebSocket服务器...');
+          _initWebSocketServer();
+        }
+      });
     }
     
-    print('=== UDP Socket初始化完成 ===\n');
+    print('=== WebSocket服务器初始化完成 ===\n');
   }
   
-  /// 发送广播消息
-  Future<void> _sendBroadcastMessage(String message) async {
-    print('=== 开始发送广播消息 ===');
-    print('消息长度: ${message.length} 字符');
-    print('目标地址: $_broadcastAddress:$_broadcastPort');
+  /// 处理新的WebSocket连接
+  void _handleNewWebSocketConnection(WebSocket webSocket, String remoteAddress) {
+    print('新的WebSocket连接来自: $remoteAddress');
     
-    // 改为每次发送时临时创建Socket
-    RawDatagramSocket? tempSocket;
+    _webSocketConnections.add(webSocket);
+    
+    // 监听WebSocket消息
+    webSocket.listen(
+      (dynamic message) {
+        try {
+          final messageStr = message.toString();
+          print('收到WebSocket消息: $messageStr');
+          _handleWebSocketMessage(messageStr, remoteAddress, webSocket);
+        } catch (e) {
+          print('处理WebSocket消息失败: $e');
+        }
+      },
+      onDone: () {
+        print('WebSocket连接已关闭: $remoteAddress');
+        _webSocketConnections.remove(webSocket);
+      },
+      onError: (error) {
+        print('WebSocket连接错误: $error');
+        _webSocketConnections.remove(webSocket);
+      },
+    );
+    
+    // 向新连接发送当前用户信息
+    if (_currentUser != null) {
+      final broadcastMessage = _currentUser!.toBroadcastMessage();
+      final messageJson = jsonEncode(broadcastMessage);
+      _sendToWebSocket(webSocket, messageJson);
+    }
+  }
+  
+  /// 处理WebSocket消息
+  void _handleWebSocketMessage(String message, String remoteAddress, WebSocket webSocket) {
     try {
-      tempSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      tempSocket.broadcastEnabled = true;
-      print('临时Socket已创建，端口: \${tempSocket.port}');
-      final data = utf8.encode(message);
-      final bytesSent = tempSocket.send(data, InternetAddress(_broadcastAddress), _broadcastPort);
-      if (bytesSent > 0) {
-        print('✓ 广播消息发送成功');
-        print('发送字节数: \$bytesSent');
-        print('消息内容预览: ${message.length > 100 ? "${message.substring(0, 100)}..." : message}');
+      final data = jsonDecode(message) as Map<String, dynamic>;
+      
+      // 检查消息类型
+      final messageType = data['type'] as String?;
+      
+      if (messageType == 'broadcast') {
+        // 处理节点广播消息
+        handleReceivedBroadcast(message, remoteAddress);
+      } else if (messageType == 'direct_message') {
+        // 处理直接消息
+        _handleReceivedMessage(message, remoteAddress);
       } else {
-        print('✗ 广播消息发送失败：发送字节数为0');
+        // 默认作为广播消息处理
+        handleReceivedBroadcast(message, remoteAddress);
       }
     } catch (e) {
-      print('✗ 发送广播消息时出错: \$e');
-      print('错误类型: \${e.runtimeType}');
-      if (e is SocketException) {
-        final socketError = e as SocketException;
-        print('Socket错误详情:');
-        print('  - 错误消息: \${socketError.message}');
-        print('  - OS错误: \${socketError.osError}');
-        print('  - 地址: \${socketError.address}');
-        print('  - 端口: \${socketError.port}');
-        if (socketError.osError != null) {
-          print('  - 错误码: \${socketError.osError!.errorCode}');
-          print('  - 错误描述: \${socketError.osError!.message}');
-        }
+      print('解析WebSocket消息失败: $e');
+    }
+  }
+  
+  /// 向WebSocket发送消息
+  void _sendToWebSocket(WebSocket webSocket, String message) {
+    try {
+      webSocket.add(message);
+    } catch (e) {
+      print('发送WebSocket消息失败: $e');
+      _webSocketConnections.remove(webSocket);
+    }
+  }
+  
+  /// 发送UDP广播消息
+  Future<void> _sendBroadcastMessage(String message) async {
+    RawDatagramSocket? tempSocket;
+    try {
+      // 每次发送时创建临时Socket
+      tempSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      tempSocket.broadcastEnabled = true;
+      
+      final data = utf8.encode(message);
+      final address = InternetAddress(_broadcastAddress);
+      
+      final bytesSent = tempSocket.send(data, address, _broadcastPort);
+      if (bytesSent != data.length) {
+        print('UDP广播发送不完整: 发送 $bytesSent/${data.length} 字节');
+      }
+      
+    } catch (e) {
+      print('发送UDP广播失败: $e');
+      if (e.toString().contains('1232')) {
+        print('网络访问权限错误，请检查防火墙设置');
+      } else if (e.toString().contains('10013')) {
+        print('权限被拒绝，请以管理员身份运行');
+      } else if (e.toString().contains('10049')) {
+        print('无法分配请求的地址，请检查网络配置');
       }
     } finally {
-      tempSocket?.close();
-      print('临时Socket已关闭');
+      try {
+        tempSocket?.close();
+      } catch (e) {
+        print('关闭临时UDP Socket失败: $e');
+      }
     }
-    print('=== 广播消息发送完成 ===\n');
   }
+  
+  /// 广播消息给所有WebSocket客户端
+  Future<void> _broadcastToWebSocketClients(String message) async {
+    final deadConnections = <WebSocket>[];
+    
+    for (final webSocket in _webSocketConnections) {
+      try {
+        webSocket.add(message);
+      } catch (e) {
+        print('向WebSocket客户端发送消息失败: $e');
+        deadConnections.add(webSocket);
+      }
+    }
+    
+    // 清理失效的连接
+    for (final deadConnection in deadConnections) {
+      _webSocketConnections.remove(deadConnection);
+    }
+  }
+  
+  /// 连接到已知节点并发送消息
+  Future<void> _connectToKnownNodes(String message) async {
+    // 获取所有在线用户节点
+    final onlineUsers = await _userNodeCz.getOnlineUserNodes();
+    
+    for (final user in onlineUsers) {
+      if (user.userId == _currentUser?.userId) continue; // 跳过自己
+      if (user.ipAddress == null || user.messagePort == null) continue;
+      
+      final nodeAddress = '${user.ipAddress}:${user.messagePort}';
+      if (_knownNodes.contains(nodeAddress)) continue; // 已经连接过
+      
+      try {
+        final webSocket = await WebSocket.connect('ws://$nodeAddress');
+        _knownNodes.add(nodeAddress);
+        
+        // 发送消息
+        webSocket.add(message);
+        
+        // 监听响应（可选）
+        webSocket.listen(
+          (dynamic response) {
+            try {
+              final responseStr = response.toString();
+              _handleWebSocketMessage(responseStr, user.ipAddress!, webSocket);
+            } catch (e) {
+              print('处理节点响应失败: $e');
+            }
+          },
+          onDone: () {
+            _knownNodes.remove(nodeAddress);
+          },
+          onError: (error) {
+            print('连接到节点 $nodeAddress 时出错: $error');
+            _knownNodes.remove(nodeAddress);
+          },
+        );
+        
+        // 短暂延迟后关闭连接（避免长期占用资源）
+        Timer(const Duration(seconds: 5), () {
+          webSocket.close();
+          _knownNodes.remove(nodeAddress);
+        });
+        
+      } catch (e) {
+        print('无法连接到节点 $nodeAddress: $e');
+      }
+    }
+  }
+  
+
   
 
 
@@ -509,8 +515,8 @@ class NodeDiscoveryService {
       print('=== 收到UDP广播 ===');
       print('原始消息内容: $message');
       print('发送方IP: $ipAddress');
-      // 使用utf8解码确保正确处理中文等Unicode字符
-      final data = jsonDecode(utf8.decode(message.codeUnits)) as Map<String, dynamic>;
+      
+      final data = jsonDecode(message) as Map<String, dynamic>;
       print('解析后的JSON数据: $data');
       
       // 特别检查messagePort字段
@@ -539,11 +545,11 @@ class NodeDiscoveryService {
       // 添加或更新用户节点
       await _userNodeCz.addOrUpdateUserNode(userNode);
       print('✓ 发现用户: ${userNode.userName} (${userNode.ipAddress}:${userNode.messagePort})');
-      print('=== 广播处理完成 ===\n');
+      print('=== UDP广播处理完成 ===\n');
     } catch (e) {
-      print('✗ 处理广播消息失败: $e');
+      print('✗ 处理UDP广播消息失败: $e');
       print('原始消息: $message');
-      print('=== 广播处理失败 ===\n');
+      print('=== UDP广播处理失败 ===\n');
     }
   }
 
@@ -581,6 +587,7 @@ class NodeDiscoveryService {
       
       // 构建消息
       final messageData = {
+        'type': 'direct_message',
         'fromUserId': _currentUser?.userId ?? '',
         'fromUserName': _currentUser?.userName ?? '',
         'message': message,
@@ -588,35 +595,28 @@ class NodeDiscoveryService {
       };
       
       final messageJson = jsonEncode(messageData);
-      final data = utf8.encode(messageJson);
       
-      // 发送消息
+      // 通过WebSocket发送消息
       try {
-        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+        final webSocket = await WebSocket.connect('ws://${targetUser.ipAddress}:${targetUser.messagePort}');
+        
         try {
-          final bytesSent = socket.send(
-            data,
-            InternetAddress(targetUser.ipAddress!),
-            targetUser.messagePort!,
-          );
+          webSocket.add(messageJson);
+          print('消息发送成功到 ${targetUser.userName} (${targetUser.ipAddress}:${targetUser.messagePort})');
           
-          if (bytesSent > 0) {
-            print('消息发送成功到 ${targetUser.userName} (${targetUser.ipAddress}:${targetUser.messagePort})');
-            return true;
-          } else {
-            print('消息发送失败：发送字节数为0');
-            return false;
-          }
-        } finally {
-          socket.close();
+          // 等待确认或短暂延迟后关闭连接
+          Timer(const Duration(seconds: 2), () {
+            webSocket.close();
+          });
+          
+          return true;
+        } catch (e) {
+          print('发送WebSocket消息失败: $e');
+          webSocket.close();
+          return false;
         }
       } catch (e) {
-        if (e is SocketException && e.osError?.errorCode == 1232) {
-          print('⚠️ 消息发送失败：网络访问权限错误');
-          print('⚠️ 请以管理员身份运行应用或检查防火墙设置');
-        } else {
-          print('发送消息失败: $e');
-        }
+        print('连接到目标用户WebSocket失败: $e');
         return false;
       }
     } catch (e) {
@@ -630,8 +630,8 @@ class NodeDiscoveryService {
     _onMessageReceived = callback;
   }
   
-  /// 获取当前用户的消息端口
-  int? get messagePort => _messagePort;
+  /// 获取当前用户的WebSocket端口
+  int? get messagePort => _webSocketPort;
 
   /// 清理离线用户
   Future<void> cleanupOfflineUsers() async {
@@ -659,8 +659,8 @@ class NodeDiscoveryService {
     if (tags != null) _currentUser!.tags = tags;
     if (statusMessage != null) _currentUser!.statusMessage = statusMessage;
     
-    // 确保消息端口信息是最新的
-    _currentUser!.messagePort = _messagePort;
+    // 确保WebSocket端口信息是最新的
+    _currentUser!.messagePort = _webSocketPort;
     
     _currentUser!.updateOnlineStatus();
     await _userNodeCz.addOrUpdateUserNode(_currentUser!);

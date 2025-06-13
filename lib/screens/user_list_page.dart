@@ -67,21 +67,36 @@ class _UserListPageState extends State<UserListPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDesktop = _aps.isDesktop.watch(context);
 
-    return Scaffold(
-      body: Column(
-        children: [
-          // 头部区域
-          _buildHeader(colorScheme),
-          // 搜索栏
-          _buildSearchBar(colorScheme),
-          // 用户列表
-          Expanded(
-            child:
-                _filteredUsers.isEmpty
-                    ? _buildEmptyState(colorScheme)
-                    : _buildUserList(colorScheme),
-          ),
-        ],
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            // 头部区域
+            _buildHeader(colorScheme),
+            // 搜索栏
+            _buildSearchBar(colorScheme),
+            // 用户列表
+            Expanded(
+              child: _filteredUsers.isEmpty
+                  ? _buildEmptyState(colorScheme)
+                  : ListView.builder(
+                      itemCount: _filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = _filteredUsers[index];
+                        return ListTile(
+                          leading: _buildUserAvatar(user, colorScheme),
+                          title: Text(user.userName, style: Theme.of(context).textTheme.bodyLarge),
+                          subtitle: user.statusMessage?.isNotEmpty == true ? Text(user.statusMessage!, style: Theme.of(context).textTheme.bodySmall) : null,
+                          dense: true,
+                          minLeadingWidth: 32,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                          onTap: () => _showUserDetailsDialog(context, user),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

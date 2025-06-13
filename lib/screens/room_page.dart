@@ -283,6 +283,7 @@ void addEncryptedRoom(
     roomName:
         isEncrypted ? Uuid().v4() : (roomname ?? ""), // 如果未加密，则使用随机UUID作为房间名
     password: isEncrypted ? Uuid().v4() : (password ?? ""), // 如果未加密，则生成一个随机密码
+    messageKey: isEncrypted ? Uuid().v4() : "",
     tags: [],
   );
   Aps().addRoom(room);
