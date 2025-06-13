@@ -12,6 +12,8 @@ class Room {
   String roomName = "";
   // 房间密码
   String password = "";
+  // 消息密钥
+  String messageKey = "";
   // 房间标签
   List<String> tags = [];
   // 排序字段
@@ -23,6 +25,7 @@ class Room {
     this.name = "",
     this.encrypted = false,
     this.roomName = "",
+    this.messageKey = "",
     this.password = "",
     this.tags = const [],
     this.sortOrder = 0,
