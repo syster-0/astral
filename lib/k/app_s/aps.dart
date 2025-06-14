@@ -4,11 +4,9 @@ import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/net_config.dart';
 import 'package:astral/k/models/room.dart';
 import 'package:astral/k/models/server_mod.dart';
-import 'package:astral/k/models/user_node.dart';
 import 'package:astral/src/rust/api/firewall.dart';
 import 'package:astral/src/rust/api/hops.dart';
 import 'package:astral/src/rust/api/simple.dart';
-import 'package:astral/services/node_discovery_service.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:astral/k/database/app_data.dart';
@@ -52,9 +50,7 @@ class Aps {
     updateNetConfig();
     initMisc();
     loadStartupSettings();
-    nodeDiscoveryService.watchOnlineUsers().listen((users) {
-      allUsersNode.value = users;
-    });
+
 
   }
 
@@ -152,18 +148,9 @@ class Aps {
   /// userListSimple
   final Signal<bool> userListSimple = signal(false); // 玩家列表
 
-  /// allUsersNode - 所有用户节点
-  final Signal<List<UserNode>> allUsersNode = signal([]);
-  
     /// beta - 参与测试版
   final Signal<bool> beta = signal(false);
   
-  /// 节点发现服务
-  NodeDiscoveryService? _nodeDiscoveryService;
-  NodeDiscoveryService get nodeDiscoveryService {
-    _nodeDiscoveryService ??= NodeDiscoveryService();
-    return _nodeDiscoveryService!;
-  }
 
 
   
@@ -258,18 +245,7 @@ class Aps {
     listenList.value = await AppDatabase().AllSettings.getListenList();
   }
 
-  /// 更新玩家名称
-  Future<void> updatePlayerName(String name) async {
-    PlayerName.value = name;
-    await AppDatabase().AllSettings.setPlayerName(name);
-    
-    // 同步更新节点发现服务中的用户信息
-    try {
-      await nodeDiscoveryService.updateCurrentUser(userName: name);
-    } catch (e) {
-      print('更新节点发现服务用户名失败: $e');
-    }
-  }
+
 
   /// **********************************************************************************************************
   /// 主题颜色
