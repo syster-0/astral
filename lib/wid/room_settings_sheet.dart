@@ -62,7 +62,7 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
         title,
         textAlign: TextAlign.left,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: colorScheme.primary,
         ),
@@ -80,10 +80,7 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(title, colorScheme),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: buttons,
-        ),
+        Wrap(spacing: 8, runSpacing: 8, children: buttons),
       ],
     );
   }
@@ -106,13 +103,13 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
                   Icon(
                     Icons.bar_chart_outlined,
                     color: colorScheme.primary,
-                    size: 24,
+                    size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '房间设置',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       color: colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
@@ -124,7 +121,7 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
                 '点击下方设置项进行配置，所有更改将实时生效',
                 textAlign: TextAlign.left,
                 maxLines: null,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -220,43 +217,29 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
     VoidCallback onPressed,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(8),
-            overlayColor: MaterialStateProperty.all(
-              colorScheme.primary.withOpacity(0.12),
+    return IntrinsicWidth(
+      child: SizedBox(
+        height: 32,
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            backgroundColor:
+                isSelected ? colorScheme.primary : colorScheme.surfaceVariant,
+            foregroundColor:
+                isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
+            side: BorderSide(
+              color: isSelected ? colorScheme.primary : colorScheme.outline,
             ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? colorScheme.primary
-                        : colorScheme.surfaceVariant,
-                border: Border.all(
-                  color: isSelected ? colorScheme.primary : colorScheme.outline,
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color:
-                      isSelected
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurfaceVariant,
-                ),
-              ),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
+          child: Text(text, style: const TextStyle(fontSize: 13)),
         ),
       ),
     );
