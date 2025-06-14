@@ -21,11 +21,11 @@ class LogCapture {
   /// 开始捕获UDP日志
   Future<void> startCapture({String host = '127.0.0.1', int port = 9999}) async {
     if (_isCapturing) return;
-    
+    debugPrint('准备绑定UDP端口: $host:$port');
     try {
       _udpSocket = await RawDatagramSocket.bind(InternetAddress(host), port);
+      debugPrint('UDP端口绑定成功: $host:$port');
       _isCapturing = true;
-      
       _udpSocket!.listen((RawSocketEvent event) {
         if (event == RawSocketEvent.read) {
           final datagram = _udpSocket!.receive();
@@ -46,11 +46,11 @@ class LogCapture {
       }, onDone: () {
         _isCapturing = false;
       });
-      
       debugPrint('UDP log capture started on $host:$port');
     } catch (e) {
       debugPrint('Failed to start UDP log capture: $e');
       _isCapturing = false;
+      rethrow; // 关键：抛出异常，避免卡住
     }
   }
   
@@ -138,6 +138,7 @@ class LogCapture {
   void _addLogToSignal(String logEntry) {
     final currentLogs = List<String>.from(Aps().logs.value);
     currentLogs.add(logEntry);
+      debugPrint('ERROR: $logEntry');
     
     // 限制日志数量，保留最新的1000条
     if (currentLogs.length > 1000) {

@@ -273,7 +273,7 @@ class _ConnectButtonState extends State<ConnectButton>
   void _setupConnectionTimeout() {
     _timeoutTimer = Timer(Duration(seconds: connectionTimeoutSeconds), () {
       if (Aps().Connec_state.value == CoState.connecting) {
-        print("连接超时");
+       debugPrint("连接超时");
         _disconnect();
       }
     });
@@ -386,7 +386,7 @@ class _ConnectButtonState extends State<ConnectButton>
       _startConnection();
     } else if (Aps().Connec_state.value == CoState.connected) {
       // 如果当前是已连接状态，则断开连接
-      print("断开连接");
+     debugPrint("断开连接");
       _disconnect();
     }
   }

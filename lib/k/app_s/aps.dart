@@ -617,7 +617,7 @@ class Aps {
   /// 添加房间
   Future<void> addRoom(Room room) async {
     await AppDatabase().RoomSetting.addRoom(room);
-    print("添加房间" + room.name);
+   debugPrint("添加房间" + room.name);
     rooms.value = await AppDatabase().RoomSetting.getAllRooms();
   }
 
@@ -673,7 +673,7 @@ class Aps {
       servers.value = await AppDatabase().ServerSetting.getAllServers();
     } catch (e, stackTrace) {
       // 记录错误日志
-      print('添加服务器失败: $e\n$stackTrace');
+     debugPrint('添加服务器失败: $e\n$stackTrace');
       // 可以考虑向用户显示错误提示
     }
   }

@@ -1,0 +1,4 @@
+# 修改为清华大学镜像：
+[submodule "external/third_party/lss"]
+    path = external/third_party/lss
+    url = https://mirrors.tuna.tsinghua.edu.cn/git/chromium/linux-syscall-support.git
