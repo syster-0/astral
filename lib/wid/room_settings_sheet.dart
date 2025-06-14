@@ -9,45 +9,85 @@ class RoomSettingsSheet extends StatefulWidget {
   State<RoomSettingsSheet> createState() => _RoomSettingsSheetState();
 
   static Future<void> show(BuildContext context) async {
-    if (MediaQuery.of(context).size.width > 600) {
+    final isDesktop = MediaQuery.of(context).size.width > 600;
+
+    if (isDesktop) {
       // PC端显示为对话框
-      await showDialog(
+      return showDialog(
         context: context,
-        builder: (context) => Dialog(
-          child: Container(
-            width: 400,
-            height: 600,
-            alignment: Alignment.topLeft, 
-            child: const RoomSettingsSheet(),
-          ),
-        ),
-      );
-    } else {
-      // 移动端显示为底部弹窗
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.5,
-          minChildSize: 0.4,
-          maxChildSize: 0.8,
-          builder: (context, scrollController) => Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
+        builder:
+            (_) => Dialog(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 400,
+                  maxHeight: 600,
+                ),
+                child: const RoomSettingsSheet(),
               ),
             ),
-            child: const RoomSettingsSheet(),
-          ),
-        ),
       );
     }
+
+    // 移动端显示为底部弹窗
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (_) => DraggableScrollableSheet(
+            initialChildSize: 0.5,
+            minChildSize: 0.4,
+            maxChildSize: 0.8,
+            builder:
+                (_, scrollController) => Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                  ),
+                  child: const RoomSettingsSheet(),
+                ),
+          ),
+    );
   }
 }
 
 class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
+  // 构建设置项标题
+  Widget _buildSectionTitle(String title, ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+      child: Text(
+        title,
+        textAlign: TextAlign.left,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  // 构建设置项组件
+  Widget _buildSettingSection(
+    String title,
+    List<Widget> buttons,
+    ColorScheme colorScheme,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(title, colorScheme),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: buttons,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,7 +97,7 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
       children: [
         // 标题栏
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 14, 8, 4), 
+          padding: const EdgeInsets.fromLTRB(24, 14, 8, 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -98,147 +138,75 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               // 显示模式
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-                    child: Text(
-                      '显示模式',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildOptionButton('简约', Aps().userListSimple.value, () {
-                        Aps().setUserListSimple(true);
-                      }),
-                      _buildOptionButton('详细', !Aps().userListSimple.value, () {
-                        Aps().setUserListSimple(false);
-                      }),
-                    ],
-                  ),
-                ],
-              ),
+              _buildSettingSection('显示模式', [
+                _buildOptionButton(
+                  '简约',
+                  Aps().userListSimple.watch(context),
+                  () {
+                    Aps().setUserListSimple(true);
+                  },
+                ),
+                _buildOptionButton(
+                  '详细',
+                  !Aps().userListSimple.watch(context),
+                  () {
+                    Aps().setUserListSimple(false);
+                  },
+                ),
+              ], colorScheme),
 
               // 用户显示
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-                    child: Text(
-                      '用户显示',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildOptionButton('默认', Aps().displayMode.value == 0, () async {
-                        await Aps().setDisplayMode(0);
-                      }),
-                      _buildOptionButton('用户', Aps().displayMode.value == 1, () async {
-                        await Aps().setDisplayMode(1);
-                      }),
-                      _buildOptionButton('服务器', Aps().displayMode.value == 2, () async {
-                        await Aps().setDisplayMode(2);
-                      }),
-                    ],
-                  ),
-                ],
-              ),
+              _buildSettingSection('用户显示', [
+                _buildOptionButton(
+                  '默认',
+                  Aps().displayMode.watch(context) == 0,
+                  () => Aps().setDisplayMode(0),
+                ),
+                _buildOptionButton(
+                  '用户',
+                  Aps().displayMode.watch(context) == 1,
+                  () => Aps().setDisplayMode(1),
+                ),
+                _buildOptionButton(
+                  '服务器',
+                  Aps().displayMode.watch(context) == 2,
+                  () => Aps().setDisplayMode(2),
+                ),
+              ], colorScheme),
 
               // 用户排序
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-                    child: Text(
-                      '用户排序',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildOptionButton('默认', Aps().sortOption.value == 0, () async {
-                        await Aps().setSortOption(0);
-                      }),
-                      _buildOptionButton('延迟', Aps().sortOption.value == 1, () async {
-                        await Aps().setSortOption(1);
-                      }),
-                      _buildOptionButton('用户名', Aps().sortOption.value == 2, () async {
-                        await Aps().setSortOption(2);
-                      }),
-                    ],
-                  ),
-                ],
-              ),
+              _buildSettingSection('用户排序', [
+                _buildOptionButton(
+                  '默认',
+                  Aps().sortOption.watch(context) == 0,
+                  () => Aps().setSortOption(0),
+                ),
+                _buildOptionButton(
+                  '延迟',
+                  Aps().sortOption.watch(context) == 1,
+                  () => Aps().setSortOption(1),
+                ),
+                _buildOptionButton(
+                  '用户名',
+                  Aps().sortOption.watch(context) == 2,
+                  () => Aps().setSortOption(2),
+                ),
+              ], colorScheme),
 
               // 排序方式
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-                    child: Text(
-                      '排序方式',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildOptionButton('升序', Aps().sortOrder.value == 0, () async {
-                        await Aps().setSortOrder(0);
-                      }),
-                      _buildOptionButton('降序', Aps().sortOrder.value == 1, () async {
-                        await Aps().setSortOrder(1);
-                      }),
-                    ],
-                  ),
-                ],
-              ),
+              _buildSettingSection('排序方式', [
+                _buildOptionButton(
+                  '升序',
+                  Aps().sortOrder.watch(context) == 0,
+                  () => Aps().setSortOrder(0),
+                ),
+                _buildOptionButton(
+                  '降序',
+                  Aps().sortOrder.watch(context) == 1,
+                  () => Aps().setSortOrder(1),
+                ),
+              ], colorScheme),
             ],
-          ),
-        ),
-
-        // 底部按钮
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: FilledButton(
-            onPressed: Navigator.of(context).pop,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              minimumSize: const Size(double.infinity, 0),
-            ),
-            child: const Text('关闭'),
           ),
         ),
       ],
@@ -246,46 +214,46 @@ class _RoomSettingsSheetState extends State<RoomSettingsSheet> {
   }
 
   // 构建选项按钮
-  Widget _buildOptionButton(String text, bool isSelected, VoidCallback onPressed) {
-    bool _isHovered = false; // 新增悬停状态
-
+  Widget _buildOptionButton(
+    String text,
+    bool isSelected,
+    VoidCallback onPressed,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: Container(
-          decoration: BoxDecoration(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: (_isHovered || isSelected) 
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
-                  : Colors.transparent,
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              )
-            ],
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(1.0),
-            border: Border.all(
-              color: (_isHovered || isSelected) 
-                ? Theme.of(context).colorScheme.primary 
-                : Colors.transparent,
-              width: (_isHovered || isSelected) ? 1.5 : 1.0,
+            overlayColor: MaterialStateProperty.all(
+              colorScheme.primary.withOpacity(0.12),
             ),
-          ),
-          child: TextButton(
-            onPressed: onPressed,
-            style: TextButton.styleFrom(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? colorScheme.primary
+                        : colorScheme.surfaceVariant,
+                border: Border.all(
+                  color: isSelected ? colorScheme.primary : colorScheme.outline,
+                  width: 1,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
-            ),
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.black, // 统一设置为黑色
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color:
+                      isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ),
