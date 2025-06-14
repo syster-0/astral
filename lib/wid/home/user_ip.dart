@@ -152,7 +152,7 @@ class _UserIpBoxState extends State<UserIpBox> {
             onChanged: (value) {},
             decoration: InputDecoration(
               labelText: '用户名',
-              // 默认值
+              hintText: '输入喜欢的名字',
               border: const OutlineInputBorder(),
               prefixIcon: Icon(Icons.person, color: colorScheme.primary),
               floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -228,6 +228,8 @@ class _UserIpBoxState extends State<UserIpBox> {
                     },
                     decoration: InputDecoration(
                       labelText: '虚拟网IP',
+                      // 添加提示文本
+                      hintText: '不明白的话自动即可',
                       border: const OutlineInputBorder(),
                       prefixIcon: Icon(Icons.lan, color: colorScheme.primary),
                       floatingLabelBehavior: FloatingLabelBehavior.always,
