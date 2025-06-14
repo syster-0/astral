@@ -58,20 +58,20 @@ class UrlSchemeRegistrar {
         final result = await Process.run('reg', command);
         if (result.exitCode != 0) {
           if (kDebugMode) {
-            print('Failed to execute reg command: ${command.join(' ')}');
-            print('Error: ${result.stderr}');
+           debugPrint('Failed to execute reg command: ${command.join(' ')}');
+           debugPrint('Error: ${result.stderr}');
           }
           return false;
         }
       }
       
       if (kDebugMode) {
-        print('URL scheme registered successfully');
+       debugPrint('URL scheme registered successfully');
       }
       return true;
     } catch (e) {
       if (kDebugMode) {
-        print('Error registering URL scheme: $e');
+       debugPrint('Error registering URL scheme: $e');
       }
       return false;
     }
@@ -92,7 +92,7 @@ class UrlSchemeRegistrar {
              result.stdout.toString().contains('URL:Astral Protocol');
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking URL scheme registration: $e');
+       debugPrint('Error checking URL scheme registration: $e');
       }
       return false;
     }
@@ -111,18 +111,18 @@ class UrlSchemeRegistrar {
       
       if (result.exitCode == 0) {
         if (kDebugMode) {
-          print('URL scheme unregistered successfully');
+         debugPrint('URL scheme unregistered successfully');
         }
         return true;
       } else {
         if (kDebugMode) {
-          print('Failed to unregister URL scheme: ${result.stderr}');
+         debugPrint('Failed to unregister URL scheme: ${result.stderr}');
         }
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error unregistering URL scheme: $e');
+       debugPrint('Error unregistering URL scheme: $e');
       }
       return false;
     }
@@ -145,7 +145,7 @@ class UrlSchemeRegistrar {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error updating URL scheme registration: $e');
+       debugPrint('Error updating URL scheme registration: $e');
       }
       return false;
     }

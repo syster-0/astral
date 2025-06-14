@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pointycastle/export.dart';
 
 class EncryptionService {
@@ -63,7 +64,7 @@ class EncryptionService {
       final combined = Uint8List.fromList(iv + encrypted);
       return base64Encode(combined);
     } catch (e) {
-      print('加密消息失败: $e');
+      debugPrint('加密消息失败: $e');
       return message; // 加密失败时返回原消息
     }
   }
@@ -97,7 +98,7 @@ class EncryptionService {
       final unpaddedMessage = _removePKCS7Padding(decrypted);
       return utf8.decode(unpaddedMessage);
     } catch (e) {
-      print('解密消息失败: $e');
+     debugPrint('解密消息失败: $e');
       return encryptedMessage; // 解密失败时返回原消息
     }
   }

@@ -119,9 +119,6 @@ class _UserIpBoxState extends State<UserIpBox> {
                     ? false
                     : true,
             onChanged: (value) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _aps.updatePlayerName(value);
-              });
             },
             decoration: InputDecoration(
               labelText: '用户名',

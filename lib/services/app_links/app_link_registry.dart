@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:astral/services/app_links/core/app_link_definitions.dart';
 import 'package:astral/services/app_links/handlers/link_handlers.dart';
+import 'package:flutter/foundation.dart';
 
 // 简化的链接处理器类型
 typedef SimpleHandler = Future<void> Function(Uri uri);
@@ -21,7 +22,7 @@ class AppLinkRegistry {
   // 注册处理器
   void registerHandler(String host, SimpleHandler handler) {
     _handlers[host] = handler;
-    print('已注册处理器: $host');
+   debugPrint('已注册处理器: $host');
   }
   
   // 初始化并注册默认处理器
@@ -37,7 +38,7 @@ class AppLinkRegistry {
     _registerLinkStream();
     
     _isInitialized = true;
-    print('App Link Registry 初始化完成');
+   debugPrint('App Link Registry 初始化完成');
   }
   
   // 注册默认处理器
@@ -56,14 +57,14 @@ class AppLinkRegistry {
   void _registerLinkStream() {
     _linkSubscription = _linkDefinitions.linkStream.listen(
       (uri) async => await _processLink(uri),
-      onError: (err) => print('Link stream error: $err'),
+      onError: (err) =>debugPrint('Link stream error: $err'),
     );
   }
   
   // 简化的链接处理
   Future<void> _processLink(Uri uri) async {
     if (!_linkDefinitions.isValidAstralLink(uri)) {
-      print('Invalid scheme: ${uri.scheme}');
+     debugPrint('Invalid scheme: ${uri.scheme}');
       return;
     }
     
@@ -71,12 +72,12 @@ class AppLinkRegistry {
     if (handler != null) {
       try {
         await handler(uri);
-        print('处理完成: ${uri.host}');
+       debugPrint('处理完成: ${uri.host}');
       } catch (e) {
-        print('处理失败: ${uri.host}, 错误: $e');
+       debugPrint('处理失败: ${uri.host}, 错误: $e');
       }
     } else {
-      print('未找到处理器: ${uri.host}');
+     debugPrint('未找到处理器: ${uri.host}');
     }
   }
   
