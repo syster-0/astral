@@ -65,11 +65,26 @@ class _RoomPageState extends State<RoomPage> {
                     // 解密并添加房间
                     var room = decryptRoomFromJWT(shareCode);
                     if (room != null) {
+                      // 检查是否已存在相同名称、房间名和密码的房间
+                      final existingRoom = _aps.rooms.value.firstWhere(
+                        (r) => r.name == room.name && 
+                               r.roomName == room.roomName && 
+                               r.password == room.password,
+                      );
+                        
+                      if (existingRoom != null) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('添加失败，已有完全相同房间：${room.name}')),
+                        );
+                        return;
+                      }
+                        
                       _aps.addRoom(room);
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(const SnackBar(content: Text('房间已成功导入')));
+                      ).showSnackBar(SnackBar(content: Text('房间已成功导入：${room.name}')));
                     } else {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(
