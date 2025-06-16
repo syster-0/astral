@@ -7,8 +7,6 @@ use windows::{
     Win32::System::Rpc::*, core::*,
 };
 
-use crate::api::nt::get_nt_path;
-
 // CIDR网段结构体
 #[derive(Debug, Clone)]
 pub struct IpNetwork {
@@ -16,6 +14,7 @@ pub struct IpNetwork {
     pub prefix_len: u8,
 }
 
+#[cfg(windows)]
 impl IpNetwork {
     pub fn new(ip: IpAddr, prefix_len: u8) -> Self {
         Self { ip, prefix_len }
@@ -81,6 +80,19 @@ impl IpNetwork {
     }
 }
 
+#[cfg(not(windows))]
+impl IpNetwork {
+    pub fn new(_ip: IpAddr, _prefix_len: u8) -> Self {
+        unreachable!()
+    }
+    pub fn from_cidr(_cidr: &str) -> std::result::Result<Self, String> {
+        Err("Not supported on non-Windows".to_string())
+    }
+    pub fn contains(&self, _ip: &IpAddr) -> bool {
+        false
+    }
+}
+
 // 实现 FromStr trait 以支持 .parse::<IpNetwork>()
 impl std::str::FromStr for IpNetwork {
     type Err = String;
@@ -131,7 +143,7 @@ pub enum FilterAction {
     Allow,
     Block,
 }
-
+#[cfg(windows)]
 impl FilterRule {
     pub fn new(name: &str) -> Self {
         Self {
@@ -217,7 +229,41 @@ impl FilterRule {
     }
 }
 
+#[cfg(not(windows))]
+impl FilterRule {
+    pub fn new(_name: &str) -> Self {
+        Self {
+            name: String::new(),
+            app_path: None,
+            local_ip: None,
+            remote_ip: None,
+            local_ip_network: None,
+            remote_ip_network: None,
+            local_port: None,
+            remote_port: None,
+            protocol: None,
+            direction: Direction::Both,
+            action: FilterAction::Block,
+        }
+    }
+    pub fn app_path(self, _path: &str) -> Self { self }
+    pub fn local_ip(self, _ip: IpAddr) -> Self { self }
+    pub fn remote_ip(self, _ip: IpAddr) -> Self { self }
+    pub fn local_ip_network(self, _network: IpNetwork) -> Self { self }
+    pub fn remote_ip_network(self, _network: IpNetwork) -> Self { self }
+    pub fn local_ip_str(self, _ip: &str) -> Self { self }
+    pub fn remote_ip_str(self, _ip: &str) -> Self { self }
+    pub fn local_ip_network_str(self, _cidr: &str) -> Self { self }
+    pub fn remote_ip_network_str(self, _cidr: &str) -> Self { self }
+    pub fn local_port(self, _port: u16) -> Self { self }
+    pub fn remote_port(self, _port: u16) -> Self { self }
+    pub fn protocol(self, _protocol: Protocol) -> Self { self }
+    pub fn direction(self, _direction: Direction) -> Self { self }
+    pub fn action(self, _action: FilterAction) -> Self { self }
+}
+
 // 创建宽字符字符串的辅助函数
+#[cfg(windows)]
 pub fn to_wide_string(s: &str) -> Vec<u16> {
     OsStr::new(s)
         .encode_wide()
@@ -225,12 +271,18 @@ pub fn to_wide_string(s: &str) -> Vec<u16> {
         .collect()
 }
 
+#[cfg(not(windows))]
+pub fn to_wide_string(_s: &str) -> Vec<u16> {
+    Vec::new()
+}
 // WFP控制器结构体
+#[cfg(windows)]
 pub struct WfpController {
     engine_handle: HANDLE,
     filter_ids: Vec<u64>,
 }
 
+#[cfg(windows)]
 impl WfpController {
     // 创建新的WFP控制器实例
     pub fn new() -> Result<Self> {
@@ -281,7 +333,6 @@ impl WfpController {
             }
         }
     }
-
 
     // 添加高级过滤器（支持复杂规则）
     pub fn add_advanced_filters(&mut self, rules: &[FilterRule]) -> Result<()> {
@@ -370,8 +421,6 @@ impl WfpController {
         
         layers
     }
-
-
 
     // 清理过滤器
     pub fn cleanup(&mut self) -> Result<()> {
@@ -672,7 +721,7 @@ impl WfpController {
             weight: FWP_VALUE0 {
                 r#type: FWP_UINT64,
                 Anonymous: FWP_VALUE0_0 {
-                    uint64: &raw mut WEIGHT_VALUE as *mut u64, // 移除不必要的 unsafe 块
+                    uint64: unsafe { &mut WEIGHT_VALUE as *mut u64 },
                 },
             },
             numFilterConditions: num_conditions,
@@ -695,7 +744,7 @@ impl WfpController {
             effectiveWeight: FWP_VALUE0 {
                 r#type: FWP_UINT64,
                 Anonymous: FWP_VALUE0_0 {
-                    uint64: unsafe { &raw mut EFFECTIVE_WEIGHT_VALUE as *mut u64 },
+                    uint64: unsafe { &mut EFFECTIVE_WEIGHT_VALUE as *mut u64 },
                 },
             },
         };
@@ -727,4 +776,14 @@ impl WfpController {
     }
 }
 
+#[cfg(not(windows))]
+pub struct WfpController;
 
+#[cfg(not(windows))]
+impl WfpController {
+    pub fn new() -> Result<Self, ()> { Ok(Self) }
+    pub fn initialize(&mut self) -> Result<(), ()> { Ok(()) }
+    pub fn add_advanced_filters(&mut self, _rules: &[FilterRule]) -> Result<(), ()> { Ok(()) }
+    pub fn cleanup(&mut self) -> Result<(), ()> { Ok(()) }
+    pub fn print_status(&self) {}
+}
