@@ -84,13 +84,13 @@ class _MainScreenState extends State<MainScreen>
       label: '房间', // 导航项标签
       page: const RoomPage(), // 对应的页面
     ),
-    if (Platform.isWindows)
-      NavigationItem(
-        icon: Icons.shield_outlined, // 未选中时的图标（防火墙）
-        activeIcon: Icons.shield, // 选中时的图标（防火墙）
-        label: '魔法墙', // 导航项标签
-        page: const WfpPage(), // 对应的页面
-      ),
+    // if (Platform.isWindows)
+    //   NavigationItem(
+    //     icon: Icons.shield_outlined, // 未选中时的图标（防火墙）
+    //     activeIcon: Icons.shield, // 选中时的图标（防火墙）
+    //     label: '魔法墙', // 导航项标签
+    //     page: const WfpPage(), // 对应的页面
+    //   ),
     NavigationItem(
       icon: Icons.dns_outlined, // 未选中时的图标
       activeIcon: Icons.dns, // 选中时的图标Icon(Icons.room_preferences)
