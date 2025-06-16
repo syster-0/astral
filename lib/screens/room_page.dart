@@ -66,17 +66,22 @@ class _RoomPageState extends State<RoomPage> {
                     // 解密并添加房间
                     var room = decryptRoomFromJWT(shareCode);
                     if (room != null) {
-                      // 检查是否已存在相同房间
-                      final hasExistingRoom = _aps.rooms.value.any(
-                        (r) => r.name == room.name && r.roomName == room.roomName,
+                      // 检查是否已存在相同房间名和密码的房间
+                      final existingRoom = _aps.rooms.value
+                      .where((r) => r.roomName == room.roomName && 
+                                    r.password == room.password)
+                      .isNotEmpty
+                        ? _aps.rooms.value.firstWhere((r) => 
+                                  r.roomName == room.roomName && 
+                                    r.password == room.password)
+                        : null;
+
+                  if (existingRoom != null) {
+                      Navigator.of(context).pop();
+                      showErrorDialog(
+                        context,
+                        '添加失败，已有相同房间',
                       );
-                        
-                      if (hasExistingRoom) {
-                        Navigator.of(context).pop();
-                        showErrorDialog(
-                          context,
-                          '添加失败，已存在相同房间：${room.name}',
-                        );
                         return;
                       }
                         
