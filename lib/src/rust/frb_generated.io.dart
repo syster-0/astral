@@ -172,6 +172,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  FilterRule dco_decode_box_autoadd_filter_rule(dynamic raw);
+
+  @protected
   FlagsC dco_decode_box_autoadd_flags_c(dynamic raw);
 
   @protected
@@ -406,6 +409,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  FilterRule sse_decode_box_autoadd_filter_rule(SseDeserializer deserializer);
 
   @protected
   FlagsC sse_decode_box_autoadd_flags_c(SseDeserializer deserializer);
@@ -670,6 +676,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_filter_rule(
+    FilterRule self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_flags_c(FlagsC self, SseSerializer serializer);

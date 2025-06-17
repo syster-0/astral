@@ -7,9 +7,7 @@ import '../frb_generated.dart';
 import '../lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `add_advanced_network_filter`, `get_layers_for_rule`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from_str`
-// These functions have error during generation (see debug logs or enable `stop_on_error: true` for more details): `action`, `app_path`, `direction`, `local_ip_network_str`, `local_ip_network`, `local_ip_str`, `local_ip`, `local_port`, `protocol`, `remote_ip_network_str`, `remote_ip_network`, `remote_ip_str`, `remote_ip`, `remote_port`
 
 Future<Uint16List> toWideString({required String s}) =>
     RustLib.instance.api.crateApiAstralWfpToWideString(s: s);
@@ -51,7 +49,6 @@ abstract class WfpController implements RustOpaqueInterface {
   static Future<WfpController> newInstance() =>
       RustLib.instance.api.crateApiAstralWfpWfpControllerNew();
 
-  /// 打印当前WfpController实例的运行状态
   Future<void> printStatus();
 }
 
@@ -86,9 +83,65 @@ class FilterRule {
     required this.action,
   });
 
+  Future<FilterRule> action({required FilterAction action}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleAction(that: this, action: action);
+
+  Future<FilterRule> appPath({required String path}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleAppPath(that: this, path: path);
+
+  Future<FilterRule> direction({required Direction direction}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleDirection(that: this, direction: direction);
+
+  Future<FilterRule> localIp({required IpAddr ip}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleLocalIp(that: this, ip: ip);
+
+  Future<FilterRule> localIpNetwork({required IpNetwork network}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleLocalIpNetwork(that: this, network: network);
+
+  Future<FilterRule> localIpNetworkStr({required String cidr}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleLocalIpNetworkStr(that: this, cidr: cidr);
+
+  Future<FilterRule> localIpStr({required String ip}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleLocalIpStr(that: this, ip: ip);
+
+  Future<FilterRule> localPort({required int port}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleLocalPort(that: this, port: port);
+
   // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
   static Future<FilterRule> newInstance({required String name}) =>
       RustLib.instance.api.crateApiAstralWfpFilterRuleNew(name: name);
+
+  Future<FilterRule> protocol({required Protocol protocol}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleProtocol(that: this, protocol: protocol);
+
+  Future<FilterRule> remoteIp({required IpAddr ip}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleRemoteIp(that: this, ip: ip);
+
+  Future<FilterRule> remoteIpNetwork({required IpNetwork network}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleRemoteIpNetwork(that: this, network: network);
+
+  Future<FilterRule> remoteIpNetworkStr({required String cidr}) => RustLib
+      .instance
+      .api
+      .crateApiAstralWfpFilterRuleRemoteIpNetworkStr(that: this, cidr: cidr);
+
+  Future<FilterRule> remoteIpStr({required String ip}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleRemoteIpStr(that: this, ip: ip);
+
+  Future<FilterRule> remotePort({required int port}) => RustLib.instance.api
+      .crateApiAstralWfpFilterRuleRemotePort(that: this, port: port);
 
   @override
   int get hashCode =>

@@ -21,7 +21,6 @@ impl IpNetwork {
     pub fn new(ip: IpAddr, prefix_len: u8) -> Self {
         Self { ip, prefix_len }
     }
-    
     pub fn from_cidr(cidr: &str) -> std::result::Result<Self, String> {
         let parts: Vec<&str> = cidr.split('/').collect();
         if parts.len() != 2 {
@@ -278,7 +277,6 @@ pub fn to_wide_string(_s: &str) -> Vec<u16> {
     Vec::new()
 }
 // WFP控制器结构体
-#[cfg(windows)]
 pub struct WfpController {
     engine_handle: HANDLE,
     filter_ids: Vec<u64>,
@@ -287,7 +285,7 @@ pub struct WfpController {
 #[cfg(windows)]
 impl WfpController {
     // 创建新的WFP控制器实例
-    pub fn new() -> Result<Self> {
+    pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             engine_handle: HANDLE::default(),
             filter_ids: Vec::new(),
@@ -295,7 +293,7 @@ impl WfpController {
     }
 
     // 初始化WFP引擎
-    pub fn initialize(&mut self) -> Result<()> {
+    pub fn initialize(&mut self) -> anyhow::Result<()> {
         unsafe {
             println!("正在初始化 Windows Filtering Platform...");
 
@@ -337,7 +335,7 @@ impl WfpController {
     }
 
     // 添加高级过滤器（支持复杂规则）
-    pub fn add_advanced_filters(&mut self, rules: &[FilterRule]) -> Result<()> {
+    pub fn add_advanced_filters(&mut self, rules: &[FilterRule]) -> anyhow::Result<()> {
         unsafe {
             let mut added_count = 0;
             
@@ -425,7 +423,7 @@ impl WfpController {
     }
 
     // 清理过滤器
-    pub fn cleanup(&mut self) -> Result<()> {
+    pub fn cleanup(&mut self) -> anyhow::Result<()> {
         unsafe {
             println!("\n🛑 停止过滤器，正在清理...");
 
@@ -778,8 +776,7 @@ impl WfpController {
     }
 }
 
-#[cfg(not(windows))]
-pub struct WfpController;
+
 
 #[cfg(not(windows))]
 impl WfpController {
