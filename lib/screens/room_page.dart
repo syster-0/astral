@@ -63,33 +63,33 @@ class _RoomPageState extends State<RoomPage> {
               onPressed: () {
                 if (shareCode.isNotEmpty) {
                   try {
-                    // 解密并添加房间
+                    shareCode = shareCode.replaceAll(RegExp(r'\s+'), '');
                     var room = decryptRoomFromJWT(shareCode);
                     if (room != null) {
                       // 检查是否已存在相同房间名和密码的房间
-                  //     final existingRoom = _aps.rooms.value
-                  //     .where((r) => r.roomName == room.roomName && 
-                  //                   r.password == room.password)
-                  //     .isNotEmpty
-                  //       ? _aps.rooms.value.firstWhere((r) => 
-                  //                 r.roomName == room.roomName && 
-                  //                   r.password == room.password)
-                  //       : null;
+                      //     final existingRoom = _aps.rooms.value
+                      //     .where((r) => r.roomName == room.roomName &&
+                      //                   r.password == room.password)
+                      //     .isNotEmpty
+                      //       ? _aps.rooms.value.firstWhere((r) =>
+                      //                 r.roomName == room.roomName &&
+                      //                   r.password == room.password)
+                      //       : null;
 
-                  // if (existingRoom != null) {
-                  //     Navigator.of(context).pop();
-                  //     showErrorDialog(
-                  //       context,
-                  //       '添加失败，已有相同房间',
-                  //     );
-                  //       return;
-                  //     }
-                        
+                      // if (existingRoom != null) {
+                      //     Navigator.of(context).pop();
+                      //     showErrorDialog(
+                      //       context,
+                      //       '添加失败，已有相同房间',
+                      //     );
+                      //       return;
+                      //     }
+
                       _aps.addRoom(room);
                       Navigator.of(context).pop();
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('房间已成功导入：${room.name}')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('房间已成功导入：${room.name}')),
+                      );
                     } else {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(
