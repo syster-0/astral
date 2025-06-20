@@ -1,4 +1,4 @@
-use easytier::common::config::PortForwardConfig;
+use easytier::{common::config::PortForwardConfig, launcher::ConfigSource};
 pub use easytier::{
     common::{
         self,
@@ -209,7 +209,7 @@ async fn create_and_store_network_instance(cfg: TomlConfigLoader) -> Result<(), 
     // 在移动 cfg 之前先获取 ID
     let name = cfg.get_id().to_string();
     // 创建网络实例
-    let mut network = NetworkInstance::new(cfg).set_fetch_node_info(true);
+    let mut network = NetworkInstance::new(cfg,ConfigSource::FFI);
     // 启动网络实例，并处理可能的错误
     handle_event(network.start().unwrap());
     println!("instance {} started", name);
@@ -556,7 +556,7 @@ pub fn create_server(
         cfg.set_hostname(Some(username));
         cfg.set_dhcp(enable_dhcp);
         for c in cidrs {
-            cfg.add_proxy_cidr(c.parse().unwrap());
+            cfg.add_proxy_cidr(c.parse().unwrap(),None);
         }
         let mut old = cfg.get_port_forwards();
 
