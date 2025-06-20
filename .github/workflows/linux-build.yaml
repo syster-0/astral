@@ -36,6 +36,8 @@ jobs:
           sudo apt-get install -y libayatana-appindicator3-dev
           # 移除冲突的包
           # sudo apt-get install -y libappindicator3-dev
+          # 添加 patchelf
+          sudo apt-get install -y patchelf
 
       - name: 🐦 安装 Flutter
         run: |
@@ -62,6 +64,8 @@ jobs:
         run: |
           mkdir -p release
           cd build/linux/x64/release/bundle
+          # 修补链接
+          patchelf astral --add-needed libisar.so --add-needed librust_lib_astral.so
           tar -czf $GITHUB_WORKSPACE/release/astral-linux-x64.tar.gz *
           echo "打包完成，检查文件大小："
           ls -lh $GITHUB_WORKSPACE/release/
