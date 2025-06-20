@@ -2,9 +2,9 @@ name: 🐧 构建 Linux 应用
 
 on:
   workflow_dispatch:
-  # push:
-  #   tags:
-  #     - 'v*'   # 当推送版本标签时触发
+  push:
+    tags:
+      - 'v*' # 当推送版本标签时触发
 
 jobs:
   build:
