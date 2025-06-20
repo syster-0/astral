@@ -1,3 +1,5 @@
+import 'package:astral/src/rust/api/astral_wfp.dart';
+import 'package:astral/src/rust/api/nt.dart';
 import 'package:astral/src/rust/lib.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -5,47 +7,25 @@ import 'package:file_picker/file_picker.dart';
 class WfpRuleConfig {
   String name;
   String? appPath;
-  String? localIp;
-  String? localMask; // 新增本地掩码
-  String? remoteIp;
-  String? remoteMask; // 新增远程掩码
+  String? local;    // 本地IP或网段，格式如192.168.1.1或192.168.1.0/24
+  String? remote;   // 远程IP或网段，格式如8.8.8.8或8.8.0.0/16
   String? localPort;
   String? remotePort;
-  String protocol;
-  String direction;
-  String action;
+  String? protocol; // 可选: tcp/udp/icmp/null
+  String direction; // inbound/outbound/both
+  String action;    // allow/block
 
   WfpRuleConfig({
     this.name = '',
     this.appPath,
-    this.localIp,
-    this.localMask,
-    this.remoteIp,
-    this.remoteMask,
+    this.local,
+    this.remote,
     this.localPort,
     this.remotePort,
-    this.protocol = 'tcp',
+    this.protocol,
     this.direction = 'both',
     this.action = 'block',
   });
-}
-
-String? ipAndMaskToCidr(String? ip, String? mask) {
-  if (ip == null || ip.isEmpty || mask == null || mask.isEmpty) return null;
-  try {
-    List<String> maskParts = mask.split('.');
-    if (maskParts.length != 4) return null;
-    int bits =
-        maskParts
-            .map((e) => int.parse(e).toRadixString(2).padLeft(8, '0'))
-            .join()
-            .split('1')
-            .length -
-        1;
-    return '$ip/$bits';
-  } catch (_) {
-    return null;
-  }
 }
 
 class WfpPage extends StatefulWidget {
@@ -70,7 +50,6 @@ class _WfpPageState extends State<WfpPage> {
       }
       final controller = await WfpController.newInstance();
       await controller.initialize();
-      // Convert rules asynchronously to handle getNtPath
       final filterRules = <FilterRule>[];
       for (final r in _rules) {
         String? ntPath;
@@ -81,32 +60,27 @@ class _WfpPageState extends State<WfpPage> {
           FilterRule(
             name: r.name,
             appPath: ntPath,
-            localIp: r.localIp,
-            remoteIp: r.remoteIp,
-            localIpNetwork: ipAndMaskToCidr(r.localIp, r.localMask),
-            remoteIpNetwork: ipAndMaskToCidr(r.remoteIp, r.remoteMask),
+            local: r.local,
+            remote: r.remote,
             localPort: r.localPort == null ? null : int.tryParse(r.localPort!),
-            remotePort:
-                r.remotePort == null ? null : int.tryParse(r.remotePort!),
-            protocol:
-                r.protocol == 'tcp'
+            remotePort: r.remotePort == null ? null : int.tryParse(r.remotePort!),
+            protocol: r.protocol == null || r.protocol!.isEmpty
+                ? null
+                : r.protocol == 'tcp'
                     ? Protocol.tcp
                     : r.protocol == 'udp'
-                    ? Protocol.udp
-                    : Protocol.icmp,
-            direction:
-                r.direction == 'inbound'
-                    ? Direction.inbound
-                    : r.direction == 'outbound'
+                        ? Protocol.udp
+                        : Protocol.icmp,
+            direction: r.direction == 'inbound'
+                ? Direction.inbound
+                : r.direction == 'outbound'
                     ? Direction.outbound
                     : Direction.both,
-            action:
-                r.action == 'allow' ? FilterAction.allow : FilterAction.block,
+            action: r.action == 'allow' ? FilterAction.allow : FilterAction.block,
           ),
         );
       }
       await controller.addAdvancedFilters(rules: filterRules);
-      await controller.printStatus();
       setState(() => _wfpController = controller);
     } catch (error) {
       print('启动失败: $error');
@@ -172,40 +146,17 @@ class _WfpPageState extends State<WfpPage> {
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: rule.localIp,
-                    decoration: const InputDecoration(labelText: '本地IP(可选)'),
-                    onChanged: (v) => setState(() => rule.localIp = v),
+                    initialValue: rule.local,
+                    decoration: const InputDecoration(labelText: '本地IP或网段(可选)'),
+                    onChanged: (v) => setState(() => rule.local = v),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
-                    initialValue: rule.localMask,
-                    decoration: const InputDecoration(
-                      labelText: '本地掩码(可选, 如255.255.255.0)',
-                    ),
-                    onChanged: (v) => setState(() => rule.localMask = v),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    initialValue: rule.remoteIp,
-                    decoration: const InputDecoration(labelText: '远程IP(可选)'),
-                    onChanged: (v) => setState(() => rule.remoteIp = v),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    initialValue: rule.remoteMask,
-                    decoration: const InputDecoration(
-                      labelText: '远程掩码(可选, 如255.255.255.0)',
-                    ),
-                    onChanged: (v) => setState(() => rule.remoteMask = v),
+                    initialValue: rule.remote,
+                    decoration: const InputDecoration(labelText: '远程IP或网段(可选)'),
+                    onChanged: (v) => setState(() => rule.remote = v),
                   ),
                 ),
               ],
@@ -231,14 +182,15 @@ class _WfpPageState extends State<WfpPage> {
             ),
             Row(
               children: [
-                DropdownButton<String>(
+                DropdownButton<String?>(
                   value: rule.protocol,
                   items: const [
+                    DropdownMenuItem(value: null, child: Text('任意协议')),
                     DropdownMenuItem(value: 'tcp', child: Text('TCP')),
                     DropdownMenuItem(value: 'udp', child: Text('UDP')),
                     DropdownMenuItem(value: 'icmp', child: Text('ICMP')),
                   ],
-                  onChanged: (v) => setState(() => rule.protocol = v!),
+                  onChanged: (v) => setState(() => rule.protocol = v),
                 ),
                 const SizedBox(width: 8),
                 DropdownButton<String>(
