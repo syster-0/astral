@@ -36,6 +36,11 @@ class AppDatabase {
       // Android平台使用应用专属目录
       final appDocDir = await getApplicationDocumentsDirectory();
       dbDir = Directory(path.join(appDocDir.path, 'db')).path;
+    } else if (Platform.isLinux) {
+      // Linux平台使用用户数据目录
+      final homeDir = Platform.environment['HOME'] ?? '.';
+      dbDir =
+          Directory(path.join(homeDir, '.local', 'share', 'astral', 'db')).path;
     } else {
       // 其他平台使用可执行文件所在目录
       final executablePath = Platform.resolvedExecutable;

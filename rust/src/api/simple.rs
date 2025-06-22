@@ -1,4 +1,4 @@
-use easytier::common::config::PortForwardConfig;
+use easytier::{common::config::PortForwardConfig, launcher::ConfigSource};
 pub use easytier::{
     common::{
         self,
@@ -35,13 +35,11 @@ use tokio::time::interval;
 use std::env;
 use std::io::{self, Write};
 
-use crate::api::{astral_wfp::{Direction, FilterAction, FilterRule, WfpController}, nt::get_nt_path};
 
 static INSTANCE: Mutex<Option<NetworkInstance>> = Mutex::new(None);
 // 创建一个 NetworkInstance 类型变量 储存当前服务器
 lazy_static! {
     static ref RT: Runtime = Runtime::new().expect("创建 Tokio 运行时失败");
-    static ref RT2: Runtime = Runtime::new().expect("创建 Tokio 运行时失败");
 }
 
 
@@ -211,7 +209,7 @@ async fn create_and_store_network_instance(cfg: TomlConfigLoader) -> Result<(), 
     // 在移动 cfg 之前先获取 ID
     let name = cfg.get_id().to_string();
     // 创建网络实例
-    let mut network = NetworkInstance::new(cfg).set_fetch_node_info(true);
+    let mut network = NetworkInstance::new(cfg,ConfigSource::FFI);
     // 启动网络实例，并处理可能的错误
     handle_event(network.start().unwrap());
     println!("instance {} started", name);
@@ -526,53 +524,6 @@ pub struct Forward{
 
 
 
-pub fn add_advanced_network_filter_async()-> JoinHandle<Result<(), String>>{
-    RT2.spawn(async move {
-
-    let path = r"C:\program files (x86)\microsoft\edge\application\msedge.exe";
-        let nt_path = match get_nt_path(path) {
-            Some(path) => path,
-            None => {
-                eprintln!("转换失败");
-                return Ok(());
-            }
-        };
-
-        let nt_path: &'static str = Box::leak(nt_path.into_boxed_str());
-        // 创建WFP控制器实例
-        let mut wfp_controller = WfpController::new().map_err(|e| e.to_string())?;
-
-        // 初始化WFP引擎
-        if let Err(e) = wfp_controller.initialize() {
-            eprintln!("WFP引擎初始化失败: {}", e);
-            return Err(format!("WFP引擎初始化失败: {}", e));
-        }
-
-        println!("🎯 目标应用程序: {:?}", nt_path);
-        println!("\n🔧 添加禁止所有网络连接的规则...");
-        let advanced_rules = vec![
-            // 禁止 Chrome 的所有网络连接（入站和出站，所有协议、所有端口、所有 IP）
-            FilterRule::new("禁止 Chrome 所有网络连接")
-                .app_path(nt_path)
-        ];
-
-        if let Err(e) = wfp_controller.add_advanced_filters(&advanced_rules) {
-            eprintln!("添加高级过滤规则失败: {}", e);
-            return Err(format!("添加高级过滤规则失败: {}", e));
-        }
-        println!("✅ 规则已添加。");
-        println!("⏳ 等待规则生效...");
-        // 永远等待，直到手动停止
-        future::pending::<()>().await; // 永远等待
-        // 下面这行不会被执行，因为上面 pending 永远不会返回
-        println!("✅ 内部规则已添加。");
-        Ok(())
-    })
-   
-}
-
-
-
 // 创建服务器
 pub fn create_server(
     username: String,
@@ -605,7 +556,7 @@ pub fn create_server(
         cfg.set_hostname(Some(username));
         cfg.set_dhcp(enable_dhcp);
         for c in cidrs {
-            cfg.add_proxy_cidr(c.parse().unwrap());
+            cfg.add_proxy_cidr(c.parse().unwrap(),None);
         }
         let mut old = cfg.get_port_forwards();
 
