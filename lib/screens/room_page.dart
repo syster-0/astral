@@ -116,6 +116,8 @@ class _RoomPageState extends State<RoomPage> {
   Widget _buildRoomsView(BuildContext context, BoxConstraints constraints) {
     final columnCount = _getColumnCount(constraints.maxWidth);
     final rooms = _aps.rooms.watch(context);
+    final selectedRoom = _aps.selectroom.watch(context);
+    final isConnected = _aps.Connec_state.watch(context);
 
     // 如果是重排序模式，使用ReorderableListView
     if (_isReorderMode) {
@@ -133,6 +135,7 @@ class _RoomPageState extends State<RoomPage> {
         },
         itemBuilder: (context, index) {
           final room = rooms[index];
+          final isSelected = selectedRoom?.id == room.id;
           return Card(
             key: ValueKey(room.id),
             margin: const EdgeInsets.symmetric(vertical: 4),
@@ -157,16 +160,19 @@ class _RoomPageState extends State<RoomPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(16.0),
           sliver: SliverMasonryGrid.count(
             crossAxisCount: columnCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
             childCount: rooms.length,
             itemBuilder: (context, index) {
               final room = rooms[index];
+              final isSelected = selectedRoom?.id == room.id;
               return RoomCard(
                 room: room,
+                isSelected: isSelected,
+                connectionState: isSelected ? isConnected : null,
                 onEdit: () {
                   showEditRoomDialog(context, room: room);
                 },
@@ -206,58 +212,61 @@ class _RoomPageState extends State<RoomPage> {
             MouseRegion(
               onEnter: (_) => setState(() => isHovered = true),
               onExit: (_) => setState(() => isHovered = false),
-              child: Card(
-                margin: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-                elevation: isHovered ? 8 : 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color:
-                        isHovered
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minWidth: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Card(
+                  margin: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color:
+                          isHovered
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                      width: 1,
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap:
-                          isConnected == CoState.connected
-                              ? () {
-                                var shareCode = encryptRoomWithJWT(
-                                  selectedRoom,
-                                );
-                                Clipboard.setData(
-                                  ClipboardData(text: shareCode),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('房间信息已复制到剪贴板')),
-                                );
-                              }
-                              : () {},
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        title: Text('当前房间: ${selectedRoom.name}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '连接状态: ${isConnected == CoState.connected
-                                  ? '已连接'
-                                  : isConnected == CoState.connecting
-                                  ? '连接中'
-                                  : '未连接'}${isConnected == CoState.connected ? ' (点击分享房间)' : ''}',
-                            ),
-                          ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: double.infinity,
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap:
+                            isConnected == CoState.connected
+                                ? () {
+                                  var shareCode = encryptRoomWithJWT(
+                                    selectedRoom,
+                                  );
+                                  Clipboard.setData(
+                                    ClipboardData(text: shareCode),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('房间信息已复制到剪贴板')),
+                                  );
+                                }
+                                : () {},
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          title: Text('当前房间: ${selectedRoom.name}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '连接状态: ${isConnected == CoState.connected
+                                    ? '已连接'
+                                    : isConnected == CoState.connecting
+                                    ? '连接中'
+                                    : '未连接'}${isConnected == CoState.connected ? ' (点击分享房间)' : ''}',
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
