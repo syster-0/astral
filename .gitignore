@@ -47,3 +47,7 @@ app.*.map.json
 # 添加至.gitignore
 .env
 *.env
+
+**/example/
+dist/
+.sentry-native/
