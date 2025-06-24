@@ -38,7 +38,7 @@ class ServerMod {
     this.enable = false,
     required this.name,
     required this.url,
-    this.tcp = false,
+    this.tcp = true,
     this.udp = false,
     this.ws = false,
     this.wss = false,
