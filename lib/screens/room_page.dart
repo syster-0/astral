@@ -2,7 +2,6 @@ import 'package:astral/fun/e_d_room.dart';
 import 'package:astral/fun/random_name.dart';
 import 'package:astral/fun/show_add_room_dialog.dart';
 import 'package:astral/fun/show_edit_room_dialog.dart';
-import 'package:astral/fun/error_dialog.dart';
 import 'package:astral/screens/user_page.dart';
 import 'package:astral/wid/room_card.dart';
 import 'package:astral/wid/room_reorder_sheet.dart';
@@ -135,7 +134,6 @@ class _RoomPageState extends State<RoomPage> {
         },
         itemBuilder: (context, index) {
           final room = rooms[index];
-          final isSelected = selectedRoom?.id == room.id;
           return Card(
             key: ValueKey(room.id),
             margin: const EdgeInsets.symmetric(vertical: 4),
@@ -172,7 +170,6 @@ class _RoomPageState extends State<RoomPage> {
               return RoomCard(
                 room: room,
                 isSelected: isSelected,
-                connectionState: isSelected ? isConnected : null,
                 onEdit: () {
                   showEditRoomDialog(context, room: room);
                 },
@@ -245,7 +242,9 @@ class _RoomPageState extends State<RoomPage> {
                                     ClipboardData(text: shareCode),
                                   );
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('房间信息已复制到剪贴板')),
+                                    const SnackBar(
+                                      content: Text('房间信息已复制到剪贴板'),
+                                    ),
                                   );
                                 }
                                 : () {},

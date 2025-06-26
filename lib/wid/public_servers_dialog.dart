@@ -401,15 +401,33 @@ class _PublicServersDialogState extends State<PublicServersDialog>
       if (mounted) {
         setState(() {
           _pingResults[url] = pingResult ?? -1; // 使用-1表示超时
+          // 每次ping完成后立即排序
+          _sortServersByLatency();
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _pingResults[url] = -1; // 异常情况标记为无法连接
+          // 每次ping完成后立即排序
+          _sortServersByLatency();
         });
       }
     }
+  }
+
+  // 根据延迟排序服务器列表
+  void _sortServersByLatency() {
+    _filteredServers.sort((a, b) {
+      final pingA = _pingResults[a['url']!] ?? 999999;
+      final pingB = _pingResults[b['url']!] ?? 999999;
+
+      // 处理超时情况(-1)，将其视为最大延迟
+      final latencyA = pingA == -1 ? 999999 : pingA;
+      final latencyB = pingB == -1 ? 999999 : pingB;
+
+      return latencyA.compareTo(latencyB);
+    });
   }
 }
 

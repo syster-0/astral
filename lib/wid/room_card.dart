@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 class RoomCard extends StatefulWidget {
   final Room room;
   final bool isSelected;
-  final CoState? connectionState;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onShare;
@@ -16,7 +15,6 @@ class RoomCard extends StatefulWidget {
     super.key,
     required this.room,
     this.isSelected = false,
-    this.connectionState,
     this.onEdit,
     this.onDelete,
     this.onShare,
@@ -29,20 +27,6 @@ class RoomCard extends StatefulWidget {
 class _RoomCardState extends State<RoomCard> {
   bool _isHovered = false;
 
-  String _getConnectionStateText() {
-    if (widget.connectionState == null) return '';
-    switch (widget.connectionState) {
-      case CoState.connected:
-        return '已连接 (点击分享房间)';
-      case CoState.connecting:
-        return '连接中';
-      case CoState.idle:
-        return '未连接';
-      default:
-        return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final room = widget.room;
@@ -53,21 +37,23 @@ class _RoomCardState extends State<RoomCard> {
       onExit: (_) => setState(() => _isHovered = false),
       child: Card(
         elevation: _isHovered ? 8 : 4,
-        color: widget.isSelected
-            ? Theme.of(context).brightness == Brightness.dark
-                ? HSLColor.fromColor(colorScheme.primary)
-                    .withLightness(0.10)
-                    .toColor()
-                : HSLColor.fromColor(colorScheme.primary)
-                    .withLightness(0.95)
-                    .toColor()
-            : colorScheme.surfaceContainerLow,
+        color:
+            widget.isSelected
+                ? Theme.of(context).brightness == Brightness.dark
+                    ? HSLColor.fromColor(
+                      colorScheme.primary,
+                    ).withLightness(0.10).toColor()
+                    : HSLColor.fromColor(
+                      colorScheme.primary,
+                    ).withLightness(0.95).toColor()
+                : colorScheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: (widget.isSelected || _isHovered)
-                ? colorScheme.primary
-                : Colors.transparent,
+            color:
+                (widget.isSelected || _isHovered)
+                    ? colorScheme.primary
+                    : Colors.transparent,
             width: (_isHovered && !widget.isSelected) ? 1 : 2,
           ),
         ),
@@ -128,26 +114,28 @@ class _RoomCardState extends State<RoomCard> {
                             onPressed: () {
                               showDialog(
                                 context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('确认删除'),
-                                  content: const Text('确定要删除这个房间吗？'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('取消'),
+                                builder:
+                                    (context) => AlertDialog(
+                                      title: const Text('确认删除'),
+                                      content: const Text('确定要删除这个房间吗？'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.pop(context),
+                                          child: const Text('取消'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            widget.onDelete?.call();
+                                          },
+                                          child: const Text(
+                                            '删除',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        widget.onDelete?.call();
-                                      },
-                                      child: const Text(
-                                        '删除',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               );
                             },
                             padding: EdgeInsets.zero,
@@ -179,13 +167,6 @@ class _RoomCardState extends State<RoomCard> {
                   '类型: ${room.encrypted ? "保护" : "不保护"}',
                   style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
-                if (widget.isSelected && widget.connectionState != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '连接状态: ${_getConnectionStateText()}',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
               ],
             ),
           ),

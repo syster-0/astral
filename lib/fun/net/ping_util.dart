@@ -13,7 +13,11 @@ class PingUtil {
 
       try {
         stopwatch.start();
-        socket = await Socket.connect(hostname, port, timeout: const Duration(seconds: 5));
+        socket = await Socket.connect(
+          hostname,
+          port,
+          timeout: const Duration(seconds: 5),
+        );
         stopwatch.stop();
         final ms = stopwatch.elapsedMilliseconds;
         return ms > 800 ? null : ms;
