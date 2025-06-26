@@ -514,6 +514,9 @@ pub struct FlagsC {
     pub disable_relay_kcp: bool,
     pub proxy_forward_by_system: bool,
     pub accept_dns: bool,
+    pub private_mode: bool,
+    pub enable_quic_proxy: bool,
+    pub disable_quic_input: bool,
 }
 
 pub struct Forward{
@@ -595,6 +598,10 @@ pub fn create_server(
         flags.disable_relay_kcp = flag.disable_relay_kcp;
         flags.proxy_forward_by_system = flag.proxy_forward_by_system;
         flags.accept_dns = flag.accept_dns;
+
+        flags.private_mode= flag.private_mode;
+        flags.enable_quic_proxy= flag.enable_quic_proxy;
+        flags.disable_quic_input=flag.disable_quic_input;
         cfg.set_flags(flags);
         // Configure peer connections with proper error handling
         let mut peer_configs = Vec::new();

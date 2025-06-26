@@ -991,6 +991,33 @@ class _SettingsPageState extends State<SettingsPage> {
                   Aps().updateDisableRelayKcp(value);
                 },
               ),
+
+              SwitchListTile(
+                title: const Text('私有模式'),
+                subtitle: const Text('是否启用私有模式'),
+                value: Aps().privateMode.watch(context),
+                onChanged: (value) {
+                  Aps().updatePrivateMode(value);
+                },
+              ),
+
+              SwitchListTile(
+                title: const Text('启用QUIC代理'),
+                subtitle: const Text('是否启用 QUIC 代理'),
+                value: Aps().enableQuicProxy.watch(context),
+                onChanged: (value) {
+                  Aps().updateEnableQuicProxy(value);
+                },
+              ),
+
+              SwitchListTile(
+                title: const Text('禁用QUIC输入'),
+                subtitle: const Text('是否禁用 QUIC 协议的数据输入'),
+                value: Aps().disableQuicInput.watch(context),
+                onChanged: (value) {
+                  Aps().updateDisableQuicInput(value);
+                },
+              ),
             ],
           ),
         ),

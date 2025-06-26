@@ -19,7 +19,7 @@ class ConnectionManager {
   late String name; // 分组名称
   late List<ConnectionInfo> connections;
   late bool enabled;
- ConnectionManager() {
+  ConnectionManager() {
     name = '';
     connections = [];
     enabled = false;
@@ -51,7 +51,8 @@ class NetConfig {
   List<String> cidrproxy = []; // 代理地址
 
   // 转发配置
-  List<ConnectionManager>  connectionManagers = [];
+  List<ConnectionManager> connectionManagers = [];
+
   /// 默认协议
   String default_protocol = 'tcp'; //x
 
@@ -114,4 +115,13 @@ class NetConfig {
 
   /// accept_dns 魔术DNS
   bool accept_dns = false; //x
+
+  /// 是否启用私有模式
+  bool private_mode = false;
+
+  /// 是否启用QUIC代理
+  bool enable_quic_proxy = false;
+
+  /// 是否禁用QUIC输入
+  bool disable_quic_input = false;
 }

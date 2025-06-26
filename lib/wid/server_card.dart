@@ -39,9 +39,8 @@ class _ServerCardState extends State<ServerCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(
-            color: _hoveredSignal.value 
-                ? colorScheme.primary 
-                : Colors.transparent,
+            color:
+                _hoveredSignal.value ? colorScheme.primary : Colors.transparent,
             width: 1,
           ),
         ),
@@ -98,24 +97,43 @@ class _ServerCardState extends State<ServerCard> {
                   children: [
                     // Ping结果显示逻辑
                     if (_pingSignal.value == null)
-                      const Text(
-                        '连接超时',
-                        style: TextStyle(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
                           color: Colors.red,
-                          fontSize: 12,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '超时',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       )
                     else if (_pingSignal.value == -1)
-                      const Text(
-                        '无法连接',
-                        style: TextStyle(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
                           color: Colors.red,
-                          fontSize: 12,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '超时',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       )
                     else
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         margin: EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: _getPingColor(_pingSignal.value),
@@ -134,7 +152,10 @@ class _ServerCardState extends State<ServerCard> {
                     const SizedBox(width: 8),
                     Text(
                       server.url,
-                      style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -172,7 +193,7 @@ class _ServerCardState extends State<ServerCard> {
     return Chip(
       label: Text(
         label,
-      style: TextStyle(
+        style: TextStyle(
           color:
               isEnabled ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
           fontSize: 12,
@@ -188,8 +209,8 @@ class _ServerCardState extends State<ServerCard> {
   // 修改_getPingColor方法，处理可空int类型
   Color _getPingColor(int? ping) {
     if (ping == null || ping == -1) return Colors.red;
-    return ping < 100 
-        ? Colors.green 
+    return ping < 100
+        ? Colors.green
         : (ping < 300 ? Colors.orange : Colors.red);
   }
 }

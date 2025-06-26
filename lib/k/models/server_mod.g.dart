@@ -146,14 +146,14 @@ ServerMod _serverModDeserialize(
     http: reader.readBoolOrNull(offsets[1]) ?? false,
     https: reader.readBoolOrNull(offsets[2]) ?? false,
     id: id,
-    name: reader.readStringOrNull(offsets[3]) ?? "",
+    name: reader.readString(offsets[3]),
     quic: reader.readBoolOrNull(offsets[4]) ?? false,
     sortOrder: reader.readLongOrNull(offsets[5]) ?? 0,
     srv: reader.readBoolOrNull(offsets[6]) ?? false,
-    tcp: reader.readBoolOrNull(offsets[7]) ?? true,
+    tcp: reader.readBoolOrNull(offsets[7]) ?? false,
     txt: reader.readBoolOrNull(offsets[8]) ?? false,
     udp: reader.readBoolOrNull(offsets[9]) ?? false,
-    url: reader.readStringOrNull(offsets[10]) ?? "",
+    url: reader.readString(offsets[10]),
     wg: reader.readBoolOrNull(offsets[11]) ?? false,
     ws: reader.readBoolOrNull(offsets[12]) ?? false,
     wss: reader.readBoolOrNull(offsets[13]) ?? false,
@@ -175,7 +175,7 @@ P _serverModDeserializeProp<P>(
     case 2:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 3:
-      return (reader.readStringOrNull(offset) ?? "") as P;
+      return (reader.readString(offset)) as P;
     case 4:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
@@ -183,13 +183,13 @@ P _serverModDeserializeProp<P>(
     case 6:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 7:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 8:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 9:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 10:
-      return (reader.readStringOrNull(offset) ?? "") as P;
+      return (reader.readString(offset)) as P;
     case 11:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 12:

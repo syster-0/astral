@@ -3,23 +3,21 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:astral/k/app_s/aps.dart';
-import 'package:flutter/material.dart';
+import 'package:astral/fun/net/ping_util.dart';
 
 // 公共服务器对话框组件
 class PublicServersDialog extends StatefulWidget {
   final Function(String, String) onAddServer;
 
-  const PublicServersDialog({
-    Key? key,
-    required this.onAddServer,
-  }) : super(key: key);
+  const PublicServersDialog({Key? key, required this.onAddServer})
+    : super(key: key);
 
   @override
   State<PublicServersDialog> createState() => _PublicServersDialogState();
 
   // 显示公共服务器对话框
   static Future<void> show(
-    BuildContext context, 
+    BuildContext context,
     Function(String, String) onAddServer,
   ) async {
     // 根据屏幕宽度选择显示方式
@@ -27,18 +25,17 @@ class PublicServersDialog extends StatefulWidget {
       // PC端显示为对话框
       await showDialog(
         context: context,
-        builder: (context) => Hero(
-          tag: 'public_servers_dialog',
-          child: Dialog(
-            child: SizedBox(
-              width: 400, // PC端统一宽度
-              height: 600, // 统一高度
-              child: PublicServersDialog(
-                onAddServer: onAddServer,
+        builder:
+            (context) => Hero(
+              tag: 'public_servers_dialog',
+              child: Dialog(
+                child: SizedBox(
+                  width: 400, // PC端统一宽度
+                  height: 600, // 统一高度
+                  child: PublicServersDialog(onAddServer: onAddServer),
+                ),
               ),
             ),
-          ),
-        ),
       );
     } else {
       // 移动端显示为底部弹窗
@@ -46,25 +43,25 @@ class PublicServersDialog extends StatefulWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => Hero(
-          tag: 'public_servers_dialog',
-          child: DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.9,
-            builder: (context, scrollController) => Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-              ),
-              child: PublicServersDialog(
-                onAddServer: onAddServer,
+        builder:
+            (context) => Hero(
+              tag: 'public_servers_dialog',
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.7,
+                minChildSize: 0.5,
+                maxChildSize: 0.9,
+                builder:
+                    (context, scrollController) => Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
+                        ),
+                      ),
+                      child: PublicServersDialog(onAddServer: onAddServer),
+                    ),
               ),
             ),
-          ),
-        ),
       );
     }
   }
@@ -78,12 +75,18 @@ class PublicServersDialog extends StatefulWidget {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
-        return jsonData.map((item) => {
-          'name': item['name'] as String,
-          'url': item['url'] as String,
-        }).toList();
+        return jsonData
+            .map(
+              (item) => {
+                'name': item['name'] as String,
+                'url': item['url'] as String,
+              },
+            )
+            .toList();
       } else {
-        throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
+        throw Exception(
+          'HTTP ${response.statusCode}: ${response.reasonPhrase}',
+        );
       }
     } catch (e) {
       // 添加详细的错误日志
@@ -93,13 +96,18 @@ class PublicServersDialog extends StatefulWidget {
   }
 }
 
-class _PublicServersDialogState extends State<PublicServersDialog> with TickerProviderStateMixin {
+class _PublicServersDialogState extends State<PublicServersDialog>
+    with TickerProviderStateMixin {
   List<Map<String, String>> _filteredServers = [];
   bool _isLoading = true;
   String? _error;
   final _aps = Aps();
   final Map<String, AnimationController> _animationControllers = {};
   final Map<String, Animation<double>> _scaleAnimations = {};
+
+  // 公共服务器延迟结果
+  final Map<String, int?> _pingResults = {};
+  Timer? _pingTimer;
 
   @override
   void initState() {
@@ -113,6 +121,8 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
     for (var controller in _animationControllers.values) {
       controller.dispose();
     }
+    // 停止ping定时器
+    _pingTimer?.cancel();
     super.dispose();
   }
 
@@ -126,11 +136,8 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
       final animation = Tween<double>(
         begin: 1.0,
         end: 0.0,
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeInOut,
-      ));
-      
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
+
       _animationControllers[serverUrl] = controller;
       _scaleAnimations[serverUrl] = animation;
     }
@@ -155,23 +162,30 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
       }
 
       // 实时获取本地服务器列表进行过滤
-      final existingUrls = _aps.servers.value.map((server) => server.url.trim().toLowerCase()).toSet();
-      
+      final existingUrls =
+          _aps.servers.value
+              .map((server) => server.url.trim().toLowerCase())
+              .toSet();
+
       // 过滤掉已存在的服务器
-      final filteredServers = allServers.where((server) {
-        final serverUrl = server['url']?.trim().toLowerCase() ?? '';
-        return serverUrl.isNotEmpty && !existingUrls.contains(serverUrl);
-      }).toList();
+      final filteredServers =
+          allServers.where((server) {
+            final serverUrl = server['url']?.trim().toLowerCase() ?? '';
+            return serverUrl.isNotEmpty && !existingUrls.contains(serverUrl);
+          }).toList();
 
       setState(() {
         _filteredServers = filteredServers;
         _isLoading = false;
       });
-      
+
       // 为每个服务器创建动画控制器
       for (var server in filteredServers) {
         _createAnimationController(server['url']!);
       }
+
+      // 启动ping测试
+      _startPingTest();
     } catch (e) {
       setState(() {
         _error = '获取服务器列表失败: $e';
@@ -189,17 +203,13 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
       children: [
         // 标题栏
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 14, 8, 16), 
+          padding: const EdgeInsets.fromLTRB(24, 14, 8, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.public,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
+                  Icon(Icons.public, color: colorScheme.primary, size: 24),
                   const SizedBox(width: 8),
                   Text(
                     '公共服务器',
@@ -225,9 +235,7 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
         ),
 
         // 服务器列表 - 使用 Expanded 填充剩余空间
-        Expanded(
-          child: _buildContent(),
-        ),
+        Expanded(child: _buildContent()),
 
         // 底部按钮
         Padding(
@@ -270,11 +278,7 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.red,
-            ),
+            Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
@@ -326,21 +330,17 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
     }
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ), // 统一边距
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), // 统一边距
       child: ListView.builder(
         padding: EdgeInsets.zero,
         itemCount: _filteredServers.length,
         itemBuilder: (context, index) {
           final server = _filteredServers[index];
           final serverUrl = server['url']!;
-          
+
           // 确保动画控制器存在
           _createAnimationController(serverUrl);
-          
+
           return AnimatedBuilder(
             animation: _scaleAnimations[serverUrl]!,
             builder: (context, child) {
@@ -352,6 +352,7 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: _PublicServerItem(
                       server: server,
+                      pingResult: _pingResults[server['url']!],
                       onAdd: () => _addServer(server['name']!, server['url']!),
                     ),
                   ),
@@ -368,28 +369,60 @@ class _PublicServersDialogState extends State<PublicServersDialog> with TickerPr
   void _addServer(String name, String url) {
     // 调用外部回调添加服务器
     widget.onAddServer(name, url);
-    
+
     // 显示成功提示
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('已添加服务器: $name')),
-    );
-    
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('已添加服务器: $name')));
+
     // 从当前列表中移除已添加的服务器
     setState(() {
-      _filteredServers.removeWhere((server) => 
-        server['url']?.trim().toLowerCase() == url.trim().toLowerCase());
+      _filteredServers.removeWhere(
+        (server) =>
+            server['url']?.trim().toLowerCase() == url.trim().toLowerCase(),
+      );
     });
+  }
+
+  // 开始ping测试
+  void _startPingTest() {
+    _pingTimer?.cancel();
+
+    // 为所有服务器运行一次ping测试
+    for (var server in _filteredServers) {
+      _pingServer(server['url']!);
+    }
+  }
+
+  // ping单个服务器
+  Future<void> _pingServer(String url) async {
+    try {
+      final pingResult = await PingUtil.ping(url);
+      if (mounted) {
+        setState(() {
+          _pingResults[url] = pingResult ?? -1; // 使用-1表示超时
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _pingResults[url] = -1; // 异常情况标记为无法连接
+        });
+      }
+    }
   }
 }
 
 class _PublicServerItem extends StatefulWidget {
   final Map<String, String> server;
   final VoidCallback onAdd;
+  final int? pingResult;
 
   const _PublicServerItem({
     Key? key,
     required this.server,
     required this.onAdd,
+    this.pingResult,
   }) : super(key: key);
 
   @override
@@ -403,7 +436,7 @@ class _PublicServerItemState extends State<_PublicServerItem> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return MouseRegion(
       onEnter: (_) {
         setState(() {
@@ -418,9 +451,10 @@ class _PublicServerItemState extends State<_PublicServerItem> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16), // 统一圆角
-          color: (theme.brightness == Brightness.light)
-              ? colorScheme.surfaceVariant.withOpacity(1.0)
-              : colorScheme.surfaceVariant.withOpacity(1.0), 
+          color:
+              (theme.brightness == Brightness.light)
+                  ? colorScheme.surfaceVariant.withOpacity(1.0)
+                  : colorScheme.surfaceVariant.withOpacity(1.0),
           border: Border.all(
             color: _isHovered ? colorScheme.primary : Colors.transparent,
             width: 1.5,
@@ -431,17 +465,39 @@ class _PublicServerItemState extends State<_PublicServerItem> {
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             title: Text(
-              widget.server['name']!, 
+              widget.server['name']!,
               style: TextStyle(
                 fontSize: 16, // 统一字体大小
-                color: colorScheme.onSurface
-              )
+                color: colorScheme.onSurface,
+              ),
             ),
-            subtitle: Text(
-              widget.server['url']!,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant
-              )
+            subtitle: Row(
+              children: [
+                // 延迟显示
+                if (widget.pingResult != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: _getPingColor(widget.pingResult),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      widget.pingResult == -1 ? '超时' : '${widget.pingResult}ms',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ],
+                Expanded(
+                  child: Text(
+                    widget.server['url']!,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ],
             ),
             trailing: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -450,7 +506,10 @@ class _PublicServerItemState extends State<_PublicServerItem> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -462,5 +521,13 @@ class _PublicServerItemState extends State<_PublicServerItem> {
         ),
       ),
     );
+  }
+
+  // 根据ping结果获取颜色
+  Color _getPingColor(int? ping) {
+    if (ping == null || ping == -1) return Colors.red;
+    return ping < 100
+        ? Colors.green
+        : (ping < 300 ? Colors.orange : Colors.red);
   }
 }

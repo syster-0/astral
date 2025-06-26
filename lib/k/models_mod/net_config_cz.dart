@@ -385,6 +385,57 @@ class NetConfigRepository {
     return config?.disable_p2p ?? false;
   }
 
+  // 更新私有模式设置
+  Future<void> updatePrivateMode(bool privateMode) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null) {
+      config.private_mode = privateMode;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+
+  // 获取私有模式设置
+  Future<bool> getPrivateMode() async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    return config?.private_mode ?? false;
+  }
+
+  // 更新QUIC代理设置
+  Future<void> updateEnableQuicProxy(bool enableQuicProxy) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null) {
+      config.enable_quic_proxy = enableQuicProxy;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+
+  // 获取QUIC代理设置
+  Future<bool> getEnableQuicProxy() async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    return config?.enable_quic_proxy ?? false;
+  }
+
+  // 更新禁用QUIC输入设置
+  Future<void> updateDisableQuicInput(bool disableQuicInput) async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    if (config != null) {
+      config.disable_quic_input = disableQuicInput;
+      await _isar.writeTxn(() async {
+        await _isar.netConfigs.put(config);
+      });
+    }
+  }
+
+  // 获取禁用QUIC输入设置
+  Future<bool> getDisableQuicInput() async {
+    NetConfig? config = await _isar.netConfigs.get(1);
+    return config?.disable_quic_input ?? false;
+  }
+
   // 更新中继所有对等RPC设置
   Future<void> updateRelayAllPeerRpc(bool relayAllPeerRpc) async {
     NetConfig? config = await _isar.netConfigs.get(1);
@@ -554,7 +605,7 @@ class NetConfigRepository {
     return config?.accept_dns ?? false;
   }
 
-    // 获取所有连接管理器
+  // 获取所有连接管理器
   Future<List<ConnectionManager>> getConnectionManagers() async {
     NetConfig? config = await _isar.netConfigs.get(1);
     return config?.connectionManagers ?? [];
@@ -571,10 +622,16 @@ class NetConfigRepository {
       });
     }
   }
+
   // 更新连接管理器
-  Future<void> updateConnectionManager(int index, ConnectionManager manager) async {
+  Future<void> updateConnectionManager(
+    int index,
+    ConnectionManager manager,
+  ) async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+    if (config != null &&
+        index >= 0 &&
+        index < config.connectionManagers.length) {
       // Create a new list with the updated item
       List<ConnectionManager> newList = List.from(config.connectionManagers);
       newList[index] = manager;
@@ -584,10 +641,13 @@ class NetConfigRepository {
       });
     }
   }
+
   // 删除连接管理器
   Future<void> removeConnectionManager(int index) async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+    if (config != null &&
+        index >= 0 &&
+        index < config.connectionManagers.length) {
       // Create a new list without the item at the specified index
       List<ConnectionManager> newList = List.from(config.connectionManagers);
       newList.removeAt(index);
@@ -597,15 +657,17 @@ class NetConfigRepository {
       });
     }
   }
+
   // 更新连接管理器启用状态
   Future<void> updateConnectionManagerEnabled(int index, bool enabled) async {
     NetConfig? config = await _isar.netConfigs.get(1);
-    if (config != null && index >= 0 && index < config.connectionManagers.length) {
+    if (config != null &&
+        index >= 0 &&
+        index < config.connectionManagers.length) {
       config.connectionManagers[index].enabled = enabled;
       await _isar.writeTxn(() async {
         await _isar.netConfigs.put(config);
       });
     }
   }
-
 }

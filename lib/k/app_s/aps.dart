@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:async'; 
-import 'package:flutter/widgets.dart'; 
-import 'package:astral/fun/net/ping_util.dart'; 
+import 'dart:async';
+import 'package:flutter/widgets.dart';
+import 'package:astral/fun/net/ping_util.dart';
 
 import 'package:astral/fun/random_name.dart';
 import 'package:astral/k/models/net_config.dart';
@@ -101,12 +101,12 @@ class Aps {
     PlayerName.value = await AppDatabase().AllSettings.getPlayerName();
     listenList.value = await AppDatabase().AllSettings.getListenList();
     servers.value = await AppDatabase().ServerSetting.getAllServers();
-    
+
     // 确保服务器列表初始化后启动Ping测试
     if (servers.value.isNotEmpty) {
       _startPingAllServers();
     }
-    
+
     userListSimple.value = await AppDatabase().AllSettings.getUserMinimal();
     closeMinimize.value = await AppDatabase().AllSettings.getCloseMinimize();
     customVpn.value = await AppDatabase().AllSettings.getCustomVpn();
@@ -372,6 +372,9 @@ class Aps {
   final Signal<bool> useSmoltcp = signal(false); // smoltcp网络栈设置
   final Signal<String> relayNetworkWhitelist = signal(''); // 中继网络白名单
   final Signal<bool> disableP2p = signal(false); // P2P禁用设置
+  final Signal<bool> privateMode = signal(false); // 私有模式设置
+  final Signal<bool> enableQuicProxy = signal(false); // QUIC代理设置
+  final Signal<bool> disableQuicInput = signal(false); // 禁用QUIC输入设置
   final Signal<bool> relayAllPeerRpc = signal(false); // 中继所有对等RPC设置
   final Signal<bool> disableUdpHolePunching = signal(false); // UDP打洞禁用设置
   final Signal<bool> multiThread = signal(true); // 多线程设置
@@ -439,6 +442,13 @@ class Aps {
     relayNetworkWhitelist.value =
         await database.netConfigSetting.getRelayNetworkWhitelist(); // 中继网络白名单
     disableP2p.value = await database.netConfigSetting.getDisableP2p(); // P2P禁用
+    privateMode.value =
+        await database.netConfigSetting.getPrivateMode(); // 私有模式
+    enableQuicProxy.value =
+        await database.netConfigSetting.getEnableQuicProxy(); // QUIC代理设置
+    disableQuicInput.value =
+        await database.netConfigSetting.getDisableQuicInput(); // 禁用QUIC输入设置
+
     relayAllPeerRpc.value =
         await database.netConfigSetting.getRelayAllPeerRpc(); // 中继所有对等RPC
     disableUdpHolePunching.value =
@@ -666,6 +676,24 @@ class Aps {
     await AppDatabase().netConfigSetting.updateAcceptDns(value);
   }
 
+  // 更新私有模式设置
+  Future<void> updatePrivateMode(bool value) async {
+    privateMode.value = value;
+    await AppDatabase().netConfigSetting.updatePrivateMode(value);
+  }
+
+  // 更新QUIC代理设置
+  Future<void> updateEnableQuicProxy(bool value) async {
+    enableQuicProxy.value = value;
+    await AppDatabase().netConfigSetting.updateEnableQuicProxy(value);
+  }
+
+  // 更新禁用QUIC输入设置
+  Future<void> updateDisableQuicInput(bool value) async {
+    disableQuicInput.value = value;
+    await AppDatabase().netConfigSetting.updateDisableQuicInput(value);
+  }
+
   /// 房间列表
   final Signal<List<Room>> rooms = signal([]);
 
@@ -753,7 +781,7 @@ class Aps {
         timer.cancel();
         return;
       }
-      
+
       for (var server in servers.value) {
         pingServerOnce(server);
       }
@@ -897,10 +925,10 @@ class Aps {
     server.enable = enable;
     await AppDatabase().ServerSetting.updateServer(server);
     servers.value = await AppDatabase().ServerSetting.getAllServers();
-    
+
     // 无论启用状态如何都开始Ping测试
     pingServerOnce(server);
-    
+
     return AppDatabase().ServerSetting.getAllServers();
   }
 }

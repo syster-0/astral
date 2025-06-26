@@ -117,7 +117,8 @@ class _ConnectButtonState extends State<ConnectButton>
     if (rom == null) return;
 
     // 检查服务器列表是否为空
-    final enabledServers = Aps().servers.value.where((server) => server.enable).toList();
+    final enabledServers =
+        Aps().servers.value.where((server) => server.enable).toList();
     if (enabledServers.isEmpty) {
       // 显示提示信息
       if (mounted) {
@@ -255,6 +256,9 @@ class _ConnectButtonState extends State<ConnectButton>
     disableRelayKcp: aps.disableRelayKcp.value,
     proxyForwardBySystem: aps.proxyForwardBySystem.value,
     acceptDns: aps.accept_dns.value,
+    privateMode: aps.privateMode.value,
+    enableQuicProxy: aps.enableQuicProxy.value,
+    disableQuicInput: aps.disableQuicInput.value,
   );
 
   Future<void> _beginConnectionProcess() async {
@@ -273,7 +277,7 @@ class _ConnectButtonState extends State<ConnectButton>
   void _setupConnectionTimeout() {
     _timeoutTimer = Timer(Duration(seconds: connectionTimeoutSeconds), () {
       if (Aps().Connec_state.value == CoState.connecting) {
-       debugPrint("连接超时");
+        debugPrint("连接超时");
         _disconnect();
       }
     });
@@ -386,7 +390,7 @@ class _ConnectButtonState extends State<ConnectButton>
       _startConnection();
     } else if (Aps().Connec_state.value == CoState.connected) {
       // 如果当前是已连接状态，则断开连接
-     debugPrint("断开连接");
+      debugPrint("断开连接");
       _disconnect();
     }
   }

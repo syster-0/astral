@@ -68,113 +68,128 @@ const NetConfigSchema = CollectionSchema(
       name: r'disable_p2p',
       type: IsarType.bool,
     ),
-    r'disable_relay_kcp': PropertySchema(
+    r'disable_quic_input': PropertySchema(
       id: 10,
+      name: r'disable_quic_input',
+      type: IsarType.bool,
+    ),
+    r'disable_relay_kcp': PropertySchema(
+      id: 11,
       name: r'disable_relay_kcp',
       type: IsarType.bool,
     ),
     r'disable_udp_hole_punching': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'disable_udp_hole_punching',
       type: IsarType.bool,
     ),
     r'enable_encryption': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'enable_encryption',
       type: IsarType.bool,
     ),
     r'enable_exit_node': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'enable_exit_node',
       type: IsarType.bool,
     ),
     r'enable_ipv6': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'enable_ipv6',
       type: IsarType.bool,
     ),
     r'enable_kcp_proxy': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'enable_kcp_proxy',
       type: IsarType.bool,
     ),
+    r'enable_quic_proxy': PropertySchema(
+      id: 17,
+      name: r'enable_quic_proxy',
+      type: IsarType.bool,
+    ),
     r'hostname': PropertySchema(
-      id: 16,
+      id: 18,
       name: r'hostname',
       type: IsarType.string,
     ),
     r'instance_name': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'instance_name',
       type: IsarType.string,
     ),
     r'ipv4': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'ipv4',
       type: IsarType.string,
     ),
     r'latency_first': PropertySchema(
-      id: 19,
+      id: 21,
       name: r'latency_first',
       type: IsarType.bool,
     ),
     r'listeners': PropertySchema(
-      id: 20,
+      id: 22,
       name: r'listeners',
       type: IsarType.stringList,
     ),
     r'mtu': PropertySchema(
-      id: 21,
+      id: 23,
       name: r'mtu',
       type: IsarType.long,
     ),
     r'multi_thread': PropertySchema(
-      id: 22,
+      id: 24,
       name: r'multi_thread',
       type: IsarType.bool,
     ),
     r'netns': PropertySchema(
-      id: 23,
+      id: 25,
       name: r'netns',
       type: IsarType.string,
     ),
     r'network_name': PropertySchema(
-      id: 24,
+      id: 26,
       name: r'network_name',
       type: IsarType.string,
     ),
     r'network_secret': PropertySchema(
-      id: 25,
+      id: 27,
       name: r'network_secret',
       type: IsarType.string,
     ),
     r'no_tun': PropertySchema(
-      id: 26,
+      id: 28,
       name: r'no_tun',
       type: IsarType.bool,
     ),
     r'peer': PropertySchema(
-      id: 27,
+      id: 29,
       name: r'peer',
       type: IsarType.stringList,
     ),
+    r'private_mode': PropertySchema(
+      id: 30,
+      name: r'private_mode',
+      type: IsarType.bool,
+    ),
     r'proxy_forward_by_system': PropertySchema(
-      id: 28,
+      id: 31,
       name: r'proxy_forward_by_system',
       type: IsarType.bool,
     ),
     r'relay_all_peer_rpc': PropertySchema(
-      id: 29,
+      id: 32,
       name: r'relay_all_peer_rpc',
       type: IsarType.bool,
     ),
     r'relay_network_whitelist': PropertySchema(
-      id: 30,
+      id: 33,
       name: r'relay_network_whitelist',
       type: IsarType.string,
     ),
     r'use_smoltcp': PropertySchema(
-      id: 31,
+      id: 34,
       name: r'use_smoltcp',
       type: IsarType.bool,
     )
@@ -265,28 +280,31 @@ void _netConfigSerialize(
   writer.writeBool(offsets[7], object.dhcp);
   writer.writeBool(offsets[8], object.disable_kcp_input);
   writer.writeBool(offsets[9], object.disable_p2p);
-  writer.writeBool(offsets[10], object.disable_relay_kcp);
-  writer.writeBool(offsets[11], object.disable_udp_hole_punching);
-  writer.writeBool(offsets[12], object.enable_encryption);
-  writer.writeBool(offsets[13], object.enable_exit_node);
-  writer.writeBool(offsets[14], object.enable_ipv6);
-  writer.writeBool(offsets[15], object.enable_kcp_proxy);
-  writer.writeString(offsets[16], object.hostname);
-  writer.writeString(offsets[17], object.instance_name);
-  writer.writeString(offsets[18], object.ipv4);
-  writer.writeBool(offsets[19], object.latency_first);
-  writer.writeStringList(offsets[20], object.listeners);
-  writer.writeLong(offsets[21], object.mtu);
-  writer.writeBool(offsets[22], object.multi_thread);
-  writer.writeString(offsets[23], object.netns);
-  writer.writeString(offsets[24], object.network_name);
-  writer.writeString(offsets[25], object.network_secret);
-  writer.writeBool(offsets[26], object.no_tun);
-  writer.writeStringList(offsets[27], object.peer);
-  writer.writeBool(offsets[28], object.proxy_forward_by_system);
-  writer.writeBool(offsets[29], object.relay_all_peer_rpc);
-  writer.writeString(offsets[30], object.relay_network_whitelist);
-  writer.writeBool(offsets[31], object.use_smoltcp);
+  writer.writeBool(offsets[10], object.disable_quic_input);
+  writer.writeBool(offsets[11], object.disable_relay_kcp);
+  writer.writeBool(offsets[12], object.disable_udp_hole_punching);
+  writer.writeBool(offsets[13], object.enable_encryption);
+  writer.writeBool(offsets[14], object.enable_exit_node);
+  writer.writeBool(offsets[15], object.enable_ipv6);
+  writer.writeBool(offsets[16], object.enable_kcp_proxy);
+  writer.writeBool(offsets[17], object.enable_quic_proxy);
+  writer.writeString(offsets[18], object.hostname);
+  writer.writeString(offsets[19], object.instance_name);
+  writer.writeString(offsets[20], object.ipv4);
+  writer.writeBool(offsets[21], object.latency_first);
+  writer.writeStringList(offsets[22], object.listeners);
+  writer.writeLong(offsets[23], object.mtu);
+  writer.writeBool(offsets[24], object.multi_thread);
+  writer.writeString(offsets[25], object.netns);
+  writer.writeString(offsets[26], object.network_name);
+  writer.writeString(offsets[27], object.network_secret);
+  writer.writeBool(offsets[28], object.no_tun);
+  writer.writeStringList(offsets[29], object.peer);
+  writer.writeBool(offsets[30], object.private_mode);
+  writer.writeBool(offsets[31], object.proxy_forward_by_system);
+  writer.writeBool(offsets[32], object.relay_all_peer_rpc);
+  writer.writeString(offsets[33], object.relay_network_whitelist);
+  writer.writeBool(offsets[34], object.use_smoltcp);
 }
 
 NetConfig _netConfigDeserialize(
@@ -312,29 +330,32 @@ NetConfig _netConfigDeserialize(
   object.dhcp = reader.readBool(offsets[7]);
   object.disable_kcp_input = reader.readBool(offsets[8]);
   object.disable_p2p = reader.readBool(offsets[9]);
-  object.disable_relay_kcp = reader.readBool(offsets[10]);
-  object.disable_udp_hole_punching = reader.readBool(offsets[11]);
-  object.enable_encryption = reader.readBool(offsets[12]);
-  object.enable_exit_node = reader.readBool(offsets[13]);
-  object.enable_ipv6 = reader.readBool(offsets[14]);
-  object.enable_kcp_proxy = reader.readBool(offsets[15]);
-  object.hostname = reader.readString(offsets[16]);
+  object.disable_quic_input = reader.readBool(offsets[10]);
+  object.disable_relay_kcp = reader.readBool(offsets[11]);
+  object.disable_udp_hole_punching = reader.readBool(offsets[12]);
+  object.enable_encryption = reader.readBool(offsets[13]);
+  object.enable_exit_node = reader.readBool(offsets[14]);
+  object.enable_ipv6 = reader.readBool(offsets[15]);
+  object.enable_kcp_proxy = reader.readBool(offsets[16]);
+  object.enable_quic_proxy = reader.readBool(offsets[17]);
+  object.hostname = reader.readString(offsets[18]);
   object.id = id;
-  object.instance_name = reader.readString(offsets[17]);
-  object.ipv4 = reader.readString(offsets[18]);
-  object.latency_first = reader.readBool(offsets[19]);
-  object.listeners = reader.readStringList(offsets[20]) ?? [];
-  object.mtu = reader.readLong(offsets[21]);
-  object.multi_thread = reader.readBool(offsets[22]);
-  object.netns = reader.readString(offsets[23]);
-  object.network_name = reader.readString(offsets[24]);
-  object.network_secret = reader.readString(offsets[25]);
-  object.no_tun = reader.readBool(offsets[26]);
-  object.peer = reader.readStringList(offsets[27]) ?? [];
-  object.proxy_forward_by_system = reader.readBool(offsets[28]);
-  object.relay_all_peer_rpc = reader.readBool(offsets[29]);
-  object.relay_network_whitelist = reader.readString(offsets[30]);
-  object.use_smoltcp = reader.readBool(offsets[31]);
+  object.instance_name = reader.readString(offsets[19]);
+  object.ipv4 = reader.readString(offsets[20]);
+  object.latency_first = reader.readBool(offsets[21]);
+  object.listeners = reader.readStringList(offsets[22]) ?? [];
+  object.mtu = reader.readLong(offsets[23]);
+  object.multi_thread = reader.readBool(offsets[24]);
+  object.netns = reader.readString(offsets[25]);
+  object.network_name = reader.readString(offsets[26]);
+  object.network_secret = reader.readString(offsets[27]);
+  object.no_tun = reader.readBool(offsets[28]);
+  object.peer = reader.readStringList(offsets[29]) ?? [];
+  object.private_mode = reader.readBool(offsets[30]);
+  object.proxy_forward_by_system = reader.readBool(offsets[31]);
+  object.relay_all_peer_rpc = reader.readBool(offsets[32]);
+  object.relay_network_whitelist = reader.readString(offsets[33]);
+  object.use_smoltcp = reader.readBool(offsets[34]);
   return object;
 }
 
@@ -384,36 +405,42 @@ P _netConfigDeserializeProp<P>(
     case 15:
       return (reader.readBool(offset)) as P;
     case 16:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 17:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 18:
       return (reader.readString(offset)) as P;
     case 19:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 20:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readString(offset)) as P;
     case 21:
-      return (reader.readLong(offset)) as P;
-    case 22:
       return (reader.readBool(offset)) as P;
+    case 22:
+      return (reader.readStringList(offset) ?? []) as P;
     case 23:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 24:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 25:
       return (reader.readString(offset)) as P;
     case 26:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 27:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readString(offset)) as P;
     case 28:
       return (reader.readBool(offset)) as P;
     case 29:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 30:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 31:
+      return (reader.readBool(offset)) as P;
+    case 32:
+      return (reader.readBool(offset)) as P;
+    case 33:
+      return (reader.readString(offset)) as P;
+    case 34:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1198,6 +1225,16 @@ extension NetConfigQueryFilter
   }
 
   QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      disable_quic_inputEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'disable_quic_input',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
       disable_relay_kcpEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1252,6 +1289,16 @@ extension NetConfigQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'enable_kcp_proxy',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
+      enable_quic_proxyEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'enable_quic_proxy',
         value: value,
       ));
     });
@@ -2634,6 +2681,16 @@ extension NetConfigQueryFilter
     });
   }
 
+  QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition> private_modeEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'private_mode',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<NetConfig, NetConfig, QAfterFilterCondition>
       proxy_forward_by_systemEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -2916,6 +2973,19 @@ extension NetConfigQuerySortBy on QueryBuilder<NetConfig, NetConfig, QSortBy> {
     });
   }
 
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByDisable_quic_input() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disable_quic_input', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy>
+      sortByDisable_quic_inputDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disable_quic_input', Sort.desc);
+    });
+  }
+
   QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByDisable_relay_kcp() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'disable_relay_kcp', Sort.asc);
@@ -2991,6 +3061,19 @@ extension NetConfigQuerySortBy on QueryBuilder<NetConfig, NetConfig, QSortBy> {
       sortByEnable_kcp_proxyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enable_kcp_proxy', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByEnable_quic_proxy() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enable_quic_proxy', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy>
+      sortByEnable_quic_proxyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enable_quic_proxy', Sort.desc);
     });
   }
 
@@ -3111,6 +3194,18 @@ extension NetConfigQuerySortBy on QueryBuilder<NetConfig, NetConfig, QSortBy> {
   QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByNo_tunDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'no_tun', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByPrivate_mode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'private_mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> sortByPrivate_modeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'private_mode', Sort.desc);
     });
   }
 
@@ -3269,6 +3364,19 @@ extension NetConfigQuerySortThenBy
     });
   }
 
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> thenByDisable_quic_input() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disable_quic_input', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy>
+      thenByDisable_quic_inputDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disable_quic_input', Sort.desc);
+    });
+  }
+
   QueryBuilder<NetConfig, NetConfig, QAfterSortBy> thenByDisable_relay_kcp() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'disable_relay_kcp', Sort.asc);
@@ -3344,6 +3452,19 @@ extension NetConfigQuerySortThenBy
       thenByEnable_kcp_proxyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enable_kcp_proxy', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> thenByEnable_quic_proxy() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enable_quic_proxy', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy>
+      thenByEnable_quic_proxyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enable_quic_proxy', Sort.desc);
     });
   }
 
@@ -3479,6 +3600,18 @@ extension NetConfigQuerySortThenBy
     });
   }
 
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> thenByPrivate_mode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'private_mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QAfterSortBy> thenByPrivate_modeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'private_mode', Sort.desc);
+    });
+  }
+
   QueryBuilder<NetConfig, NetConfig, QAfterSortBy>
       thenByProxy_forward_by_system() {
     return QueryBuilder.apply(this, (query) {
@@ -3592,6 +3725,12 @@ extension NetConfigQueryWhereDistinct
     });
   }
 
+  QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByDisable_quic_input() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'disable_quic_input');
+    });
+  }
+
   QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByDisable_relay_kcp() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'disable_relay_kcp');
@@ -3626,6 +3765,12 @@ extension NetConfigQueryWhereDistinct
   QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByEnable_kcp_proxy() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'enable_kcp_proxy');
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByEnable_quic_proxy() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'enable_quic_proxy');
     });
   }
 
@@ -3706,6 +3851,12 @@ extension NetConfigQueryWhereDistinct
   QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByPeer() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'peer');
+    });
+  }
+
+  QueryBuilder<NetConfig, NetConfig, QDistinct> distinctByPrivate_mode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'private_mode');
     });
   }
 
@@ -3806,6 +3957,12 @@ extension NetConfigQueryProperty
     });
   }
 
+  QueryBuilder<NetConfig, bool, QQueryOperations> disable_quic_inputProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'disable_quic_input');
+    });
+  }
+
   QueryBuilder<NetConfig, bool, QQueryOperations> disable_relay_kcpProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'disable_relay_kcp');
@@ -3840,6 +3997,12 @@ extension NetConfigQueryProperty
   QueryBuilder<NetConfig, bool, QQueryOperations> enable_kcp_proxyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'enable_kcp_proxy');
+    });
+  }
+
+  QueryBuilder<NetConfig, bool, QQueryOperations> enable_quic_proxyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'enable_quic_proxy');
     });
   }
 
@@ -3912,6 +4075,12 @@ extension NetConfigQueryProperty
   QueryBuilder<NetConfig, List<String>, QQueryOperations> peerProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'peer');
+    });
+  }
+
+  QueryBuilder<NetConfig, bool, QQueryOperations> private_modeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'private_mode');
     });
   }
 
