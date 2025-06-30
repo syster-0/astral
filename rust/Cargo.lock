@@ -3729,7 +3729,7 @@ dependencies = [
  "tokio",
  "widestring",
  "winapi",
- "windows 0.48.0",
+ "windows 0.52.0",
  "windows-sys 0.52.0",
 ]
 
