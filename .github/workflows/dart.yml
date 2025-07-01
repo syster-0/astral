@@ -69,38 +69,11 @@ jobs:
           if_no_artifact_found: warn
       - run: mv ./downloaded/universal/* ./downloaded/universal/astral-universal.apk
 
-      - name: 📦 下载 Windows 构件
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: "windows-build.yml"
-          name: astral-windows-x64-zip
-          path: ./downloaded/windows
-          search_artifacts: true
-          if_no_artifact_found: warn
-      
-      - name: 📦 下载 WindowsSetup 构件
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: "windows-build-Setup.yml"
-          name: astral-windows-x64-setup
-          path: ./downloaded/WindowsSetup
-          search_artifacts: true
-          if_no_artifact_found: warn
-      
-      - name: 📦 下载 WindowsSetupCmd 构件
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: "windows-build-Setup-cmd.yml"
-          name: astral-windows-x64-setup-cmd
-          path: ./downloaded/WindowsSetupCmd
-          search_artifacts: true
-          if_no_artifact_found: warn
-
       - name: 📦 下载 linux 构件
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: 'linux-build.yaml'
-          name: astral-linux-x64-tar
+          name: astral-linux-x64-all
           path: ./downloaded/linux
           search_artifacts: true
           if_no_artifact_found: warn
@@ -237,10 +210,9 @@ jobs:
             ./downloaded/x86_64/*.apk
             ./downloaded/universal/*.apk
             ./downloaded/WindowsSetup/*.exe
-            ./downloaded/WindowsSetupCmd/*.exe
             ./downloaded/windows/*.zip
-            ./downloaded/linux/*.tar.gz
-            ./downloaded/linux/*.deb
-            ./downloaded/linux/*.rpm
+            ./downloaded/linux/astral-linux-x64.tar.gz
+            ./downloaded/linux/astral-linux-x64.deb
+            ./downloaded/linux/astral-linux-x64.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
