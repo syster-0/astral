@@ -332,7 +332,7 @@ class UpdateChecker {
       // 默认使用 arm64-v8a 架构，这是目前最常见的 Android 架构
       return 'astral-arm64-v8a.apk';
     } else if (Platform.isWindows) {
-      return 'Astralsetup.exe';
+      return 'astral-windows-x64-setup.exe';
     } else {
       // 其他平台暂不支持直接下载
       return '';
