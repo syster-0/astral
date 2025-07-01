@@ -78,6 +78,15 @@ jobs:
           search_artifacts: true
           if_no_artifact_found: warn
 
+      - name: 📦 解压 linux 构件
+        run: |
+          # 解压所有上传的产物到 ./downloaded/linux 目录
+          for file in ./downloaded/linux/*; do
+            if [[ $file == *.tar.gz || $file == *.deb || $file == *.rpm ]]; then
+              cp "$file" ./downloaded/linux/
+            fi
+          done
+
       - name: 📝 列出下载的文件
         run: |
           echo "已下载的文件列表:"
