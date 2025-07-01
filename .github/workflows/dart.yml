@@ -77,6 +77,7 @@ jobs:
           path: ./downloaded/windows
           search_artifacts: true
           if_no_artifact_found: warn
+      - run: mv ./downloaded/windows/* ./downloaded/windows/astral-windows-x64-zip.zip
       
       - name: 📦 下载 WindowsSetup 构件
         uses: dawidd6/action-download-artifact@v6
@@ -86,6 +87,17 @@ jobs:
           path: ./downloaded/WindowsSetup
           search_artifacts: true
           if_no_artifact_found: warn
+      - run: mv ./downloaded/WindowsSetup/* ./downloaded/WindowsSetup/astral-windows-x64-setup.exe
+
+      - name: 📦 下载 WindowsSetupCmd 构件
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: "windows-build-Setup-cmd.yml"
+          name: astral-windows-x64-setup-cmd
+          path: ./downloaded/WindowsSetupCmd
+          search_artifacts: true
+          if_no_artifact_found: warn
+      - run: mv ./downloaded/WindowsSetupCmd/* ./downloaded/WindowsSetupCmd/astral-windows-x64-setup-cmd.exe
 
       - name: 📦 下载 linux 构件
         uses: dawidd6/action-download-artifact@v6
@@ -228,7 +240,11 @@ jobs:
             ./downloaded/x86_64/*.apk
             ./downloaded/universal/*.apk
             ./downloaded/WindowsSetup/*.exe
+            ./downloaded/WindowsSetupCmd/*.exe
             ./downloaded/windows/*.zip
             ./downloaded/linux/*.tar.gz
+            ./downloaded/linux/*.deb
+            ./downloaded/linux/*.rpm
+            ./downloaded/linux/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

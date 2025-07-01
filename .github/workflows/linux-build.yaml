@@ -38,6 +38,8 @@ jobs:
           # sudo apt-get install -y libappindicator3-dev
           # 添加 patchelf
           sudo apt-get install -y patchelf
+          sudo apt-get install -y ruby-dev
+          sudo gem install --no-document fpm
 
       - name: 🐦 安装 Flutter
         run: |
@@ -70,9 +72,32 @@ jobs:
           echo "打包完成，检查文件大小："
           ls -lh $GITHUB_WORKSPACE/release/
 
-      - name: 📤 上传构建产物
+      - name: 📦 打包 deb 包
+        run: |
+          mkdir -p release
+          fpm -s dir -t deb -n astral -v 1.0.0 --prefix /opt/astral -C build/linux/x64/release/bundle .
+          mv *.deb $GITHUB_WORKSPACE/release/astral-linux-x64.deb
+
+      - name: 📦 打包 rpm 包
+        run: |
+          fpm -s dir -t rpm -n astral -v 1.0.0 --prefix /opt/astral -C build/linux/x64/release/bundle .
+          mv *.rpm $GITHUB_WORKSPACE/release/astral-linux-x64.rpm
+
+      - name: 📦 打包 AppImage
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          mkdir -p AppDir/usr/bin
+          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+          ./appimagetool AppDir $GITHUB_WORKSPACE/release/astral-linux-x64.AppImage
+
+      - name: 📤 上传所有 Linux 构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: astral-linux-x64-tar
-          path: release/astral-linux-x64.tar.gz
+          name: astral-linux-x64-all
+          path: |
+            release/astral-linux-x64.tar.gz
+            release/astral-linux-x64.deb
+            release/astral-linux-x64.rpm
+            release/astral-linux-x64.AppImage
           retention-days: 7
